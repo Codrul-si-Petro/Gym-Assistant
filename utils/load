@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+# Must be sourced so environment variables persist
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  echo "Please source this script, e.g.:"
+  echo "  source utils/load django dev"
+  exit 1
+fi
+
+# Validate command
+if [ "$1" != "django" ]; then
+  echo "Usage: source utils/load django [dev|prod]"
+  return 1
+fi
+
+# Require second argument (environment)
+if [ -z "$2" ]; then
+  echo "Error: environment not specified. Use 'dev' or 'prod'."
+  return 1
+fi
+
+ENV=$2
+export DJANGO_ENV=$ENV
+
+# Determine project root (relative to script)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+echo "PROJECT_ROOT=$PROJECT_ROOT"
+
+# Ensure we are at project root
+if [ ! -f "$PROJECT_ROOT/manage.py" ]; then
+  echo "Error: must run from project root where backend/manage.py exists"
+  return 1
+fi
+
+# Load dotenv file
+DOTENV_FILE="$PROJECT_ROOT/.env.$ENV"
+
+if [ ! -f "$DOTENV_FILE" ]; then
+  echo "Error: $DOTENV_FILE not found!"
+  return 1
+fi
+
+set -o allexport
+while IFS= read -r line; do
+    # Skip empty lines and comments
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    eval "$line"
+done < "$DOTENV_FILE"
+set +o allexport
+
+# export PGPASSWORD for PostgreSQL
+if [[ "$DATABASE_URL" =~ ://[^:]+:([^@]+)@ ]]; then
+    export PGPASSWORD="${BASH_REMATCH[1]}"
+fi
+
+# Banner
+if [ "$ENV" = "prod" ]; then
+  COLOR='\033[0;31m'
+else
+  COLOR='\033[0;32m'
+fi
+NC='\033[0m'
+
+echo -e "${COLOR}=== Django environment: $ENV loaded ===${NC}"
