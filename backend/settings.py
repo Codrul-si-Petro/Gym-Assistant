@@ -18,30 +18,6 @@ from django.db.backends.signals import connection_created
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# # dynamic envs based on my new files
-# DJANGO_ENV = os.environ.get("DJANGO_ENV")
-#
-# if not DJANGO_ENV:
-#     print(
-#         "\033[93m[Warning]\033[0m DJANGO_ENV not set — defaulting to 'dev'. "
-#         "Use `export DJANGO_ENV=prod` or `export DJANGO_ENV=dev` before running.\n"
-#     )
-#
-# ENV_FILE_MAP = {
-#         "dev": BASE_DIR / ".env.dev",
-#         "prod": BASE_DIR / ".env.prod",
-#         }
-#
-# env_file = ENV_FILE_MAP.get(DJANGO_ENV, BASE_DIR / "env.dev")
-# # load env file only if it exists in root
-# if os.path.exists(env_file):
-#     load_dotenv(env_file)
-#     print(f"\033[92m[dotenv] Loaded {env_file.name}\033[0m")
-# else:
-#     print(f"\033[93m[dotenv] No {env_file.name} found (using system env)\033[0m")
-#
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
@@ -55,8 +31,15 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'authentication',
     'core',
     'rest_framework',
+    'dj_rest_auth', # order matters for auth apps it seems
+    'rest_framework.authtoken',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'drf_yasg',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -71,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -112,7 +96,6 @@ DATABASES = {
     }
 }
 
-# set search path for schemas
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -144,6 +127,7 @@ USE_I18N = True
 
 USE_TZ = True
 
+AUTH_USER_MODEL = "authentication.User"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -154,3 +138,41 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Allauth configurations
+AUTHENTICATION_BACKENDS = (
+        'django.contrib.auth.backends.ModelBackend',  # default one
+        'allauth.account.auth_backends.AuthenticationBackend',
+        )
+
+SITE_ID = 1  # TODO: learn why this is needed for allauth
+
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
+REST_USE_JWT = True  # use JWT for sessions
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',  # or JWT if using SimpleJWT
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+CLIENT_ID = os.getenv('OAUTH_CLIENT_ID')
+OAUTH_SECRET = os.getenv('OAUTH_SECRET_KEY')
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': CLIENT_ID,
+            'secret': OAUTH_SECRET,
+            'key': ''
+            }
+    }
+}
