@@ -14,6 +14,11 @@ from .serializers import (
         )
 from rest_framework.parsers import FormParser, JSONParser
 from rest_framework import viewsets
+from django.shortcuts import render
+
+
+def homepage(request):
+    return render(request, "login.html")
 
 
 class WorkoutsViewSet(viewsets.ModelViewSet):
