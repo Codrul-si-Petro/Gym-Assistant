@@ -179,3 +179,14 @@ SOCIALACCOUNT_PROVIDERS = {
 
 LOGIN_REDIRECT_URL = '/auth/login-success/'
 LOGOUT_REDIRECT_URL = '/'
+
+SWAGGER_SETTINGS = {
+        'SECURITY_DEFINITIONS': {
+            'Token': {
+                'type': 'apiKey',  # indicates header based token auth
+                'name': 'Authorization',  # header name
+                'in': 'header',
+                }
+            },
+        'USE_SESSION_AUTH': False,  # disable session login in Swagger
+        }
