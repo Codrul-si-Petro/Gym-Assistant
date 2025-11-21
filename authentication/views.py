@@ -1,3 +1,5 @@
 from django.shortcuts import render
 
-# Create your views here.
+
+def login_success(request):
+    return render(request, 'login_success.html')
