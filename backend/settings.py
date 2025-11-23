@@ -14,10 +14,8 @@ from pathlib import Path
 import os
 from urllib.parse import urlparse, parse_qsl
 
-# Build paths inside the project like this: BACKEND_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = BASE_DIR / "frontend"
+BASE_DIR = Path(__file__).resolve().parent.parent
+print(f'BASE_DIR is: {BASE_DIR}')
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -29,7 +27,7 @@ if not SECRET_KEY:
 DEBUG = os.getenv('DJANGO_DEBUG')
 print(f"Debugging set to: {DEBUG}")
 
-ALLOWED_HOSTS = ["gym-assistant-2smv.onrender.com"]
+ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
 
 
 # Application definition
@@ -38,7 +36,7 @@ INSTALLED_APPS = [
     'authentication',
     'core',
     'rest_framework',
-    'dj_rest_auth', # order matters for auth apps it seems
+    'dj_rest_auth',  # order matters for auth apps it seems
     'rest_framework.authtoken',
     'allauth',
     'allauth.account',
@@ -70,7 +68,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            FRONTEND_DIR / 'templates',
+            BASE_DIR / 'frontend' / 'templates',
             ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -139,6 +137,14 @@ AUTH_USER_MODEL = "authentication.User"
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "/static/"
+
+# tell django where to find static files
+STATICFILES_DIRS = [
+        BASE_DIR / 'frontend' / 'static',
+        ]
+
+# for prod, need this to collect static files for Render
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
