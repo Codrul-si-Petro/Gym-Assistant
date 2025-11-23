@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from urllib.parse import urlparse, parse_qsl
-from django.db.backends.signals import connection_created
 
 # Build paths inside the project like this: BACKEND_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -23,11 +22,14 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY is not set!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG=os.getenv('DJANGO_DEBUG')
+DEBUG = os.getenv('DJANGO_DEBUG')
+print(f"Debugging set to: {DEBUG}")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["gym_assistant-2smv.onrender.com"]
 
 
 # Application definition
