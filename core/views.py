@@ -17,8 +17,8 @@ from rest_framework import viewsets
 from django.shortcuts import render
 
 
-def homepage(request):
-    return render(request, "login.html")
+def homepageView(request):
+    return render(request, "homepage.html")
 
 
 class WorkoutsViewSet(viewsets.ModelViewSet):
@@ -65,7 +65,7 @@ class EquipmentViewSet(viewsets.ModelViewSet):
         return Exercises.objects.filter(user=user)
 
 
-class AttachmentSerializer(viewsets.ModelViewSet):
+class AttachmentsViewSet(viewsets.ModelViewSet):
     serializer_class = AttachmentSerializer
     parser_classes = [FormParser, JSONParser]
 
