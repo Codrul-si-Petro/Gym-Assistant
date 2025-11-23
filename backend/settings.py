@@ -28,6 +28,7 @@ DEBUG = os.getenv('DJANGO_DEBUG')
 print(f"Debugging set to: {DEBUG}")
 
 ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
+print(ALLOWED_HOSTS)
 
 
 # Application definition
