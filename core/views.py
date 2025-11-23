@@ -1,25 +1,76 @@
-from django.db import connection as conn
+from .models import (
+        Workouts,
+        Exercises,
+        Muscles,
+        Equipment,
+        Attachments
+        )
+from .serializers import (
+        WorkoutSerializer,
+        ExercisesSerializer,
+        MusclesSerializer,
+        EquipmentSerializer,
+        AttachmentSerializer
+        )
+from rest_framework.parsers import FormParser, JSONParser
 from rest_framework import viewsets
-from .models import Workouts, Exercises
-from .serializers import WorkoutSerializer, ExercisesSerializer
+from django.shortcuts import render
+
+
+def homepage(request):
+    return render(request, "login.html")
 
 
 class WorkoutsViewSet(viewsets.ModelViewSet):
-    queryset = Workouts.objects.all()
     serializer_class = WorkoutSerializer
+    parser_classes = [FormParser, JSONParser]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Workouts.objects.all()
+        return Workouts.objects.filter(user=user)
+
 
 class ExercisesViewSet(viewsets.ModelViewSet):
-    queryset = Exercises.objects.all()
     serializer_class = ExercisesSerializer
+    parser_classes = [FormParser, JSONParser]
 
-    def set_search_path(self):
-        with conn.cursor() as cursor:
-            cursor.execute('SET search_path TO core, public;')
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Exercises.objects.all()
+        return Exercises.objects.filter(user=user)
 
-    def create(self, request, *args, **kwargs):
-        self.set_search_path()
-        return super().create(request, *args, **kwargs)
 
-    def list(self, request, *args, **kwargs):
-        self.set_search_path()
-        return super().list(request, *args, **kwargs)
+class MusclesViewSet(viewsets.ModelViewSet):
+    serializer_class = MusclesSerializer
+    parser_classes = [FormParser, JSONParser]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Exercises.objects.all()
+        return Exercises.objects.filter(user=user)
+
+
+class EquipmentViewSet(viewsets.ModelViewSet):
+    serializer_class = EquipmentSerializer
+    parser_classes = [FormParser, JSONParser]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Exercises.objects.all()
+        return Exercises.objects.filter(user=user)
+
+
+class AttachmentSerializer(viewsets.ModelViewSet):
+    serializer_class = AttachmentSerializer
+    parser_classes = [FormParser, JSONParser]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Exercises.objects.all()
+        return Exercises.objects.filter(user=user)

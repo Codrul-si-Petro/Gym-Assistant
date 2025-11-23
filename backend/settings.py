@@ -13,19 +13,23 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from urllib.parse import urlparse, parse_qsl
-from django.db.backends.signals import connection_created
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Build paths inside the project like this: BACKEND_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY is not set!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG=os.getenv('DJANGO_DEBUG')
+DEBUG = os.getenv('DJANGO_DEBUG')
+print(f"Debugging set to: {DEBUG}")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["gym-assistant-2smv.onrender.com"]
 
 
 # Application definition
@@ -65,7 +69,9 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            FRONTEND_DIR,
+            ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -132,7 +138,7 @@ AUTH_USER_MODEL = "authentication.User"
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -176,3 +182,17 @@ SOCIALACCOUNT_PROVIDERS = {
             }
     }
 }
+
+LOGIN_REDIRECT_URL = '/auth/login-success/'
+LOGOUT_REDIRECT_URL = '/'
+
+SWAGGER_SETTINGS = {
+        'SECURITY_DEFINITIONS': {
+            'Token': {
+                'type': 'apiKey',  # indicates header based token auth
+                'name': 'Authorization',  # header name
+                'in': 'header',
+                }
+            },
+        'USE_SESSION_AUTH': False,  # disable session login in Swagger
+        }

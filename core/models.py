@@ -1,12 +1,17 @@
 from django.db import models
 from .custom_fields import DateForeignKey
-
-# define the schema with db table and some inheritance magic
+from django.contrib.auth.models import User
+from django.conf import settings
 
 # main tables
 class Workouts(models.Model):
 
     workout_id = models.AutoField(primary_key=True, db_index=True)
+    user= models.ForeignKey (
+            settings.AUTH_USER_MODEL,
+            on_delete=models.CASCADE,
+            default=1
+            )
     workout_number = models.PositiveIntegerField(auto_created=True)
     date = DateForeignKey(
             to="Calendar",
@@ -51,6 +56,7 @@ class Exercises(models.Model):
     class Meta:
         db_table = "dim_exercises"
 
+
 class Muscles(models.Model):
 
     muscle_id = models.AutoField(primary_key=True, db_index=True)
@@ -60,6 +66,7 @@ class Muscles(models.Model):
 
     class Meta:
         db_table = "dim_muscles"
+
 
 class Exercise_Muscle_Bridge(models.Model):
 
@@ -75,6 +82,7 @@ class Exercise_Muscle_Bridge(models.Model):
 
     class Meta:
         db_table = "exercise_muscle_bridge"
+
 
 class Equipment(models.Model):
 
@@ -98,8 +106,8 @@ class Attachments(models.Model):
     class Meta:
         db_table = "dim_attachments"
 
-class Calendar(models.Model):
 
+class Calendar(models.Model):
     date_id = models.DateField(primary_key=True, db_index=True, default='1900-01-01')
     week_day = models.TextField()
     day_number_in_month = models.SmallIntegerField()
@@ -108,7 +116,6 @@ class Calendar(models.Model):
     calendar_month_name = models.TextField()
     calendar_year = models.SmallIntegerField()
     is_weekend = models.BooleanField()
+
     class Meta:
         db_table = "dim_calendar"
-
-
