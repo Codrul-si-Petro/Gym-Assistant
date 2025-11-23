@@ -29,7 +29,7 @@ if not SECRET_KEY:
 DEBUG = os.getenv('DJANGO_DEBUG')
 print(f"Debugging set to: {DEBUG}")
 
-ALLOWED_HOSTS = ["gym_assistant-2smv.onrender.com"]
+ALLOWED_HOSTS = ["gym-assistant-2smv.onrender.com"]
 
 
 # Application definition
