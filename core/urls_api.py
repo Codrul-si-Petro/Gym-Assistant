@@ -14,5 +14,5 @@ router.register(r'attachments', AttachmentsViewSet, basename='attachments')
 router.register(r'muscles', MusclesViewSet, basename='muscles')
 
 urlpatterns = [
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
 ]

@@ -139,12 +139,12 @@ AUTH_USER_MODEL = "authentication.User"
 
 STATIC_URL = "/static/"
 
-# tell django where to find static files
-STATICFILES_DIRS = [
-        BASE_DIR / 'frontend' / 'static',
-        ]
-
-# for prod, need this to collect static files for Render
+# tell django where to find static files. will be needed later once i have static files
+# STATICFILES_DIRS = [
+#         BASE_DIR / 'frontend' / 'static',
+#         ]
+#
+# for prod, need this to collect static files for Render. If this isnt correct swagger is blank
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
