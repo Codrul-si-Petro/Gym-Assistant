@@ -24,7 +24,7 @@ if not SECRET_KEY:
     raise ValueError("DJANGO_SECRET_KEY is not set!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG')
+DEBUG = os.getenv('DJANGO_DEBUG', "False").lower() in ("true")
 print(f"Debugging set to: {DEBUG}")
 
 ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
@@ -54,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
