@@ -162,9 +162,17 @@ AUTHENTICATION_BACKENDS = (
 SITE_ID = 1  # TODO: learn why this is needed for allauth
 
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
+# login redirect override variables
+LOGIN_REDIRECT_URL = "/auth/login-success"
+LOGOUT_REDIRECT_URL = "/"
+
+
+EMAIL_BACKEND='backend.email_sender.GmailSMTPBackend'
+DEFAULT_FROM_EMAIL='Gym Assistant<noreply.com>'
 
 REST_USE_JWT = True  # use JWT for sessions
 
@@ -177,6 +185,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+        ]
 }
 CLIENT_ID = os.getenv('OAUTH_CLIENT_ID')
 OAUTH_SECRET = os.getenv('OAUTH_SECRET_KEY')

@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import LoginSuccessView
+from .views import login_success_view
 
 urlpatterns = [
-    path('login/', LoginSuccessView, name='login-success'),
+    path('login-success/', login_success_view, name='login-success'),
 ]

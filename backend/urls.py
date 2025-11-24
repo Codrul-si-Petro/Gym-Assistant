@@ -42,9 +42,11 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
     # Authentication
-    path('auth/', include('dj_rest_auth.urls')), # login, pass reset
-    path('auth/registration/', include('dj_rest_auth.registration.urls')), # sign up
-    path('auth/social/', include('allauth.socialaccount.providers.google.urls')), # google login
+    path('auth/', include('dj_rest_auth.urls')),  # login, pass reset
+    path('auth/registration/', include('dj_rest_auth.registration.urls')),  #  sign up
+    path('auth/social/', include('allauth.socialaccount.providers.google.urls')),  # google login
+    # include Authentication
+    path('auth/', include('authentication.urls')),
 
     # Home page
     path('', include('core.urls'))

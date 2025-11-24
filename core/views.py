@@ -37,10 +37,7 @@ class ExercisesViewSet(viewsets.ModelViewSet):
     parser_classes = [FormParser, JSONParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Exercises.objects.all()
-        return Exercises.objects.filter(user=user)
+        return Exercises.objects.all()
 
 
 class MusclesViewSet(viewsets.ModelViewSet):
@@ -48,10 +45,7 @@ class MusclesViewSet(viewsets.ModelViewSet):
     parser_classes = [FormParser, JSONParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Exercises.objects.all()
-        return Exercises.objects.filter(user=user)
+        return Muscles.objects.all()
 
 
 class EquipmentViewSet(viewsets.ModelViewSet):
@@ -59,10 +53,7 @@ class EquipmentViewSet(viewsets.ModelViewSet):
     parser_classes = [FormParser, JSONParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Exercises.objects.all()
-        return Exercises.objects.filter(user=user)
+        return Equipment.objects.all()
 
 
 class AttachmentsViewSet(viewsets.ModelViewSet):
@@ -70,7 +61,4 @@ class AttachmentsViewSet(viewsets.ModelViewSet):
     parser_classes = [FormParser, JSONParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Exercises.objects.all()
-        return Exercises.objects.filter(user=user)
+        return Attachments.objects.all()
