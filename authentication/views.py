@@ -1,5 +1,8 @@
 from django.shortcuts import render
+from django.views import View
 
 
-def login_success_view(request):
-    return render(request, 'login_success.html')
+class LoginSuccessView(View):
+
+    def get(self, request):
+        return render(request, "login_success.html")
