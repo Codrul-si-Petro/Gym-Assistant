@@ -180,7 +180,7 @@ REST_USE_JWT = True  # use JWT for sessions
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',  # or JWT if using SimpleJWT
+        'rest_framework.authentication.BasicAuthentication',  # or JWT if using SimpleJWT
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -215,5 +215,5 @@ SWAGGER_SETTINGS = {
                 'in': 'header',
                 }
             },
-        'USE_SESSION_AUTH': False,  # disable session login in Swagger
+        'USE_SESSION_AUTH': True,  # disable session login in Swagger
         }
