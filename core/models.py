@@ -25,10 +25,10 @@ class Workouts(models.Model):
             on_delete=models.CASCADE,
             default="1"
             )
-    set_number = models.SmallIntegerField(default=0)
+    set_number = models.SmallIntegerField()
     repetitions = models.SmallIntegerField()
     load = models.DecimalField(max_digits=9, decimal_places=2)
-    unit = models.TextField()
+    unit = models.TextField(default='KG')
     equipment = models.ForeignKey(
             to="Equipment",
             on_delete=models.CASCADE,
@@ -37,8 +37,8 @@ class Workouts(models.Model):
             to="Attachments",
             on_delete=models.CASCADE,
             default="1")
-    set_type = models.TextField()
-    comments = models.TextField()
+    set_type = models.TextField(default='Working set')
+    comments = models.TextField(default='N/A')
     workout_split = models.TextField(max_length=50)
     ta_created_at = models.DateTimeField(auto_now_add=True)
 
