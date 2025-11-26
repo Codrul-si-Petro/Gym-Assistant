@@ -13,21 +13,22 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from urllib.parse import urlparse, parse_qsl
-from django.db.backends.signals import connection_created
 
-# Build paths inside the project like this: BACKEND_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-BACKEND_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = BASE_DIR / "frontend"
+BASE_DIR = Path(__file__).resolve().parent.parent
+print(f'BASE_DIR is: {BASE_DIR}')
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY is not set!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG=os.getenv('DJANGO_DEBUG')
+DEBUG = os.getenv('DJANGO_DEBUG', "False").lower() in ("true")
+print(f"Debugging set to: {DEBUG}")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
+print(ALLOWED_HOSTS)
 
 
 # Application definition
@@ -36,7 +37,7 @@ INSTALLED_APPS = [
     'authentication',
     'core',
     'rest_framework',
-    'dj_rest_auth', # order matters for auth apps it seems
+    'dj_rest_auth',  # order matters for auth apps it seems
     'rest_framework.authtoken',
     'allauth',
     'allauth.account',
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -68,7 +70,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            FRONTEND_DIR,
+            BASE_DIR / 'frontend' / 'templates',
             ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -138,6 +140,14 @@ AUTH_USER_MODEL = "authentication.User"
 
 STATIC_URL = "/static/"
 
+# tell django where to find static files. will be needed later once i have static files
+STATICFILES_DIRS = [
+        BASE_DIR / 'frontend' / 'static',
+        ]
+
+# for prod, need this to collect static files for Render. If this isnt correct swagger is blank
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -152,9 +162,17 @@ AUTHENTICATION_BACKENDS = (
 SITE_ID = 1  # TODO: learn why this is needed for allauth
 
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
+# login redirect override variables
+LOGIN_REDIRECT_URL = "/auth/login-success"
+LOGOUT_REDIRECT_URL = "/"
+
+
+EMAIL_BACKEND='backend.email_sender.GmailSMTPBackend'
+DEFAULT_FROM_EMAIL='Gym Assistant<noreply.com>'
 
 REST_USE_JWT = True  # use JWT for sessions
 
@@ -162,11 +180,16 @@ REST_USE_JWT = True  # use JWT for sessions
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',  # or JWT if using SimpleJWT
+        'rest_framework.authentication.BasicAuthentication',  # or JWT if using SimpleJWT
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+        ]
 }
 CLIENT_ID = os.getenv('OAUTH_CLIENT_ID')
 OAUTH_SECRET = os.getenv('OAUTH_SECRET_KEY')
@@ -192,5 +215,5 @@ SWAGGER_SETTINGS = {
                 'in': 'header',
                 }
             },
-        'USE_SESSION_AUTH': False,  # disable session login in Swagger
+        'USE_SESSION_AUTH': True,  # disable session login in Swagger
         }

@@ -1,12 +1,11 @@
-from django.urls import path, include
+from django.urls import path
 from rest_framework.routers import DefaultRouter
-from .views import WorkoutsViewSet, ExercisesViewSet, homepage
+from .views import (
+        homepageView
+        )
 
 router = DefaultRouter()
-router.register(r'workouts', WorkoutsViewSet, basename='workouts')
-router.register(r'exercises', ExercisesViewSet, basename='exercises')
 
 urlpatterns = [
-    path('api/', include(router.urls)),
-    path('home/', homepage, name='home')
+    path('', homepageView, name='home')
 ]

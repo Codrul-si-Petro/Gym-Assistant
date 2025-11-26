@@ -12,18 +12,20 @@ from .serializers import (
         EquipmentSerializer,
         AttachmentSerializer
         )
-from rest_framework.parsers import FormParser, JSONParser
-from rest_framework import viewsets
+from rest_framework.parsers import FormParser
+from rest_framework import viewsets, mixins
 from django.shortcuts import render
 
+def homepageView(request):
+    return render(request, "homepage.html")
 
-def homepage(request):
-    return render(request, "login.html")
 
+class WorkoutsViewSet(mixins.CreateModelMixin,
+                      mixins.ListModelMixin,
+                      viewsets.GenericViewSet):
 
-class WorkoutsViewSet(viewsets.ModelViewSet):
     serializer_class = WorkoutSerializer
-    parser_classes = [FormParser, JSONParser]
+    parser_classes = [FormParser]
 
     def get_queryset(self):
         user = self.request.user
@@ -31,46 +33,37 @@ class WorkoutsViewSet(viewsets.ModelViewSet):
             return Workouts.objects.all()
         return Workouts.objects.filter(user=user)
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
-class ExercisesViewSet(viewsets.ModelViewSet):
+
+class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = ExercisesSerializer
-    parser_classes = [FormParser, JSONParser]
+    parser_classes = [FormParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Exercises.objects.all()
-        return Exercises.objects.filter(user=user)
+        return Exercises.objects.all()
 
 
-class MusclesViewSet(viewsets.ModelViewSet):
+class MusclesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = MusclesSerializer
-    parser_classes = [FormParser, JSONParser]
+    parser_classes = [FormParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Exercises.objects.all()
-        return Exercises.objects.filter(user=user)
+        return Muscles.objects.all()
 
 
-class EquipmentViewSet(viewsets.ModelViewSet):
+class EquipmentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = EquipmentSerializer
-    parser_classes = [FormParser, JSONParser]
+    parser_classes = [FormParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Exercises.objects.all()
-        return Exercises.objects.filter(user=user)
+        return Equipment.objects.all()
 
 
-class AttachmentSerializer(viewsets.ModelViewSet):
+class AttachmentsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = AttachmentSerializer
-    parser_classes = [FormParser, JSONParser]
+    parser_classes = [FormParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Exercises.objects.all()
-        return Exercises.objects.filter(user=user)
+        return Attachments.objects.all()
