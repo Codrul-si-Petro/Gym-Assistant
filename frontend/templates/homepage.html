@@ -6,7 +6,7 @@
   <title>Home</title>
   <!-- <link href="style.css" rel="stylesheet"> --!>
   {% load static %}
-  <link rel="stylesheet" href="{% static 'style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/homepage.css' %}">
 </head>
 <body>
 <nav class="container">
@@ -15,8 +15,8 @@
   <a href="learn" id="item2">Learn More</a>
   <a href="#support" id="item3">Support</a>
   <a href="feature" id="item4">Features</a>
-  <a href="login" id="item5">Login</a>
-   <a href="signup" id="item6">Sign up</a>
+  <a href="{% url 'login' %}" id="item5">Login</a> <!-- this is how to look for url /login/ for button --!>
+  <a href="sign up" id="item6">Sign up</a>
    
 </nav>
 </body>

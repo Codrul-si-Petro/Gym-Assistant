@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+   {% load static %}
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <link rel="stylesheet" href="{% static 'css/homepage.css' %}"
+</head>
+
+<body>
+
+<!-- NAV BAR -->
+<nav class="container">
+  <a href="/" id="item1">&#10051; Workout Assistant</a>
+  <a href="/learn" id="item2">Learn More</a>
+  <a href="/support" id="item3">Support</a>
+  <a href="/feature" id="item4">Features</a>
+  <a href="{% url 'login' %}" id="item5">Login</a>
+</nav>
+
+<!-- LOGIN FORM -->
+<div class="login-wrapper">
+  {% if messages %}
+  <ul>
+    {% for message in messages %}
+    <li style="color:red">{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+    <h1>Login</h1>
+
+    <form method="POST" action="{% url 'login' %}">
+        {% csrf_token %}
+
+        <input type="text" name="username" placeholder="Username or Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+
+        <button type="submit">Log in</button>
+    </form>
+
+    <!-- GOOGLE LOGIN BUTTON -->
+    <form action="/social/google/login" method="GET">
+        <button type="submit" class="google-btn">⬤ Login with Google</button>
+    </form>
+</div>
+
+</body>
+</html>

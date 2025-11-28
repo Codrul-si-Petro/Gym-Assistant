@@ -43,11 +43,18 @@ urlpatterns = [
 
     # Authentication
     path('auth/', include('dj_rest_auth.urls')),  # login, pass reset
-    path('auth/registration/', include('dj_rest_auth.registration.urls')),  #  sign up
-    path('auth/social/', include('allauth.socialaccount.providers.google.urls')),  # google login
+    # above resolves to auth/login, auth/logout, auth/password/reset
+    path('auth/registration/', include('dj_rest_auth.registration.urls')),  # sign up
+    # resolves to auth/registration
+    path('social/', include('allauth.socialaccount.providers.google.urls')),  # google login
+    # resolves to /social/google/login
     # include Authentication
-    path('auth/', include('authentication.urls')),
+    path('', include('authentication.urls')),  # login success
 
     # Home page
     path('', include('core.urls'))
 ]
+
+# to redirect after successful login
+LOGIN_REDIRECT_URL = '/login-success/'
+SOCIALACCOUNT_LOGIN_REDIRECT_URL = '/login-success/'
