@@ -3,14 +3,14 @@ body {
     max-width: 100%;
     height: 100%;
     margin: 0;
-    background: linear-gradient(to top right, #69247a, #65219c, #6722d6, #846fe0, #7423aa);
+    background: linear-gradient(to top right, #453649, #471f68, #342f47, #291e30);
     background-attachment: fixed;
 }
 
 .container {
     display: flex;
     box-shadow: 0 6px 20px rgba(0,0,0,0.20);
-    background-color: #7d3faf;
+    background-color: #4d3a5a;
     height: 70px;
     border-bottom-right-radius: 10px;
     border-bottom-left-radius: 10px;
@@ -23,7 +23,7 @@ body {
      margin-bottom: 40px;
      padding: auto;
      font-family: Georgia, serif;
-     color: black;
+     color: rgb(139, 138, 138);
      text-align: left;
      text-decoration: none;
      font-size: 14px;
@@ -34,13 +34,13 @@ body {
      flex: 1 1 150px;
 }
 
-#item2, #item3{
+ #item2{
     flex: 1 1 100px;
    padding-left: 10px;
    padding-right: 10px;
    color: rgb(20, 27, 27)
 }
-#item4{
+#item3{
     flex: 1 1 100px;
    padding-left: 10px;
    padding-right: 80px; 
@@ -48,14 +48,14 @@ body {
     color: rgb(20, 27, 27)
 }
 
-#item5{
+#item4{
     flex: 1 1 100px;
       margin-left: 40px;
     padding-left: 90px;
     padding-right: 0px;
     color: rgb(20, 27, 27)
 }
-#item6{
+#item5{
     flex: 1 1 90px;
      color: rgb(20, 27, 27)
 
@@ -64,7 +64,7 @@ body {
 /* style for bars */
 
 nav a::after {
-  content: "      |";        /* the bar */
+  content: "    |";        /* the bar */
   margin: 0 30px;
   color: #0a0a0a;
 }
@@ -73,12 +73,12 @@ nav a:last-child::after {
   content: "";    
 }
 
-#item4::after{
+#item3::after{
     content: "";
 }
 
-#item5::after{
-     content: "      |";        /* the bar */
+#item4::after{
+     content: "    |";        /* the bar */
   margin: 0 50px;
   color: #0a0a0a;
 }
@@ -90,4 +90,8 @@ nav a:last-child::after {
    text-shadow: 3px 3px 4px rgba(0,0,0,0.20) ;
    background-color: #bbbabe;
 }
+
+/* text style and animation */
+
+
 
