@@ -24,7 +24,13 @@ jobs:
       - name: Ping website
         if: env.ping == 'true'
         run: |
-          echo "Pinging Gym Assistant on Render..."
-          for i in {1..2}; do
-            curl -s https://gym-assistant-2smv.onrender.com/ && break || sleep 5
+          MAX_TRIES=5
+          for i in $(seq 1 $MAX_TRIES); do
+          if curl -s https://gym-assistant-2smv.onrender.com/; then
+          echo "Ping successful"
+          break
+          else
+          echo "Retry in 10s..."
+          sleep 10
+          fi
           done

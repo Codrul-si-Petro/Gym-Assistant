@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Home</title>
 
-  <link href="../static/style.css" rel="stylesheet">
-  <!-- {% load static %}
-  <!-- <link rel="stylesheet" href="{% static 'style.css' %}"> -->
+  <!-- <link href="../static/style.css" rel="stylesheet"> -->
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
 
 </head>
@@ -15,10 +15,10 @@
 <nav class="container">
 
   <a href="#workout" id="item1">&#10051; Workout Assistant</a>
-  <a href="learn" id="item2">Learn More</a>
+  <a href="#learn" id="item2">Learn More</a>
   <a href="#support" id="item3">Support</a>
-  <a href="login" id="item4">Login</a>
-   <a href="signup" id="item5">Sign up</a>
+  <a href="{% url 'login' %}" id="item4">Login</a>  <!-- we use this if we have a html page for it -->
+  <a href="/social/google/login" id="item5">Sign up</a> <!-- we use this if we dont have one -->
    
 </nav>
 
@@ -26,6 +26,6 @@
 
 </nav>
 
- <script src="script.js" ></script>
+  <script src="{% static 'js/script.js' %}"></script>
 </body>
 </html>

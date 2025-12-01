@@ -44,9 +44,9 @@ urlpatterns = [
     # Authentication
     path('auth/', include('dj_rest_auth.urls')),  # login, pass reset
     path('auth/registration/', include('dj_rest_auth.registration.urls')),  #  sign up
-    path('auth/social/', include('allauth.socialaccount.providers.google.urls')),  # google login
+    path('social/', include('allauth.socialaccount.providers.google.urls')),  # google login
     # include Authentication
-    path('auth/', include('authentication.urls')),
+    path('', include('authentication.urls')),
 
     # Home page
     path('', include('core.urls'))
