@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: dim_exercises # this points to a django model
+    description: "Existing dimension for exercises, Django managed"
+    columns: 
+      - name: exercise_id
+        tests:
+          - not_null
+          - unique
+      - name: exercise_name
+        tests:
+          - not_null
+          - unique
+  - name: dim_muscles 
+    description: "Existing dimension for muscles, Django managed"
+    columns: 
+    - name: muscle_id
+      tests:
+        - not_null
+        - unique
+    - name: muscle_name
+      tests:
+        - not_null
+        - unique
