@@ -1,0 +1,12 @@
+name: Keep Website Alive
+
+on: 
+  schedule:
+    - cron: "*/13 * * * 1-6" # run every 13 min
+
+jobs: 
+  keep_alive:
+      runs-on: ubuntu-latest
+      steps: 
+        - name: Pinger
+          run: curl https://gym-assistant-2smv.onrender.com/
