@@ -61,7 +61,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 if args.source == args.target:
-    raise ValueError("Source and target environments must be different")
+    raise ValueError("\033[91mSource and target environments must be different\033[0m")
 # map engines 
 engine_map={"dev": dev_engine, "prod": prod_engine}
 
@@ -70,9 +70,14 @@ target_engine = engine_map[args.target]
 
 # copy
 for table_name in args.tables:
-    print(f"Syncing table {table_name} from {args.source} to {args.target}")
+    print(f"Syncing table {table_name} from {args.source} to {args.target}...")
 
     df = pd.read_sql_table(table_name, source_engine)
 
-    df.to_sql(table_name, target_engine, if_exists='replace', index=False)
-    print(f"Table {table_name} synced successfully")
+    with target_engine.begin() as conn:
+        conn.execute(text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE"))
+
+    df.to_sql(table_name, target_engine, if_exists="append", index=False)
+
+
+    print(f"\033[92mTable {table_name} synced successfully\033[0m")
