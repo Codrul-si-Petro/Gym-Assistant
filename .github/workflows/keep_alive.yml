@@ -2,7 +2,7 @@ name: Keep Website Alive
 
 on:
   schedule:
-    - cron: "*/5 * * * *"  # every 5 minutes
+    - cron: "*/10 * * * *"  # every 5 minutes
   workflow_dispatch:        # allows manual run
 
 jobs:
@@ -23,4 +23,8 @@ jobs:
 
       - name: Ping website
         if: env.ping == 'true'
-        run: curl -s https://gym-assistant-2smv.onrender.com/ || true
+        run: |
+          echo "Pinging Gym Assistant on Render..."
+          for i in {1..2}; do
+            curl -s https://gym-assistant-2smv.onrender.com/ && break || sleep 5
+          done
