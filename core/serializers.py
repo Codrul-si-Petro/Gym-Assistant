@@ -4,8 +4,11 @@ from .models import (
         Exercises,
         Muscles,
         Equipment,
-        Attachments
+        Attachments,
+        Calendar
         )
+import datetime
+
 
 class WorkoutSerializer(serializers.ModelSerializer):
     # define what fields will be read only
@@ -13,31 +16,57 @@ class WorkoutSerializer(serializers.ModelSerializer):
     exercise = serializers.PrimaryKeyRelatedField(read_only=True)
     attachment = serializers.PrimaryKeyRelatedField(read_only=True)
     equipment = serializers.PrimaryKeyRelatedField(read_only=True)
+    date = serializers.SerializerMethodField(read_only=True)
 
     # define write only input fields to be associated for FK
-    exercise_name = serializers.CharField(write_only=True)
-    attachment_name = serializers.CharField(write_only=True)
-    equipment_name = serializers.CharField(write_only=True)
+    exercise_name = serializers.CharField(write_only=True, default='N/A')
+    attachment_name = serializers.CharField(write_only=True, default='N/A')
+    equipment_name = serializers.CharField(write_only=True, default='N/A')
+
+    # Other required input fields
+    workout_number = serializers.IntegerField(min_value=1, max_value=10000, default=1)
+    set_number = serializers.IntegerField(min_value=1, max_value=200, default=1)
+    repetitions = serializers.IntegerField(min_value=0, max_value=1000, default=0)
+    load = serializers.IntegerField(min_value=0, default=0)
+    unit = serializers.CharField(min_length=2, default='KG')
+    set_type = serializers.CharField(min_length=1, default='Working set')
+    comments = serializers.CharField(min_length=1, required=False, default='N/A')
+    workout_split = serializers.CharField(max_length=50, min_length=1, default= 'Lower')
+    date = serializers.DateField(write_only=True, required=False, default=datetime.date.today)
 
     class Meta:
         model = Workouts
         fields = '__all__'
-        read_only_fields = ['workout_id', 'ta_created_at']
+        read_only_fields = [
+                'workout_id',
+                'ta_created_at',
+                'user',
+                'exercise',
+                'attachment',
+                'equipment'
+                ]
 
     def create(self, validated_data):
-        exercise_name = validated_data.pop('exercise_name')
-        attachment_name = validated_data.pop('attachment_name')
+        exercise_name = validated_data.pop('exercise_name', 'N/A')
+        attachment_name = validated_data.pop('attachment_name', 'N/A')
+        equipment_name = validated_data.pop('equipment_name', 'N/A')
+        date_input = validated_data.pop('date')
 
-        exercise = Exercises.objects.get(name=exercise_name)
-        attachment = Attachments.objects.get(name=attachment_name)
+        exercise = Exercises.objects.get(exercise_name=exercise_name)
+        attachment = Attachments.objects.get(attachment_name=attachment_name)
+        equipment = Equipment.objects.get(equipment_name=equipment_name)
+        calendar_entry = Calendar.objects.get(date_id=date_input)
 
         validated_data['exercise'] = exercise
         validated_data['attachment'] = attachment
+        validated_data['equipment'] = equipment
+        validated_data['date'] = calendar_entry
 
         # auto assign user id
         validated_data['user'] = self.context['request'].user
 
         return super().create(validated_data)
+
 
 class ExercisesSerializer(serializers.ModelSerializer):
     class Meta:
