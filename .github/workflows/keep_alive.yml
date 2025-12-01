@@ -1,12 +1,26 @@
 name: Keep Website Alive
 
-on: 
+on:
   schedule:
-    - cron: "*/13 * * * 1-6" # run every 13 min
+    - cron: "*/5 * * * *"  # every 5 minutes
+  workflow_dispatch:        # allows manual run
 
-jobs: 
+jobs:
   keep_alive:
-      runs-on: ubuntu-latest
-      steps: 
-        - name: Pinger
-          run: curl https://gym-assistant-2smv.onrender.com/
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculate if we should ping
+        id: check_time
+        run: |
+          # Get current minute in UTC
+          MIN=$(date -u +%M)
+          # Only ping if current minute modulo 13 == 0
+          if [ $((MIN % 13)) -eq 0 ]; then
+            echo "ping=true" >> $GITHUB_ENV
+          else
+            echo "ping=false" >> $GITHUB_ENV
+          fi
+
+      - name: Ping website
+        if: env.ping == 'true'
+        run: curl -s https://gym-assistant-2smv.onrender.com/ || true
