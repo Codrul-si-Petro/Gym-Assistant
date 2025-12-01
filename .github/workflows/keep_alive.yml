@@ -2,25 +2,13 @@ name: Keep Website Alive
 
 on:
   schedule:
-    - cron: "*/10 * * * *"  # every 5 minutes
+    - cron: "*/10 * * * *"  # every 10 minutes
   workflow_dispatch:        # allows manual run
 
 jobs:
   keep_alive:
     runs-on: ubuntu-latest
     steps:
-      - name: Calculate if we should ping
-        id: check_time
-        run: |
-          # Get current minute in UTC
-          MIN=$(date -u +%M)
-          # Only ping if current minute modulo 13 == 0
-          if [ $((MIN % 13)) -eq 0 ]; then
-            echo "ping=true" >> $GITHUB_ENV
-          else
-            echo "ping=false" >> $GITHUB_ENV
-          fi
-
       - name: Ping website
         if: env.ping == 'true'
         run: |
