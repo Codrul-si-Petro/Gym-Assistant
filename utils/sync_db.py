@@ -1,5 +1,6 @@
 """
-This script is a tool to be used when we want to quickly copy tables from one environment to another
+This script is a tool to be used when we want to quickly copy tables from one environment to another.
+Need to fix the environment variable loading with the " " versus ' ' issue.
 """
 
 import pandas as pd
@@ -9,6 +10,9 @@ from pathlib import Path
 import argparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# //TODO: stop using connection string and use port, host, name to avoid issue 
+# presented in the docstring above
 
 load_dotenv(BASE_DIR / '.env.dev')
 dev_env = dotenv_values(BASE_DIR / '.env.dev')
