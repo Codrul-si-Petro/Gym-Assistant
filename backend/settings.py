@@ -174,6 +174,8 @@ LOGOUT_REDIRECT_URL = "/"
 EMAIL_BACKEND='backend.email_sender.GmailSMTPBackend'
 DEFAULT_FROM_EMAIL='Gym Assistant<noreply.com>'
 
+REST_AUTH_PASSWORD_RESET_SERIALIZER = "authentication.serializers.CustomPasswordResetSerializer"
+
 REST_USE_JWT = True  # use JWT for sessions
 
 
@@ -189,6 +191,9 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.MultiPartParser',
+        ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
         ]
 }
 CLIENT_ID = os.getenv('OAUTH_CLIENT_ID')
@@ -206,6 +211,7 @@ SOCIALACCOUNT_PROVIDERS = {
 
 LOGIN_REDIRECT_URL = '/auth/login-success/'
 LOGOUT_REDIRECT_URL = '/'
+REST_AUTH_PASSWORD_RESET_CONFIRM_URL = 'reset/{uid}/{token}/'
 
 SWAGGER_SETTINGS = {
         'SECURITY_DEFINITIONS': {

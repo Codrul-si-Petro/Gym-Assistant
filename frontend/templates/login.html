@@ -1,0 +1,22 @@
+<!-- frontend/templates/auth/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login</h2>
+    <form method="post">
+        {% csrf_token %}
+        {% if form.errors %}
+            <p style="color:red;">Invalid username or password</p>
+        {% endif %}
+        <label for="id_username">Username:</label>
+        {{ form.username }}<br><br>
+        <label for="id_password">Password:</label>
+        {{ form.password }}<br><br>
+        <button type="submit">Login</button>
+    </form>
+</body>
+</html>
