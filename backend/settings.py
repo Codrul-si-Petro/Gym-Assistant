@@ -172,7 +172,7 @@ LOGOUT_REDIRECT_URL = "/"
 
 
 EMAIL_BACKEND = 'backend.email_sender.GmailSMTPBackend'
-DEFAULT_FROM_EMAIL='Gym Assistant<noreply.com>'
+DEFAULT_FROM_EMAIL='Gym Assistant<MS_vKo3u4@test-xkjn41m1r5p4z781.mlsender.net>'
 
 REST_AUTH_PASSWORD_RESET_SERIALIZER = "authentication.serializers.CustomPasswordResetSerializer"
 
