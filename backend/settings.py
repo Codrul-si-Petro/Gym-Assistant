@@ -171,7 +171,7 @@ LOGIN_REDIRECT_URL = "/auth/login-success"
 LOGOUT_REDIRECT_URL = "/"
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'backend.email_sender.GmailSMTPBackend'
 DEFAULT_FROM_EMAIL='Gym Assistant<noreply.com>'
 
 REST_AUTH_PASSWORD_RESET_SERIALIZER = "authentication.serializers.CustomPasswordResetSerializer"

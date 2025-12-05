@@ -16,8 +16,9 @@ class GmailSMTPBackend(EmailBackend):
         kwargs['username'] = gmail_user
         kwargs['password'] = gmail_password
         kwargs['host'] = 'smtp.gmail.com'
-        kwargs['port'] = 587
-        kwargs['use_tls'] = True
+        kwargs['port'] = 465  # these changes are to see
+        kwargs['use_tls'] = False  # if render will allow us to send emails like this
+        kwargs['use_ssl'] = True
         kwargs['fail_silently'] = False
 
         super().__init__(**kwargs)
