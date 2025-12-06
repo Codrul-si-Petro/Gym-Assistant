@@ -193,7 +193,7 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',
         ],
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.UserRateThrottle',
+        'core.api_throttle.DefaultThrottle',
         ]
 }
 CLIENT_ID = os.getenv('OAUTH_CLIENT_ID')

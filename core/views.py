@@ -12,23 +12,25 @@ from .serializers import (
         EquipmentSerializer,
         AttachmentSerializer
         )
-from rest_framework.parsers import FormParser
-from rest_framework import viewsets, mixins
+from rest_framework.parsers import FormParser, JSONParser
+from rest_framework import viewsets, mixins, request
 from django.shortcuts import render
-from .api_throttle import DefaultPostThrottle
-
+from .api_throttle import EndpointThrottle
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 def homepageView(request):
     return render(request, "homepage.html")
-
 
 class WorkoutsViewSet(mixins.CreateModelMixin,
                       mixins.ListModelMixin,
                       viewsets.GenericViewSet):
 
     serializer_class = WorkoutSerializer
-    parser_classes = [FormParser]
+    parser_classes = [FormParser, JSONParser]
+    throttle_classes = [EndpointThrottle]
 
+    
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
@@ -38,47 +40,68 @@ class WorkoutsViewSet(mixins.CreateModelMixin,
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-    def get_throttles(self):
-        if self.request.method == 'GET':  # will remove this probably
-            self.throttle_classes = [DefaultPostThrottle]
-        if self.request.method == 'POST':
-            self.throttle_classes = [DefaultPostThrottle]
+    @swagger_auto_schema(
+        request_body=WorkoutSerializer,  # <-- use serializer to avoid writing schema each time
+        tags=['Core'],
+        consumes=['application/x-www-form-urlencoded']  # <-- force Swagger form
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
-        return super().get_throttles()
+
+    @swagger_auto_schema(tags=["Core"])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = ExercisesSerializer
-    parser_classes = [FormParser]
+    parser_classes = [FormParser, JSONParser]
+    throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
         return Exercises.objects.all()
 
-    def get_throttles(self):
-        if self.request.method == 'GET':
-            self.throttle_classes = [DefaultPostThrottle]
-        return super().get_throttles()
+    @swagger_auto_schema(tags=["Core"])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class MusclesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = MusclesSerializer
-    parser_classes = [FormParser]
+    parser_classes = [FormParser, JSONParser]
+    throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
         return Muscles.objects.all()
 
+    @swagger_auto_schema(tags=["Core"])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
 
 class EquipmentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = EquipmentSerializer
-    parser_classes = [FormParser]
+    parser_classes = [FormParser, JSONParser]
+    throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
         return Equipment.objects.all()
 
+    @swagger_auto_schema(tags=["Core"])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
 
 class AttachmentsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = AttachmentSerializer
-    parser_classes = [FormParser]
+    parser_classes = [FormParser, JSONParser]
+    throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
         return Attachments.objects.all()
+
+    @swagger_auto_schema(tags=["Core"])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
