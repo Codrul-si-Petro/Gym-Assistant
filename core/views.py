@@ -13,14 +13,18 @@ from .serializers import (
         AttachmentSerializer
         )
 from rest_framework.parsers import FormParser, JSONParser
-from rest_framework import viewsets, mixins, request
+from rest_framework import viewsets, mixins
 from django.shortcuts import render
 from .api_throttle import EndpointThrottle
 from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
 
 def homepageView(request):
     return render(request, "homepage.html")
+
 
 class WorkoutsViewSet(mixins.CreateModelMixin,
                       mixins.ListModelMixin,
@@ -63,6 +67,7 @@ class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return Exercises.objects.all()
 
     @swagger_auto_schema(tags=["Core"])
+    @method_decorator(cache_page(60*60*12))  # cache for 12 hrs
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -76,6 +81,7 @@ class MusclesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return Muscles.objects.all()
 
     @swagger_auto_schema(tags=["Core"])
+    @method_decorator(cache_page(60*60*12))  # cache for 12 hrs
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -89,6 +95,7 @@ class EquipmentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return Equipment.objects.all()
 
     @swagger_auto_schema(tags=["Core"])
+    @method_decorator(cache_page(60*60*12))  # cache for 12 hrs
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -102,6 +109,7 @@ class AttachmentsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return Attachments.objects.all()
 
     @swagger_auto_schema(tags=["Core"])
+    @method_decorator(cache_page(60*60*12))  # cache for 12 hrs
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
