@@ -29,9 +29,9 @@ class WorkoutSerializer(serializers.ModelSerializer):
     repetitions = serializers.IntegerField(min_value=0, max_value=1000, default=0)
     load = serializers.IntegerField(min_value=0, default=0)
     unit = serializers.CharField(min_length=2, default='KG')
-    set_type = serializers.CharField(min_length=1, default='Working set')
+    set_type = serializers.CharField(min_length=1, default='N/A')
     comments = serializers.CharField(min_length=1, required=False, default='N/A')
-    workout_split = serializers.CharField(max_length=50, min_length=1, default= 'Lower')
+    workout_split = serializers.CharField(max_length=50, min_length=1, default= 'N/A')
     date = serializers.DateField(write_only=True, required=False, default=datetime.date.today)
 
     class Meta:
@@ -43,7 +43,8 @@ class WorkoutSerializer(serializers.ModelSerializer):
                 'user',
                 'exercise',
                 'attachment',
-                'equipment'
+                'equipment',
+                'ta_updated_at'
                 ]
 
     def create(self, validated_data):
@@ -64,6 +65,15 @@ class WorkoutSerializer(serializers.ModelSerializer):
 
         # auto assign user id
         validated_data['user'] = self.context['request'].user
+
+        if Workouts.objects.filter(
+                exercise=validated_data['exercise'],
+                workout_number=validated_data['workout_number'],
+                set_number=validated_data['set_number']
+                ).exists():
+            raise serializers.ValidationError(
+                    "This set_number already exists for this exercise in this workout"
+                    )
 
         return super().create(validated_data)
 
