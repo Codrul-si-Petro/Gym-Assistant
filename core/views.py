@@ -30,7 +30,7 @@ class WorkoutsViewSet(mixins.CreateModelMixin,
     parser_classes = [FormParser, JSONParser]
     throttle_classes = [EndpointThrottle]
 
-    
+
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:

@@ -3,8 +3,9 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 
+
 def login_success_view(request):
-    return render(request, "login_success.html") # TODO: move these pages to a subdirectory
+    return render(request, "auth/login_success.html")
 
 
 def login_page_view(request):
@@ -17,4 +18,4 @@ def login_page_view(request):
         else:
             messages.error(request, "Invalid username or password")
 
-    return render(request, "login.html", {"form": form})
+    return render(request, "auth/login.html", {"form": form})

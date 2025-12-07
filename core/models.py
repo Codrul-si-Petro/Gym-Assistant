@@ -1,6 +1,5 @@
 from django.db import models
 from .custom_fields import DateForeignKey
-from django.contrib.auth.models import User
 from django.conf import settings
 
 # main tables
@@ -41,6 +40,7 @@ class Workouts(models.Model):
     comments = models.TextField(default='N/A')
     workout_split = models.TextField(max_length=50)
     ta_created_at = models.DateTimeField(auto_now_add=True)
+    ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
         db_table = "fact_workouts"
@@ -52,6 +52,7 @@ class Exercises(models.Model):
     exercise_name = models.TextField(max_length=256)
     exercise_movement_type = models.TextField()
     ta_created_at = models.DateTimeField(auto_now_add=True)
+    ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
         db_table = "dim_exercises"
@@ -63,6 +64,7 @@ class Muscles(models.Model):
     muscle_name = models.TextField(max_length=256)
     muscle_group = models.TextField(max_length=20)
     ta_created_at = models.DateTimeField(auto_now_add=True)
+    ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
         db_table = "dim_muscles"
@@ -78,7 +80,9 @@ class Exercise_Muscle_Bridge(models.Model):
             to="Muscles",
             on_delete=models.CASCADE,
             default="1")
+    muscle_role = models.TextField(default=None)
     ta_created_at = models.DateTimeField(auto_now_add=True)
+    ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
         db_table = "exercise_muscle_bridge"
@@ -91,6 +95,7 @@ class Equipment(models.Model):
     equipment_description = models.TextField()
     equipment_category = models.TextField()
     ta_created_at = models.DateTimeField(auto_now_add=True)
+    ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
         db_table = "dim_equipment"
@@ -102,6 +107,7 @@ class Attachments(models.Model):
     attachment_name = models.TextField()
     attachment_description = models.TextField()
     ta_created_at = models.DateTimeField(auto_now_add=True)
+    ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
         db_table = "dim_attachments"
@@ -109,9 +115,9 @@ class Attachments(models.Model):
 
 class Calendar(models.Model):
     date_id = models.DateField(primary_key=True, db_index=True, default='1900-01-01')
-    week_day = models.TextField()
+    week_day = models.SmallIntegerField()
     day_number_in_month = models.SmallIntegerField()
-    day_name_in_week = models.SmallIntegerField()
+    day_name_in_week = models.TextField()
     calendar_month_number = models.SmallIntegerField()
     calendar_month_name = models.TextField()
     calendar_year = models.SmallIntegerField()
