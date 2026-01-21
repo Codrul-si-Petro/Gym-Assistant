@@ -4,8 +4,9 @@ from django.db import models
 from .custom_fields import DateForeignKey
 
 
-# main tables
 class Workouts(models.Model):
+    """Fact table for workout data. Managed by Alembic in core schema."""
+
     workout_id = models.AutoField(primary_key=True, db_index=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, default=1)
     workout_number = models.PositiveIntegerField(auto_created=True)
@@ -30,10 +31,13 @@ class Workouts(models.Model):
     ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
-        db_table = "fact_workouts"
+        managed = False
+        db_table = 'core"."fact_workouts'
 
 
 class Exercises(models.Model):
+    """Dimension table for exercises. Managed by Alembic in core schema."""
+
     exercise_id = models.AutoField(primary_key=True, db_index=True)
     exercise_name = models.TextField(max_length=256)
     exercise_movement_type = models.TextField()
@@ -41,10 +45,13 @@ class Exercises(models.Model):
     ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
-        db_table = "dim_exercises"
+        managed = False
+        db_table = 'core"."dim_exercises'
 
 
 class Muscles(models.Model):
+    """Dimension table for muscles. Managed by Alembic in core schema."""
+
     muscle_id = models.AutoField(primary_key=True, db_index=True)
     muscle_name = models.TextField(max_length=256)
     muscle_group = models.TextField(max_length=20)
@@ -52,10 +59,13 @@ class Muscles(models.Model):
     ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
-        db_table = "dim_muscles"
+        managed = False
+        db_table = 'core"."dim_muscles'
 
 
 class Exercise_Muscle_Bridge(models.Model):
+    """Bridge table linking exercises to muscles. Managed by Alembic in core schema."""
+
     exercise = models.ForeignKey(to="Exercises", on_delete=models.CASCADE, default="1")
     muscle = models.ForeignKey(to="Muscles", on_delete=models.CASCADE, default="1")
     muscle_role = models.TextField(default=None)
@@ -63,10 +73,13 @@ class Exercise_Muscle_Bridge(models.Model):
     ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
-        db_table = "exercise_muscle_bridge"
+        managed = False
+        db_table = 'core"."exercise_muscle_bridge'
 
 
 class Equipment(models.Model):
+    """Dimension table for equipment. Managed by Alembic in core schema."""
+
     equipment_id = models.AutoField(primary_key=True, db_index=True)
     equipment_name = models.TextField()
     equipment_description = models.TextField()
@@ -75,10 +88,13 @@ class Equipment(models.Model):
     ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
-        db_table = "dim_equipment"
+        managed = False
+        db_table = 'core"."dim_equipment'
 
 
 class Attachments(models.Model):
+    """Dimension table for attachments. Managed by Alembic in core schema."""
+
     attachment_id = models.AutoField(primary_key=True, db_index=True)
     attachment_name = models.TextField()
     attachment_description = models.TextField()
@@ -86,10 +102,13 @@ class Attachments(models.Model):
     ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
-        db_table = "dim_attachments"
+        managed = False
+        db_table = 'core"."dim_attachments'
 
 
 class Calendar(models.Model):
+    """Dimension table for calendar/dates. Managed by Alembic in core schema."""
+
     date_id = models.DateField(primary_key=True, db_index=True, default="1900-01-01")
     week_day = models.SmallIntegerField()
     day_number_in_month = models.SmallIntegerField()
@@ -100,4 +119,5 @@ class Calendar(models.Model):
     is_weekend = models.BooleanField()
 
     class Meta:
-        db_table = "dim_calendar"
+        managed = False
+        db_table = 'core"."dim_calendar'

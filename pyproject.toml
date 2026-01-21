@@ -103,6 +103,7 @@ dependencies = [
     "pre-commit>=4.0",
     "pytest-playwright>=0.7.2",
     "playwright>=1.57.0",
+    "alembic>=1.14",
 ]
 
 [tool.ruff]

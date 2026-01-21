@@ -3,8 +3,12 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     """
-    This will be the standard user of the app.
+    Custom user model for the app.
+    Managed by Django in public schema.
     """
 
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
+
+    # Let Django manage this table (in public schema)
+    # Only core tables use Alembic with separate schemas
