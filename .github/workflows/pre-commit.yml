@@ -1,14 +1,16 @@
-name: CI
+name: Pre-commit
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   push:
-    branches: [main]
+    branches: [main, dev]
 
 jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
+    environment: Dev
+
     
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +34,7 @@ jobs:
         run: uv run mypy .
         env:
           DJANGO_SETTINGS_MODULE: backend.settings
-          DATABASE_URL: postgres://test:test@localhost:5432/test
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DJANGO_DEBUG: "False"
           DJANGO_ALLOWED_HOSTS: "*"
-          SECRET_KEY: "ci-test-secret-key-not-for-production"
+          SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
