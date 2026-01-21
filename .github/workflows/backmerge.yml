@@ -1,0 +1,28 @@
+name: Backmerge main to dev
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  backmerge:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Create backmerge PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: backmerge/main-to-dev
+          base: dev
+          title: "🔄 Backmerge: main → dev"
+          body: |
+            Automated PR to sync `dev` with latest changes from `main`.
+            
+            This keeps the development branch up to date with production.
+          commit-message: "chore: backmerge main to dev"
+          delete-branch: true
