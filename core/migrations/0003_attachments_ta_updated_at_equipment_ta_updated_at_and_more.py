@@ -4,70 +4,69 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0002_workouts_user'),
+        ("core", "0002_workouts_user"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='attachments',
-            name='ta_updated_at',
+            model_name="attachments",
+            name="ta_updated_at",
             field=models.DateTimeField(null=True),
         ),
         migrations.AddField(
-            model_name='equipment',
-            name='ta_updated_at',
+            model_name="equipment",
+            name="ta_updated_at",
             field=models.DateTimeField(null=True),
         ),
         migrations.AddField(
-            model_name='exercise_muscle_bridge',
-            name='ta_updated_at',
+            model_name="exercise_muscle_bridge",
+            name="ta_updated_at",
             field=models.DateTimeField(null=True),
         ),
         migrations.AddField(
-            model_name='exercises',
-            name='ta_updated_at',
+            model_name="exercises",
+            name="ta_updated_at",
             field=models.DateTimeField(null=True),
         ),
         migrations.AddField(
-            model_name='muscles',
-            name='ta_updated_at',
+            model_name="muscles",
+            name="ta_updated_at",
             field=models.DateTimeField(null=True),
         ),
         migrations.AddField(
-            model_name='workouts',
-            name='ta_updated_at',
+            model_name="workouts",
+            name="ta_updated_at",
             field=models.DateTimeField(null=True),
         ),
         migrations.AlterField(
-            model_name='calendar',
-            name='day_name_in_week',
+            model_name="calendar",
+            name="day_name_in_week",
             field=models.TextField(),
         ),
         migrations.AlterField(
-            model_name='calendar',
-            name='week_day',
+            model_name="calendar",
+            name="week_day",
             field=models.SmallIntegerField(),
         ),
         migrations.AlterField(
-            model_name='workouts',
-            name='comments',
-            field=models.TextField(default='N/A'),
+            model_name="workouts",
+            name="comments",
+            field=models.TextField(default="N/A"),
         ),
         migrations.AlterField(
-            model_name='workouts',
-            name='set_number',
+            model_name="workouts",
+            name="set_number",
             field=models.SmallIntegerField(),
         ),
         migrations.AlterField(
-            model_name='workouts',
-            name='set_type',
-            field=models.TextField(default='Working set'),
+            model_name="workouts",
+            name="set_type",
+            field=models.TextField(default="Working set"),
         ),
         migrations.AlterField(
-            model_name='workouts',
-            name='unit',
-            field=models.TextField(default='KG'),
+            model_name="workouts",
+            name="unit",
+            field=models.TextField(default="KG"),
         ),
     ]

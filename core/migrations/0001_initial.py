@@ -7,110 +7,131 @@ import core.custom_fields
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Attachments',
+            name="Attachments",
             fields=[
-                ('attachment_id', models.AutoField(db_index=True, primary_key=True, serialize=False)),
-                ('attachment_name', models.TextField()),
-                ('attachment_description', models.TextField()),
-                ('ta_created_at', models.DateTimeField(auto_now_add=True)),
+                ("attachment_id", models.AutoField(db_index=True, primary_key=True, serialize=False)),
+                ("attachment_name", models.TextField()),
+                ("attachment_description", models.TextField()),
+                ("ta_created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'db_table': 'dim_attachments',
+                "db_table": "dim_attachments",
             },
         ),
         migrations.CreateModel(
-            name='Calendar',
+            name="Calendar",
             fields=[
-                ('date_id', models.DateField(db_index=True, default='1900-01-01', primary_key=True, serialize=False)),
-                ('week_day', models.TextField()),
-                ('day_number_in_month', models.SmallIntegerField()),
-                ('day_name_in_week', models.SmallIntegerField()),
-                ('calendar_month_number', models.SmallIntegerField()),
-                ('calendar_month_name', models.TextField()),
-                ('calendar_year', models.SmallIntegerField()),
-                ('is_weekend', models.BooleanField()),
+                ("date_id", models.DateField(db_index=True, default="1900-01-01", primary_key=True, serialize=False)),
+                ("week_day", models.TextField()),
+                ("day_number_in_month", models.SmallIntegerField()),
+                ("day_name_in_week", models.SmallIntegerField()),
+                ("calendar_month_number", models.SmallIntegerField()),
+                ("calendar_month_name", models.TextField()),
+                ("calendar_year", models.SmallIntegerField()),
+                ("is_weekend", models.BooleanField()),
             ],
             options={
-                'db_table': 'dim_calendar',
+                "db_table": "dim_calendar",
             },
         ),
         migrations.CreateModel(
-            name='Equipment',
+            name="Equipment",
             fields=[
-                ('equipment_id', models.AutoField(db_index=True, primary_key=True, serialize=False)),
-                ('equipment_name', models.TextField()),
-                ('equipment_description', models.TextField()),
-                ('equipment_category', models.TextField()),
-                ('ta_created_at', models.DateTimeField(auto_now_add=True)),
+                ("equipment_id", models.AutoField(db_index=True, primary_key=True, serialize=False)),
+                ("equipment_name", models.TextField()),
+                ("equipment_description", models.TextField()),
+                ("equipment_category", models.TextField()),
+                ("ta_created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'db_table': 'dim_equipment',
+                "db_table": "dim_equipment",
             },
         ),
         migrations.CreateModel(
-            name='Exercises',
+            name="Exercises",
             fields=[
-                ('exercise_id', models.AutoField(db_index=True, primary_key=True, serialize=False)),
-                ('exercise_name', models.TextField(max_length=256)),
-                ('exercise_movement_type', models.TextField()),
-                ('ta_created_at', models.DateTimeField(auto_now_add=True)),
+                ("exercise_id", models.AutoField(db_index=True, primary_key=True, serialize=False)),
+                ("exercise_name", models.TextField(max_length=256)),
+                ("exercise_movement_type", models.TextField()),
+                ("ta_created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'db_table': 'dim_exercises',
+                "db_table": "dim_exercises",
             },
         ),
         migrations.CreateModel(
-            name='Muscles',
+            name="Muscles",
             fields=[
-                ('muscle_id', models.AutoField(db_index=True, primary_key=True, serialize=False)),
-                ('muscle_name', models.TextField(max_length=256)),
-                ('muscle_group', models.TextField(max_length=20)),
-                ('ta_created_at', models.DateTimeField(auto_now_add=True)),
+                ("muscle_id", models.AutoField(db_index=True, primary_key=True, serialize=False)),
+                ("muscle_name", models.TextField(max_length=256)),
+                ("muscle_group", models.TextField(max_length=20)),
+                ("ta_created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'db_table': 'dim_muscles',
+                "db_table": "dim_muscles",
             },
         ),
         migrations.CreateModel(
-            name='Exercise_Muscle_Bridge',
+            name="Exercise_Muscle_Bridge",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('ta_created_at', models.DateTimeField(auto_now_add=True)),
-                ('exercise', models.ForeignKey(default='1', on_delete=django.db.models.deletion.CASCADE, to='core.exercises')),
-                ('muscle', models.ForeignKey(default='1', on_delete=django.db.models.deletion.CASCADE, to='core.muscles')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("ta_created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "exercise",
+                    models.ForeignKey(default="1", on_delete=django.db.models.deletion.CASCADE, to="core.exercises"),
+                ),
+                (
+                    "muscle",
+                    models.ForeignKey(default="1", on_delete=django.db.models.deletion.CASCADE, to="core.muscles"),
+                ),
             ],
             options={
-                'db_table': 'exercise_muscle_bridge',
+                "db_table": "exercise_muscle_bridge",
             },
         ),
         migrations.CreateModel(
-            name='Workouts',
+            name="Workouts",
             fields=[
-                ('workout_number', models.PositiveIntegerField(auto_created=True)),
-                ('workout_id', models.AutoField(db_index=True, primary_key=True, serialize=False)),
-                ('set_number', models.SmallIntegerField(default=0)),
-                ('repetitions', models.SmallIntegerField()),
-                ('load', models.DecimalField(decimal_places=2, max_digits=9)),
-                ('unit', models.TextField()),
-                ('set_type', models.TextField()),
-                ('comments', models.TextField()),
-                ('workout_split', models.TextField(max_length=50)),
-                ('ta_created_at', models.DateTimeField(auto_now_add=True)),
-                ('attachment', models.ForeignKey(default='1', on_delete=django.db.models.deletion.CASCADE, to='core.attachments')),
-                ('date', core.custom_fields.DateForeignKey(db_column='date_id', default='2025-01-01', on_delete=django.db.models.deletion.CASCADE, to='core.calendar')),
-                ('equipment', models.ForeignKey(default='1', on_delete=django.db.models.deletion.CASCADE, to='core.equipment')),
-                ('exercise', models.ForeignKey(default='1', on_delete=django.db.models.deletion.CASCADE, to='core.exercises')),
+                ("workout_number", models.PositiveIntegerField(auto_created=True)),
+                ("workout_id", models.AutoField(db_index=True, primary_key=True, serialize=False)),
+                ("set_number", models.SmallIntegerField(default=0)),
+                ("repetitions", models.SmallIntegerField()),
+                ("load", models.DecimalField(decimal_places=2, max_digits=9)),
+                ("unit", models.TextField()),
+                ("set_type", models.TextField()),
+                ("comments", models.TextField()),
+                ("workout_split", models.TextField(max_length=50)),
+                ("ta_created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "attachment",
+                    models.ForeignKey(default="1", on_delete=django.db.models.deletion.CASCADE, to="core.attachments"),
+                ),
+                (
+                    "date",
+                    core.custom_fields.DateForeignKey(
+                        db_column="date_id",
+                        default="2025-01-01",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.calendar",
+                    ),
+                ),
+                (
+                    "equipment",
+                    models.ForeignKey(default="1", on_delete=django.db.models.deletion.CASCADE, to="core.equipment"),
+                ),
+                (
+                    "exercise",
+                    models.ForeignKey(default="1", on_delete=django.db.models.deletion.CASCADE, to="core.exercises"),
+                ),
             ],
             options={
-                'db_table': 'fact_workouts',
+                "db_table": "fact_workouts",
             },
         ),
     ]

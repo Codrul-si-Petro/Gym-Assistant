@@ -12,18 +12,18 @@ from sqlalchemy import create_engine, text
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# //TODO: stop using connection string and use port, host, name to avoid issue 
+# //TODO: stop using connection string and use port, host, name to avoid issue
 # presented in the docstring above
 
-load_dotenv(BASE_DIR / '.env.dev')
-dev_env = dotenv_values(BASE_DIR / '.env.dev')
+load_dotenv(BASE_DIR / ".env.dev")
+dev_env = dotenv_values(BASE_DIR / ".env.dev")
 
 dev_db_url = dev_env.get("DATABASE_URL")
 if not dev_db_url:
     raise ValueError("DATABASE_URL not found in .env.dev")
 
-load_dotenv(BASE_DIR / '.env.prod', override=True)
-prod_env = dotenv_values(BASE_DIR / '.env.prod')
+load_dotenv(BASE_DIR / ".env.prod", override=True)
+prod_env = dotenv_values(BASE_DIR / ".env.prod")
 prod_db_url = prod_env.get("DATABASE_URL")
 if not prod_db_url:
     raise ValueError("DATABASE_URL not found in .env.prod")
@@ -46,33 +46,23 @@ except Exception as e:
 
 # define cli arg
 parser = argparse.ArgumentParser()
-parser.add_argument(
-        "--source",
-        choices=["dev", "prod"],
-        required=True,
-        help="Source environment to copy tables from"
-        )
+parser.add_argument("--source", choices=["dev", "prod"], required=True, help="Source environment to copy tables from")
 
-parser.add_argument(
-        "--target",
-        choices=["dev", "prod"],
-        required=True,
-        help="Source environment to copy tables from"
-        )
+parser.add_argument("--target", choices=["dev", "prod"], required=True, help="Source environment to copy tables from")
 
 parser.add_argument(
     "--tables",
     nargs="+",  # allows multiple table names
     required=True,
-    help="List of table names to sync"
+    help="List of table names to sync",
 )
 
 args = parser.parse_args()
 
 if args.source == args.target:
     raise ValueError("\033[91mSource and target environments must be different\033[0m")
-# map engines 
-engine_map={"dev": dev_engine, "prod": prod_engine}
+# map engines
+engine_map = {"dev": dev_engine, "prod": prod_engine}
 
 source_engine = engine_map[args.source]
 target_engine = engine_map[args.target]
@@ -87,6 +77,5 @@ for table_name in args.tables:
         conn.execute(text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE"))
 
     df.to_sql(table_name, target_engine, if_exists="append", index=False)
-
 
     print(f"\033[92mTable {table_name} synced successfully\033[0m")

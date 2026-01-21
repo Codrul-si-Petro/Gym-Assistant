@@ -6,13 +6,12 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.1
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies:
-          - django-stubs>=5.1
-          - djangorestframework-stubs
-          - types-requests
-          - types-PyYAML
-        args: [--ignore-missing-imports]
+        name: mypy
+        entry: .venv/bin/mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+        args: ["."]
