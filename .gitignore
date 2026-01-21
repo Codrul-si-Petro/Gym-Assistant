@@ -3,3 +3,5 @@
 .venv
 __pycache/
 *.py[cod]
+infra/dbt/logs
+infra/dbt/transformation/logs
