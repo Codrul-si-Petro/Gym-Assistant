@@ -1,13 +1,8 @@
-from rest_framework import serializers
-from .models import (
-        Workouts,
-        Exercises,
-        Muscles,
-        Equipment,
-        Attachments,
-        Calendar
-        )
 import datetime
+
+from rest_framework import serializers
+
+from .models import Attachments, Calendar, Equipment, Exercises, Muscles, Workouts
 
 
 class WorkoutSerializer(serializers.ModelSerializer):
@@ -19,61 +14,59 @@ class WorkoutSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField(read_only=True)
 
     # define write only input fields to be associated for FK
-    exercise_name = serializers.CharField(write_only=True, default='N/A')
-    attachment_name = serializers.CharField(write_only=True, default='N/A')
-    equipment_name = serializers.CharField(write_only=True, default='N/A')
+    exercise_name = serializers.CharField(write_only=True, default="N/A")
+    attachment_name = serializers.CharField(write_only=True, default="N/A")
+    equipment_name = serializers.CharField(write_only=True, default="N/A")
 
     # Other required input fields
     workout_number = serializers.IntegerField(min_value=1, max_value=10000, default=1)
     set_number = serializers.IntegerField(min_value=1, max_value=200, default=1)
     repetitions = serializers.IntegerField(min_value=0, max_value=1000, default=0)
     load = serializers.IntegerField(min_value=0, default=0)
-    unit = serializers.CharField(min_length=2, default='KG')
-    set_type = serializers.CharField(min_length=1, default='N/A')
-    comments = serializers.CharField(min_length=1, required=False, default='N/A')
-    workout_split = serializers.CharField(max_length=50, min_length=1, default= 'N/A')
+    unit = serializers.CharField(min_length=2, default="KG")
+    set_type = serializers.CharField(min_length=1, default="N/A")
+    comments = serializers.CharField(min_length=1, required=False, default="N/A")
+    workout_split = serializers.CharField(max_length=50, min_length=1, default="N/A")
     date = serializers.DateField(write_only=True, required=False, default=datetime.date.today)
 
     class Meta:
         model = Workouts
-        fields = '__all__'
+        fields = "__all__"
         read_only_fields = [
-                'workout_id',
-                'ta_created_at',
-                'user',
-                'exercise',
-                'attachment',
-                'equipment',
-                'ta_updated_at'
-                ]
+            "workout_id",
+            "ta_created_at",
+            "user",
+            "exercise",
+            "attachment",
+            "equipment",
+            "ta_updated_at",
+        ]
 
     def create(self, validated_data):
-        exercise_name = validated_data.pop('exercise_name', 'N/A')
-        attachment_name = validated_data.pop('attachment_name', 'N/A')
-        equipment_name = validated_data.pop('equipment_name', 'N/A')
-        date_input = validated_data.pop('date')
+        exercise_name = validated_data.pop("exercise_name", "N/A")
+        attachment_name = validated_data.pop("attachment_name", "N/A")
+        equipment_name = validated_data.pop("equipment_name", "N/A")
+        date_input = validated_data.pop("date")
 
         exercise = Exercises.objects.get(exercise_name=exercise_name)
         attachment = Attachments.objects.get(attachment_name=attachment_name)
         equipment = Equipment.objects.get(equipment_name=equipment_name)
         calendar_entry = Calendar.objects.get(date_id=date_input)
 
-        validated_data['exercise'] = exercise
-        validated_data['attachment'] = attachment
-        validated_data['equipment'] = equipment
-        validated_data['date'] = calendar_entry
+        validated_data["exercise"] = exercise
+        validated_data["attachment"] = attachment
+        validated_data["equipment"] = equipment
+        validated_data["date"] = calendar_entry
 
         # auto assign user id
-        validated_data['user'] = self.context['request'].user
+        validated_data["user"] = self.context["request"].user
 
         if Workouts.objects.filter(
-                exercise=validated_data['exercise'],
-                workout_number=validated_data['workout_number'],
-                set_number=validated_data['set_number']
-                ).exists():
-            raise serializers.ValidationError(
-                    "This set_number already exists for this exercise in this workout"
-                    )
+            exercise=validated_data["exercise"],
+            workout_number=validated_data["workout_number"],
+            set_number=validated_data["set_number"],
+        ).exists():
+            raise serializers.ValidationError("This set_number already exists for this exercise in this workout")
 
         return super().create(validated_data)
 
@@ -81,31 +74,26 @@ class WorkoutSerializer(serializers.ModelSerializer):
 class ExercisesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exercises
-        fields = [
-            'exercise_id',
-            'exercise_name',
-            'exercise_movement_type',
-            'ta_created_at'
-            ]
-        read_only_fields = ['exercise_id', 'ta_created_at']
+        fields = ["exercise_id", "exercise_name", "exercise_movement_type", "ta_created_at"]
+        read_only_fields = ["exercise_id", "ta_created_at"]
 
 
 class MusclesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Muscles
-        fields = '__all__'
-        read_only_fields = ['muscle_id', 'ta_created_at']
+        fields = "__all__"
+        read_only_fields = ["muscle_id", "ta_created_at"]
 
 
 class EquipmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Equipment
-        fields = '__all__'
-        read_only_fields = ['equipment_id', 'ta_created_at']
+        fields = "__all__"
+        read_only_fields = ["equipment_id", "ta_created_at"]
 
 
 class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachments
-        fields = '__all__'
-        read_only_fields = ['attachment_id', 'ta_created_at']
+        fields = "__all__"
+        read_only_fields = ["attachment_id", "ta_created_at"]

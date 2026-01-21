@@ -1,39 +1,29 @@
-from .models import (
-        Workouts,
-        Exercises,
-        Muscles,
-        Equipment,
-        Attachments
-        )
-from .serializers import (
-        WorkoutSerializer,
-        ExercisesSerializer,
-        MusclesSerializer,
-        EquipmentSerializer,
-        AttachmentSerializer
-        )
-from rest_framework.parsers import FormParser, JSONParser
-from rest_framework import viewsets, mixins
 from django.shortcuts import render
-from .api_throttle import EndpointThrottle
-from drf_yasg.utils import swagger_auto_schema
-
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import mixins, viewsets
+from rest_framework.parsers import FormParser, JSONParser
+
+from .api_throttle import EndpointThrottle
+from .models import Attachments, Equipment, Exercises, Muscles, Workouts
+from .serializers import (
+    AttachmentSerializer,
+    EquipmentSerializer,
+    ExercisesSerializer,
+    MusclesSerializer,
+    WorkoutSerializer,
+)
 
 
 def homepageView(request):
     return render(request, "homepage.html")
 
 
-class WorkoutsViewSet(mixins.CreateModelMixin,
-                      mixins.ListModelMixin,
-                      viewsets.GenericViewSet):
-
+class WorkoutsViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = WorkoutSerializer
     parser_classes = [FormParser, JSONParser]
     throttle_classes = [EndpointThrottle]
-
 
     def get_queryset(self):
         user = self.request.user
@@ -46,12 +36,11 @@ class WorkoutsViewSet(mixins.CreateModelMixin,
 
     @swagger_auto_schema(
         request_body=WorkoutSerializer,  # <-- use serializer to avoid writing schema each time
-        tags=['Core'],
-        consumes=['application/x-www-form-urlencoded']  # <-- force Swagger form
+        tags=["Core"],
+        consumes=["application/x-www-form-urlencoded"],  # <-- force Swagger form
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-
 
     @swagger_auto_schema(tags=["Core"])
     def list(self, request, *args, **kwargs):
@@ -67,7 +56,7 @@ class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return Exercises.objects.all()
 
     @swagger_auto_schema(tags=["Core"])
-    @method_decorator(cache_page(60*60*12))  # cache for 12 hrs
+    @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -81,7 +70,7 @@ class MusclesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return Muscles.objects.all()
 
     @swagger_auto_schema(tags=["Core"])
-    @method_decorator(cache_page(60*60*12))  # cache for 12 hrs
+    @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -95,7 +84,7 @@ class EquipmentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return Equipment.objects.all()
 
     @swagger_auto_schema(tags=["Core"])
-    @method_decorator(cache_page(60*60*12))  # cache for 12 hrs
+    @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -109,7 +98,6 @@ class AttachmentsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return Attachments.objects.all()
 
     @swagger_auto_schema(tags=["Core"])
-    @method_decorator(cache_page(60*60*12))  # cache for 12 hrs
+    @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-

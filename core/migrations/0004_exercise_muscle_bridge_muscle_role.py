@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0003_attachments_ta_updated_at_equipment_ta_updated_at_and_more'),
+        ("core", "0003_attachments_ta_updated_at_equipment_ta_updated_at_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='exercise_muscle_bridge',
-            name='muscle_role',
+            model_name="exercise_muscle_bridge",
+            name="muscle_role",
             field=models.TextField(null=True),
         ),
     ]

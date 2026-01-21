@@ -1,6 +1,5 @@
-from django.db import models
-from django.core.exceptions import ImproperlyConfigured
 from django.core import checks
+from django.db import models
 
 
 class DateForeignKey(models.ForeignKey):
@@ -9,9 +8,9 @@ class DateForeignKey(models.ForeignKey):
     ORM is horrible and does not have this implemented.
     Use only when the referenced PK/to_field is a DateField.
     """
+
     def __init__(self, to, to_field=None, **kwargs):
         super().__init__(to, to_field=to_field, **kwargs)
-        
 
     def db_type(self, connection):
         # Force PostgreSQL to use DATE as column type
@@ -23,8 +22,7 @@ class DateForeignKey(models.ForeignKey):
         return value
 
     def rel_db_type(self, connection):
-        return 'date'
-
+        return "date"
 
     def check(self, **kwargs):
         errors = super().check(**kwargs)

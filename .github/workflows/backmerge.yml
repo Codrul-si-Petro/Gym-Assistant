@@ -1,0 +1,35 @@
+name: Backmerge main to dev
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  backmerge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Create or update backmerge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list --base dev --head main --json number --jq '.[0].number')
+          
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR #$EXISTING_PR already exists, it will auto-update with new commits"
+          else
+            echo "Creating new backmerge PR..."
+            gh pr create \
+              --base dev \
+              --head main \
+              --title "Backmerge: main to dev" \
+              --body "Automated PR to sync dev with latest changes from main."
+          fi

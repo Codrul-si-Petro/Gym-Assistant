@@ -1,12 +1,12 @@
-from rest_framework.throttling import UserRateThrottle, SimpleRateThrottle
+from rest_framework.throttling import SimpleRateThrottle, UserRateThrottle
 
 
 class DefaultThrottle(UserRateThrottle):
-    rate = '30/min'  # this is for now only
+    rate = "30/min"  # this is for now only
 
 
 class EndpointThrottle(SimpleRateThrottle):
-    rate = '15/min'
+    rate = "15/min"
 
     def get_cache_key(self, request, view):
         ident = request.user.pk
