@@ -1,25 +1,19 @@
-from .models import (
-        Workouts,
-        Exercises,
-        Muscles,
-        Equipment,
-        Attachments
-        )
-from .serializers import (
-        WorkoutSerializer,
-        ExercisesSerializer,
-        MusclesSerializer,
-        EquipmentSerializer,
-        AttachmentSerializer
-        )
-from rest_framework.parsers import FormParser, JSONParser
-from rest_framework import viewsets, mixins
 from django.shortcuts import render
-from .api_throttle import EndpointThrottle
-from drf_yasg.utils import swagger_auto_schema
-
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import mixins, viewsets
+from rest_framework.parsers import FormParser, JSONParser
+
+from .api_throttle import EndpointThrottle
+from .models import Attachments, Equipment, Exercises, Muscles, Workouts
+from .serializers import (
+    AttachmentSerializer,
+    EquipmentSerializer,
+    ExercisesSerializer,
+    MusclesSerializer,
+    WorkoutSerializer,
+)
 
 
 def homepageView(request):

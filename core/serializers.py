@@ -1,13 +1,8 @@
-from rest_framework import serializers
-from .models import (
-        Workouts,
-        Exercises,
-        Muscles,
-        Equipment,
-        Attachments,
-        Calendar
-        )
 import datetime
+
+from rest_framework import serializers
+
+from .models import Attachments, Calendar, Equipment, Exercises, Muscles, Workouts
 
 
 class WorkoutSerializer(serializers.ModelSerializer):

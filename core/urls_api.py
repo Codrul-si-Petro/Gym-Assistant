@@ -1,11 +1,7 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from .views import (
-        WorkoutsViewSet,
-        ExercisesViewSet,
-        MusclesViewSet,
-        AttachmentsViewSet
-        )
+
+from .views import AttachmentsViewSet, ExercisesViewSet, MusclesViewSet, WorkoutsViewSet
 
 router = DefaultRouter()
 router.register(r'workouts', WorkoutsViewSet, basename='workouts')

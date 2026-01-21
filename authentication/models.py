@@ -1,15 +1,9 @@
-from django.contrib.auth.models import AbstractUser, Group
-
-
-def create_default_groups():
-
-    admin_group = Group.objects.get_or_create(name="admin")
-    user_group = Group.objects.get_or_create(name="user")
+from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
     """
     This will be the standard user of the app.
     """
-    first_name = None
-    last_name = None
+    first_name = None  # type: ignore[assignment]
+    last_name = None  # type: ignore[assignment]

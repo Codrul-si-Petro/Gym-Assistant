@@ -1,6 +1,5 @@
-from django.db import models
-from django.core.exceptions import ImproperlyConfigured
 from django.core import checks
+from django.db import models
 
 
 class DateForeignKey(models.ForeignKey):

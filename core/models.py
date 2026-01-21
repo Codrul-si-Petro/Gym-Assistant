@@ -1,6 +1,8 @@
-from django.db import models
-from .custom_fields import DateForeignKey
 from django.conf import settings
+from django.db import models
+
+from .custom_fields import DateForeignKey
+
 
 # main tables
 class Workouts(models.Model):

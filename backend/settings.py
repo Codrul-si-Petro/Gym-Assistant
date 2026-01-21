@@ -10,12 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from pathlib import Path
 import os
-from urllib.parse import urlparse, parse_qsl
+import warnings
+from pathlib import Path
+from urllib.parse import parse_qsl, urlparse
+
+# Suppress dj-rest-auth deprecation warnings (library not yet updated for allauth 65+)
+# TODO: Remove this once dj-rest-auth releases a fix
+warnings.filterwarnings("ignore", message=".*app_settings.*is deprecated.*", category=UserWarning)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-print(f'BASE_DIR is: {BASE_DIR}')
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -28,7 +32,6 @@ DEBUG = os.getenv('DJANGO_DEBUG', "False").lower() in ("true")
 print(f"Debugging set to: {DEBUG}")
 
 ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
-print(ALLOWED_HOSTS)
 
 
 # Application definition
@@ -89,7 +92,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-tmpPostgres = urlparse(os.getenv('DATABASE_URL'))
+tmpPostgres = urlparse(os.getenv('DATABASE_URL', ''))
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -98,7 +101,7 @@ DATABASES = {
         'PASSWORD': tmpPostgres.password,
         'HOST': tmpPostgres.hostname,
         'PORT': 5432,
-        'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+        'OPTIONS': dict(parse_qsl(tmpPostgres.query or '')),
     }
 }
 
@@ -161,9 +164,8 @@ AUTHENTICATION_BACKENDS = (
 
 SITE_ID = 1  # TODO: learn why this is needed for allauth
 
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
 # login redirect override variables

@@ -3,11 +3,12 @@ This script is a tool to be used when we want to quickly copy tables from one en
 Need to fix the environment variable loading with the " " versus ' ' issue.
 """
 
-import pandas as pd
-from sqlalchemy import create_engine, text
-from dotenv import load_dotenv, dotenv_values
-from pathlib import Path
 import argparse
+from pathlib import Path
+
+import pandas as pd
+from dotenv import dotenv_values, load_dotenv
+from sqlalchemy import create_engine, text
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,11 +18,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env.dev')
 dev_env = dotenv_values(BASE_DIR / '.env.dev')
 
-dev_db_url = dev_env["DATABASE_URL"]
+dev_db_url = dev_env.get("DATABASE_URL")
+if not dev_db_url:
+    raise ValueError("DATABASE_URL not found in .env.dev")
 
 load_dotenv(BASE_DIR / '.env.prod', override=True)
 prod_env = dotenv_values(BASE_DIR / '.env.prod')
-prod_db_url = prod_env["DATABASE_URL"]
+prod_db_url = prod_env.get("DATABASE_URL")
+if not prod_db_url:
+    raise ValueError("DATABASE_URL not found in .env.prod")
 
 dev_engine = create_engine(dev_db_url)
 prod_engine = create_engine(prod_db_url)

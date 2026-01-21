@@ -1,8 +1,10 @@
 """
 Custom emails sent for Authentication and other purposes
 """
-from django.core.mail.backends.smtp import EmailBackend
 import os
+
+from django.core.mail.backends.smtp import EmailBackend
+
 
 class GmailSMTPBackend(EmailBackend):
     def __init__(self, **kwargs):
