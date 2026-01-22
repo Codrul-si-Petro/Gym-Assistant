@@ -107,3 +107,9 @@ dbt test
 Once the server is running, visit:
 - Swagger UI: http://localhost:8000/swagger/
 - ReDoc: http://localhost:8000/redoc/
+
+## Services used
+
+The app is hosted on [Render](https://render.com)
+
+A cron job on [cron-job.org](https://cron-job.org) pings the server every 14 minutes to keep it alive.
