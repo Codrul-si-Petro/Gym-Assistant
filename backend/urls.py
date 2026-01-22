@@ -43,6 +43,7 @@ urlpatterns = [
     path("auth/", include("dj_rest_auth.urls")),  # login
     path("auth/", include("django.contrib.auth.urls")),  # pass reset
     path("auth/registration/", include("dj_rest_auth.registration.urls")),  # sign up
+    path("accounts/", include("allauth.urls")),  # allauth (signup, login, social)
     path("social/", include("allauth.socialaccount.providers.google.urls")),  # google login
     # include Authentication
     path("", include("authentication.urls")),
