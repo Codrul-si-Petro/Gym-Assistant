@@ -167,7 +167,7 @@ SITE_ID = 1  # TODO: learn why this is needed for allauth
 
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
 # login redirect override variables
 LOGIN_REDIRECT_URL = "/auth/login-success"
