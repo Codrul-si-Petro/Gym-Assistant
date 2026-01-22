@@ -169,6 +169,11 @@ ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
+# Social account settings
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Skip signup form for social login
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Auto-link if email matches existing account
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Automatically connect social to existing account
+
 # login redirect override variables
 LOGIN_REDIRECT_URL = "/auth/login-success"
 LOGOUT_REDIRECT_URL = "/"
