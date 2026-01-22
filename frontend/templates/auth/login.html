@@ -18,5 +18,11 @@
         {{ form.password }}<br><br>
         <button type="submit">Login</button>
     </form>
+    
+    <hr>
+    <p>Or sign in with:</p>
+    <a href="{% url 'google_login' %}">
+        <button type="button">Sign in with Google</button>
+    </a>
 </body>
 </html>
