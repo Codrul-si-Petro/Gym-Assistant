@@ -99,6 +99,10 @@ DATABASES = {
         "HOST": tmpPostgres.hostname,
         "PORT": 5432,
         "OPTIONS": dict(parse_qsl(tmpPostgres.query or "")),
+        "TEST": {
+            # Use the actual database instead of creating a test database
+            "NAME": tmpPostgres.path.replace("/", ""),
+        },
     }
 }
 
@@ -209,6 +213,7 @@ SWAGGER_SETTINGS = {
         }
     },
     "USE_SESSION_AUTH": True,  # disable session login in Swagger
+    "USE_COMPAT_RENDERERS": False,  # Suppress deprecation warning about format prefix
 }
 
 # Ignore migrations used by Django (now using alembic)

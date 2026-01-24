@@ -3,7 +3,7 @@ name = "gym-assistant"
 version = "0.1.0"
 description = "Gym workout tracking assistant"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 
 dependencies = [
     "agate==1.9.1",
@@ -97,13 +97,15 @@ dependencies = [
     "whitenoise==6.11.0",
     "zipp==3.23.0",
     # Linting & type checking
-    "mypy>=1.14",
+    "mypy>=1.14, <1.19",
     "ruff>=0.9",
     "django-stubs>=5.1",
     "pre-commit>=4.0",
     "pytest-playwright>=0.7.2",
     "playwright>=1.57.0",
     "alembic>=1.14",
+    "pytest-django>=4.11.0",
+    "pytest>=9.0.0",
 ]
 
 [tool.ruff]
@@ -137,3 +139,10 @@ ignore_errors = true
 
 [tool.django-stubs]
 django_settings_module = "backend.settings"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "backend.settings"
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--reuse-db"

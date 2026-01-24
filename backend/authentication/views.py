@@ -103,7 +103,9 @@ def api_signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        login(request, user)
+        # Specify backend for login when multiple backends are configured
+
+        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         return Response(
             {
                 "username": user.username,
@@ -190,6 +192,7 @@ def api_delete_account(request):
     tags=["Authentication"],
 )
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def current_user(request):
     if request.user.is_authenticated:
         return Response({"username": request.user.username, "email": request.user.email, "id": request.user.id})
