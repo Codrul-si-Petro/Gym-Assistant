@@ -15,8 +15,6 @@ import warnings
 from pathlib import Path
 from urllib.parse import parse_qsl, urlparse
 
-# Suppress dj-rest-auth deprecation warnings (library not yet updated for allauth 65+)
-# TODO: Remove this once dj-rest-auth releases a fix
 warnings.filterwarnings("ignore", message=".*app_settings.*is deprecated.*", category=UserWarning)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,11 +35,9 @@ ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
 # Application definition
 
 INSTALLED_APPS = [
-    "authentication",
-    "core",
+    "backend.authentication",
+    "backend.core",
     "rest_framework",
-    "dj_rest_auth",  # order matters for auth apps it seems
-    "rest_framework.authtoken",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -103,6 +99,10 @@ DATABASES = {
         "HOST": tmpPostgres.hostname,
         "PORT": 5432,
         "OPTIONS": dict(parse_qsl(tmpPostgres.query or "")),
+        "TEST": {
+            # Use the actual database instead of creating a test database
+            "NAME": tmpPostgres.path.replace("/", ""),
+        },
     }
 }
 
@@ -167,25 +167,22 @@ SITE_ID = 1  # TODO: learn why this is needed for allauth
 
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_VERIFICATION = "none"  # keeping it like this until we fix the email service
+
+# Social account settings
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Skip signup form for social login
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Auto-link if email matches existing account
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Automatically connect social to existing account
 
 # login redirect override variables
-LOGIN_REDIRECT_URL = "/auth/login-success"
+LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
-
-
-EMAIL_BACKEND = "backend.email_sender.GmailSMTPBackend"
-DEFAULT_FROM_EMAIL = "Gym Assistant<MS_vKo3u4@test-xkjn41m1r5p4z781.mlsender.net>"
-
-REST_AUTH_PASSWORD_RESET_SERIALIZER = "authentication.serializers.CustomPasswordResetSerializer"
-
-REST_USE_JWT = True  # use JWT for sessions
 
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",  # or JWT if using SimpleJWT
+        "rest_framework.authentication.BasicAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -196,7 +193,7 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.MultiPartParser",
     ],
     "DEFAULT_THROTTLE_CLASSES": [
-        "core.api_throttle.DefaultThrottle",
+        "backend.core.api_throttle.DefaultThrottle",
     ],
 }
 CLIENT_ID = os.getenv("OAUTH_CLIENT_ID")
@@ -204,9 +201,8 @@ OAUTH_SECRET = os.getenv("OAUTH_SECRET_KEY")
 
 SOCIALACCOUNT_PROVIDERS = {"google": {"APP": {"client_id": CLIENT_ID, "secret": OAUTH_SECRET, "key": ""}}}
 
-LOGIN_REDIRECT_URL = "/auth/login-success/"
+LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
-REST_AUTH_PASSWORD_RESET_CONFIRM_URL = "reset/{uid}/{token}/"
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
@@ -217,4 +213,10 @@ SWAGGER_SETTINGS = {
         }
     },
     "USE_SESSION_AUTH": True,  # disable session login in Swagger
+    "USE_COMPAT_RENDERERS": False,  # Suppress deprecation warning about format prefix
+}
+
+# Ignore migrations used by Django (now using alembic)
+MIGRATION_MODULES = {
+    "core": None,
 }

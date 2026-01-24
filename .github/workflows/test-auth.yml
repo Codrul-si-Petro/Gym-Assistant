@@ -1,16 +1,13 @@
-name: Pre-commit
+name: unit-tests
 
-on:
+on: 
   pull_request:
     branches: [main, dev]
-  push:
-    branches: [main, dev]
 
-jobs:
-  lint-and-typecheck:
+jobs: 
+  auth-tests:
     runs-on: ubuntu-latest
     environment: Dev
-
     
     steps:
       - uses: actions/checkout@v4
@@ -24,18 +21,11 @@ jobs:
       - name: Install dependencies
         run: uv sync
       
-      - name: Run ruff (lint)
-        run: uv run ruff check .
-      
-      - name: Run ruff (format check)
-        run: uv run ruff format --check .
-      
-      - name: Run mypy
-        run: uv run mypy .
+      - name: Run tests
+        run: uv run pytest tests/unit/test_auth.py -v
         env:
           DJANGO_SETTINGS_MODULE: backend.settings
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DJANGO_DEBUG: "False"
           DJANGO_ALLOWED_HOSTS: "*"
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
- 

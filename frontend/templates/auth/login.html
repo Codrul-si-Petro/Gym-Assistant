@@ -3,20 +3,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login</title>
 </head>
-<body>
-    <h2>Login</h2>
-    <form method="post">
-        {% csrf_token %}
-        {% if form.errors %}
-            <p style="color:red;">Invalid username or password</p>
-        {% endif %}
-        <label for="id_username">Username:</label>
-        {{ form.username }}<br><br>
-        <label for="id_password">Password:</label>
-        {{ form.password }}<br><br>
-        <button type="submit">Login</button>
-    </form>
+<body style="min-height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center;">
+    <div>
+        <h2>Login</h2>
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+                <p style="color:red;">Invalid username or password</p>
+            {% endif %}
+            <label for="id_username">Username:</label>
+            {{ form.username }}<br><br>
+            <label for="id_password">Password:</label>
+            {{ form.password }}<br><br>
+            <button type="submit">Login</button>
+        </form>
+
+        <p>Don't have an account?</p>
+        <p>
+            <a href="{% url 'account_signup' %}">Sign up with email</a>
+            &nbsp;or&nbsp;
+            <a href="{% url 'google_login' %}">Sign up with Google</a>
+        </p>
+    </div>
 </body>
 </html>
