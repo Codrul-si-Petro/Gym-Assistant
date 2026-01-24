@@ -19,6 +19,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # API
     path("api/", include("backend.core.urls_api")),
+    path("api/auth/", include("backend.authentication.urls_api")),
     # Swagger UI
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
