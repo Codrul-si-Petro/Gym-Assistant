@@ -16,7 +16,8 @@ def login_page_view(request):
     if request.method == "POST":
         if form.is_valid():
             login(request, form.get_user())
-            return redirect("login_success")
+            # After successful login, go to homepage
+            return redirect("home")
         else:
             messages.error(request, "Invalid username or password")
 
