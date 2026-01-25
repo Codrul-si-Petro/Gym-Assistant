@@ -1,0 +1,61 @@
+{% comment %}
+  Django-allauth signup template with social provider support (Google OAuth).
+  Used by django-allauth's account_signup view.
+  Accessible via /accounts/signup/ URL.
+{% endcomment %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign up</title>
+</head>
+<body style="min-height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center;">
+  <div>
+    <h1>Sign up</h1>
+
+    {% if form.non_field_errors %}
+      <div>
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <form method="post" action="">
+      {% csrf_token %}
+      <p>
+        <label for="id_username">Username:</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <span style="color: red;">{{ form.username.errors }}</span>
+        {% endif %}
+      </p>
+      <p>
+        <label for="id_password1">Password:</label>
+        {{ form.password1 }}
+        {% if form.password1.errors %}
+          <span style="color: red;">{{ form.password1.errors }}</span>
+        {% endif %}
+      </p>
+      <p>
+        <label for="id_password2">Password (again):</label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+          <span style="color: red;">{{ form.password2.errors }}</span>
+        {% endif %}
+      </p>
+      <button type="submit">Submit</button>
+    </form>
+
+    <p>Or sign up with:</p>
+    <p>
+      <a href="{% provider_login_url 'google' %}">Google</a>
+    </p>
+
+    <p>
+      Already have an account?
+      <a href="{% url 'account_login' %}">Log in</a>
+    </p>
+  </div>
+</body>
+</html>

@@ -14,7 +14,7 @@ class SignupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("username", "email", "password1", "password2")
+        fields = ("username", "password1", "password2")
 
     def validate(self, attrs):
         if attrs["password1"] != attrs["password2"]:
@@ -24,7 +24,6 @@ class SignupSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data["username"],
-            email=validated_data["email"],
             password=validated_data["password1"],
         )
         return user

@@ -1,14 +1,19 @@
+{% comment %}
+  Django-allauth login template with social provider support (Google OAuth).
+  Used by django-allauth's account_login view.
+  Accessible via /accounts/login/ URL.
+{% endcomment %}
 {% load socialaccount %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign up</title>
+  <title>Log in</title>
 </head>
 <body style="min-height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center;">
   <div>
-    <h1>Sign up</h1>
+    <h1>Log in</h1>
 
     {% if form.non_field_errors %}
       <div>
@@ -19,17 +24,17 @@
     <form method="post" action="">
       {% csrf_token %}
       {{ form.as_p }}
-      <button type="submit">Sign up with email</button>
+      <button type="submit">Log in</button>
     </form>
 
-    <p>Or sign up with:</p>
+    <p>Or continue with:</p>
     <p>
-      <a href="{% provider_login_url 'google' %}">Sign up with Google</a>
+      <a href="{% provider_login_url 'google' %}">Log in with Google</a>
     </p>
 
     <p>
-      Already have an account?
-      <a href="{% url 'account_login' %}">Log in</a>
+      Don't have an account?
+      <a href="{% url 'account_signup' %}">Sign up</a>
     </p>
   </div>
 </body>

@@ -1,6 +1,13 @@
+from allauth.account.views import LoginView, SignupView
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.views import (
+    PasswordResetCompleteView,
+    PasswordResetConfirmView,
+    PasswordResetDoneView,
+    PasswordResetView,
+)
 from django.shortcuts import redirect, render
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -13,10 +20,14 @@ from .serializers import LoginSerializer, SignupSerializer
 
 
 def login_success_view(request):
-    return render(request, "auth/login_success.html")
+    return render(request, "auth/login_success_page.html")
 
 
 def login_page_view(request):
+    # If already logged in, redirect to home
+    if request.user.is_authenticated:
+        return redirect("home")
+
     form = AuthenticationForm(request, data=request.POST or None)
 
     if request.method == "POST":
@@ -27,7 +38,7 @@ def login_page_view(request):
         else:
             messages.error(request, "Invalid username or password")
 
-    return render(request, "auth/login.html", {"form": form})
+    return render(request, "auth/login_form.html", {"form": form})
 
 
 @swagger_auto_schema(
@@ -197,3 +208,42 @@ def current_user(request):
     if request.user.is_authenticated:
         return Response({"username": request.user.username, "email": request.user.email, "id": request.user.id})
     return Response(None)
+
+
+# Override Django's built-in password reset views to use custom templates in auth/ folder
+class CustomPasswordResetView(PasswordResetView):
+    template_name = "auth/password_reset_request_form.html"
+    email_template_name = "emails/password_reset_email.html"
+
+
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = "auth/password_reset_email_sent.html"
+
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = "auth/password_reset_confirm_token.html"
+
+
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = "auth/password_reset_complete_success.html"
+
+
+# Override django-allauth views to use custom templates in auth/ folder
+class CustomAllauthLoginView(LoginView):
+    template_name = "auth/login_with_social_providers.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        # If already logged in, redirect to home
+        if request.user.is_authenticated:
+            return redirect("home")
+        return super().dispatch(request, *args, **kwargs)
+
+
+class CustomAllauthSignupView(SignupView):
+    template_name = "auth/signup_with_social_providers.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        # If already logged in, redirect to home
+        if request.user.is_authenticated:
+            return redirect("home")
+        return super().dispatch(request, *args, **kwargs)

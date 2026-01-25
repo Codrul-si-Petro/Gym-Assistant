@@ -4,6 +4,17 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
+from backend.authentication.views import (
+    CustomAllauthLoginView,
+    CustomAllauthSignupView,
+    CustomPasswordResetCompleteView,
+    CustomPasswordResetConfirmView,
+    CustomPasswordResetDoneView,
+    CustomPasswordResetView,
+)
+
+from .views import WorkoutFormView, homepageView
+
 schema_view = get_schema_view(
     openapi.Info(
         title="Gym Assistant API",
@@ -23,12 +34,21 @@ urlpatterns = [
     # Swagger UI
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
-    # Authentication
-    path("auth/", include("django.contrib.auth.urls")),  # login/password reset
-    path("accounts/", include("allauth.urls")),  # allauth (signup, login, social)
+    # Authentication - Override Django's built-in password reset views with custom templates
+    path("auth/password_reset/", CustomPasswordResetView.as_view(), name="password_reset"),
+    path("auth/password_reset/done/", CustomPasswordResetDoneView.as_view(), name="password_reset_done"),
+    path("auth/reset/<uidb64>/<token>/", CustomPasswordResetConfirmView.as_view(), name="password_reset_confirm"),
+    path("auth/reset/done/", CustomPasswordResetCompleteView.as_view(), name="password_reset_complete"),
+    # Override django-allauth views with custom templates
+    path("accounts/login/", CustomAllauthLoginView.as_view(), name="account_login"),
+    path("accounts/signup/", CustomAllauthSignupView.as_view(), name="account_signup"),
+    # Include remaining allauth URLs (logout, email verification, etc.)
+    path("accounts/", include("allauth.urls")),
     path("social/", include("allauth.socialaccount.providers.google.urls")),  # google login
     # include Authentication
     path("", include("backend.authentication.urls")),
     # Home page
-    path("", include("backend.core.urls")),
+    path("", homepageView, name="home"),
+    # Workouts input form
+    path("workouts/", WorkoutFormView.as_view(), name="workout-logger"),
 ]
