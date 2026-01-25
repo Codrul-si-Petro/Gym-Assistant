@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
@@ -14,10 +13,6 @@ from .serializers import (
     MusclesSerializer,
     WorkoutSerializer,
 )
-
-
-def homepageView(request):
-    return render(request, "homepage.html")
 
 
 class WorkoutsViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):

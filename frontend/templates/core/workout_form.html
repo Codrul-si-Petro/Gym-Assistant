@@ -1,0 +1,133 @@
+{% comment %}
+  Workout input form that submits to the API endpoint /api/workouts/.
+  Accessible via a view that renders this template.
+{% endcomment %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Input Form</title>
+    <style>
+        @media (max-width: 768px) {
+            button[type="submit"]:not([name="delete_last"]) {
+                padding: 16px 32px !important;
+                font-size: 18px !important;
+                width: 100% !important;
+            }
+        }
+        button[name="delete_last"] {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+    </style>
+</head>
+<body style="min-height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center;">
+    <div>
+        <h2>Input Your Workout</h2>
+        
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'error' %}
+                    <p style="color: red;">{{ message }}</p>
+                {% elif message.tags == 'success' %}
+                    <p style="color: green;">{{ message }}</p>
+                {% else %}
+                    <p>{{ message }}</p>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        
+        <form method="post" action="">
+            {% csrf_token %}
+            
+            <p>
+                <label for="exercise_name">Exercise Name *</label>
+                <input type="text" id="exercise_name" name="exercise_name" list="exercises_list" value="{% if form_data.exercise_name %}{{ form_data.exercise_name.0 }}{% endif %}" required>
+                <datalist id="exercises_list">
+                    {% for exercise in exercises %}
+                        <option value="{{ exercise.exercise_name }}">
+                    {% endfor %}
+                </datalist>
+            </p>
+            
+            <p>
+                <label for="attachment_name">Attachment</label>
+                <input type="text" id="attachment_name" name="attachment_name" list="attachments_list" value="{% if form_data.attachment_name %}{{ form_data.attachment_name.0 }}{% endif %}">
+                <datalist id="attachments_list">
+                    {% for attachment in attachments %}
+                        <option value="{{ attachment.attachment_name }}">
+                    {% endfor %}
+                </datalist>
+            </p>
+            
+            <p>
+                <label for="equipment_name">Equipment</label>
+                <input type="text" id="equipment_name" name="equipment_name" list="equipment_list" value="{% if form_data.equipment_name %}{{ form_data.equipment_name.0 }}{% endif %}">
+                <datalist id="equipment_list">
+                    {% for item in equipment %}
+                        <option value="{{ item.equipment_name }}">
+                    {% endfor %}
+                </datalist>
+            </p>
+            
+            <p>
+                <label for="workout_number">Workout Number</label>
+                <input type="number" id="workout_number" name="workout_number" min="1" max="10000" value="{% if form_data.workout_number %}{{ form_data.workout_number.0 }}{% else %}1{% endif %}" required>
+            </p>
+            
+            <p>
+                <label for="set_number">Set Number</label>
+                <input type="number" id="set_number" name="set_number" min="1" max="200" value="{% if form_data.set_number %}{{ form_data.set_number.0 }}{% else %}1{% endif %}" required>
+            </p>
+            
+            <p>
+                <label for="repetitions">Repetitions</label>
+                <input type="number" id="repetitions" name="repetitions" min="0" max="1000" value="{% if form_data.repetitions %}{{ form_data.repetitions.0 }}{% else %}0{% endif %}" required>
+            </p>
+            
+            <p>
+                <label for="load">Load</label>
+                <input type="number" id="load" name="load" min="0" value="{% if form_data.load %}{{ form_data.load.0 }}{% else %}0{% endif %}" required>
+            </p>
+            
+            <p>
+                <label for="unit">Unit</label>
+                <select id="unit" name="unit">
+                    <option value="KG" {% if not form_data.unit or form_data.unit.0 == 'KG' %}selected{% endif %}>KG</option>
+                    <option value="LBS" {% if form_data.unit and form_data.unit.0 == 'LBS' %}selected{% endif %}>LBS</option>
+                    <option value="KM" {% if form_data.unit and form_data.unit.0 == 'KM' %}selected{% endif %}>KM</option>
+                    <option value="MILES" {% if form_data.unit and form_data.unit.0 == 'MILES' %}selected{% endif %}>MILES</option>
+                </select>
+            </p>
+            
+            <p>
+                <label for="set_type">Set Type</label>
+                <input type="text" id="set_type" name="set_type" value="{% if form_data.set_type %}{{ form_data.set_type.0 }}{% else %}Working set{% endif %}">
+            </p>
+            
+            <p>
+                <label for="workout_split">Workout Split</label>
+                <input type="text" id="workout_split" name="workout_split" maxlength="50" value="{% if form_data.workout_split %}{{ form_data.workout_split.0 }}{% endif %}">
+            </p>
+            
+            <p>
+                <label for="date">Date</label>
+                <input type="date" id="date" name="date" value="{% if form_data.date %}{{ form_data.date.0 }}{% else %}{{ today_date }}{% endif %}">
+            </p>
+            
+            <p>
+                <label for="comments">Comments (Optional)</label>
+                <textarea id="comments" name="comments">{% if form_data.comments %}{{ form_data.comments.0 }}{% endif %}</textarea>
+            </p>
+            
+            <button type="submit">Submit Workout</button>
+        </form>
+        
+        <form method="post" action="" id="delete-form" style="margin-top: 20px;">
+            {% csrf_token %}
+            <button type="submit" name="delete_last" onclick="return confirm('Are you sure you want to delete your last workout entry?');" style="background-color: #dc3545; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 12px;">Delete Last Entry</button>
+        </form>
+    </div>
+</body>
+</html>
