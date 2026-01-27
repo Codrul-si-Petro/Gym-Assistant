@@ -106,6 +106,7 @@ dependencies = [
     "alembic>=1.14",
     "pytest-django>=4.11.0",
     "pytest>=9.0.0",
+    "sqlmodel>=0.0.31",
 ]
 
 [tool.ruff]
@@ -132,6 +133,10 @@ plugins = ["mypy_django_plugin.main"]
 ignore_missing_imports = true
 warn_unused_ignores = true
 strict = false  # not too annoying
+exclude = [
+    "infra/",
+    "manage.py",
+]
 
 [[tool.mypy.overrides]]
 module = "*.migrations.*"

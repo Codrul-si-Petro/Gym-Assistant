@@ -1,4 +1,4 @@
-"id","ta_created_at","exercise_id","muscle_id","ta_updated_at","muscle_role"
+id,ta_created_at,exercise_id,muscle_id,ta_updated_at,muscle_role
 1,2025-12-01 15:42:40.421 +0200,30,17,,Primary
 2,2025-12-01 15:42:40.421 +0200,14,13,,Secondary
 3,2025-12-01 15:42:40.421 +0200,22,19,,Secondary
