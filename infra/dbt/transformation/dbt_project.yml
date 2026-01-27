@@ -16,4 +16,14 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 seeds:
   transformation:
-    +schema: seeds
+    +schema: staging
+    seed_exercises:
+      +alias: seed_dim_exercises
+    seed_muscles:
+      +alias: seed_dim_muscles
+    seed_equipment:
+      +alias: seed_dim_equipment
+    seed_attachments:
+      +alias: seed_dim_attachments
+    seed_exercise_muscle:
+      +alias: seed_exercise_muscle_bridge

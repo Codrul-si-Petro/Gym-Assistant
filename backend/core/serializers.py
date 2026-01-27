@@ -14,9 +14,9 @@ class WorkoutSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField(read_only=True)
 
     # define write only input fields to be associated for FK
-    exercise_name = serializers.CharField(write_only=True, default="N/A")
-    attachment_name = serializers.CharField(write_only=True, default="N/A")
-    equipment_name = serializers.CharField(write_only=True, default="N/A")
+    exercise_name = serializers.CharField(write_only=True, required=True)
+    attachment_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    equipment_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     # Other required input fields
     workout_number = serializers.IntegerField(min_value=1, max_value=10000, default=1)
@@ -42,11 +42,33 @@ class WorkoutSerializer(serializers.ModelSerializer):
             "ta_updated_at",
         ]
 
+    def validate_exercise_name(self, value):
+        """Validate that exercise exists in database"""
+        if not Exercises.objects.filter(exercise_name=value).exists():
+            raise serializers.ValidationError(f"Exercise '{value}' does not exist in the database.")
+        return value
+
+    def validate_attachment_name(self, value):
+        """Validate that attachment exists in database, or default to N/A if empty"""
+        if not value or not value.strip():
+            return "N/A"
+        if not Attachments.objects.filter(attachment_name=value).exists():
+            raise serializers.ValidationError(f"Attachment '{value}' does not exist in the database.")
+        return value
+
+    def validate_equipment_name(self, value):
+        """Validate that equipment exists in database, or default to N/A if empty"""
+        if not value or not value.strip():
+            return "N/A"
+        if not Equipment.objects.filter(equipment_name=value).exists():
+            raise serializers.ValidationError(f"Equipment '{value}' does not exist in the database.")
+        return value
+
     def create(self, validated_data):
-        exercise_name = validated_data.pop("exercise_name", "N/A")
-        attachment_name = validated_data.pop("attachment_name", "N/A")
-        equipment_name = validated_data.pop("equipment_name", "N/A")
-        date_input = validated_data.pop("date")
+        exercise_name = validated_data.pop("exercise_name")
+        attachment_name = validated_data.pop("attachment_name", "") or "N/A"
+        equipment_name = validated_data.pop("equipment_name", "") or "N/A"
+        date_input = validated_data.pop("date", datetime.date.today())
 
         exercise = Exercises.objects.get(exercise_name=exercise_name)
         attachment = Attachments.objects.get(attachment_name=attachment_name)
@@ -57,6 +79,10 @@ class WorkoutSerializer(serializers.ModelSerializer):
         validated_data["attachment"] = attachment
         validated_data["equipment"] = equipment
         validated_data["date"] = calendar_entry
+
+        # Handle empty workout_split - default to "N/A" if not provided
+        if not validated_data.get("workout_split"):
+            validated_data["workout_split"] = "N/A"
 
         # auto assign user id
         validated_data["user"] = self.context["request"].user
