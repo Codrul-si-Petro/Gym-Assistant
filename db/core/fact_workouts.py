@@ -40,6 +40,7 @@ class FactWorkouts(CoreTable, table=True):
     set_type: str = Field(sa_column=Column(VARCHAR(255), nullable=False, server_default="'Working set'"))
     comments: str = Field(sa_column=Column(TEXT, nullable=False, server_default="'N/A'"))
     workout_split: str = Field(sa_column=Column(TEXT, nullable=False))
+    laterality: str = Field(sa_column=Column(VARCHAR(255), nullable=False, server_default="'Bilateral'"))
 
     ta_created_at: datetime = Field(
         sa_column=Column(

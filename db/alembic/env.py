@@ -34,7 +34,11 @@ def include_object(object, name, type_, reflected, compare_to):
     """Filter to only track fact_workouts table, ignore dimension stubs."""
     if type_ == "table":
         # Only track fact_workouts, ignore dimension tables (managed by dbt)
-        return name == "fact_workouts"
+        # Allow both reflected (from DB) and non-reflected (from models) fact_workouts
+        if name == "fact_workouts":
+            return True
+        # Exclude all other tables (dimension stubs)
+        return False
     return True
 
 
@@ -75,6 +79,9 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             version_table_schema="public",
             include_object=include_object,
+            include_schemas=True,  # Include all schemas when reflecting
+            compare_type=True,  # Compare column types
+            compare_server_default=True,  # Compare server defaults
         )
 
         with context.begin_transaction():

@@ -136,6 +136,7 @@ strict = false  # not too annoying
 exclude = [
     "infra/",
     "manage.py",
+    "db/alembic/versions/",
 ]
 
 [[tool.mypy.overrides]]
