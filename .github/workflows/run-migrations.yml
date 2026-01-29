@@ -1,10 +1,8 @@
 name: Run Database Migrations
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
-    # Optional: Only trigger when migration files change
     paths:
       - 'backend/**/migrations/**'
       - 'db/alembic/versions/**'
@@ -24,8 +22,30 @@ jobs:
       
       - name: Install dependencies
         run: uv sync
-      
-      # Run Django migrations
+
+      # Show current state BEFORE applying migrations
+      - name: Show Django migration status
+        run: uv run python manage.py showmigrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_DEBUG: "False"
+          DJANGO_ALLOWED_HOSTS: "*"
+          MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
+          MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
+
+      - name: Show Alembic migration status
+        run: |
+          echo "=== Current Alembic revision ==="
+          uv run alembic current
+          echo ""
+          echo "=== Alembic history ==="
+          uv run alembic history
+        working-directory: ./db
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Apply migrations
       - name: Run Django migrations
         run: uv run python manage.py migrate --no-input
         env:
@@ -36,9 +56,24 @@ jobs:
           MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
           MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
       
-      # Run Alembic migrations
       - name: Run Alembic migrations
         run: uv run alembic upgrade head
         working-directory: ./db
         env:
-          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Show state AFTER applying migrations
+      - name: Show final migration status
+        run: |
+          echo "=== Django migrations after apply ==="
+          uv run python manage.py showmigrations
+          echo ""
+          echo "=== Alembic revision after apply ==="
+          cd db && uv run alembic current
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_DEBUG: "False"
+          DJANGO_ALLOWED_HOSTS: "*"
+          MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
+          MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
