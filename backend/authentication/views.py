@@ -1,15 +1,14 @@
 from allauth.account.models import EmailAddress
-from allauth.account.views import LoginView, SignupView
-from django.contrib import messages
+from allauth.account.views import LoginView, PasswordChangeView, SignupView
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import (
     PasswordResetCompleteView,
     PasswordResetConfirmView,
     PasswordResetDoneView,
     PasswordResetView,
 )
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -20,28 +19,6 @@ from rest_framework.response import Response
 from backend.email_sender import MailerSendPasswordResetForm
 
 from .serializers import LoginSerializer, SignupSerializer
-
-
-def login_success_view(request):
-    return render(request, "auth/login_success_page.html")
-
-
-def login_page_view(request):
-    # If already logged in, redirect to home
-    if request.user.is_authenticated:
-        return redirect("home")
-
-    form = AuthenticationForm(request, data=request.POST or None)
-
-    if request.method == "POST":
-        if form.is_valid():
-            login(request, form.get_user())
-            # After successful login, go to homepage
-            return redirect("home")
-        else:
-            messages.error(request, "Invalid username or password")
-
-    return render(request, "auth/login_form.html", {"form": form})
 
 
 @swagger_auto_schema(
@@ -273,3 +250,8 @@ class CustomAllauthSignupView(SignupView):
         if request.user.is_authenticated:
             return redirect("home")
         return super().dispatch(request, *args, **kwargs)
+
+
+class CustomPasswordChangeView(PasswordChangeView):
+    template_name = "auth/password_change.html"
+    success_url = reverse_lazy("account_login")
