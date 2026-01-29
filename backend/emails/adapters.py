@@ -12,6 +12,45 @@ class MailerSendAccountAdapter(DefaultAccountAdapter):
     Uses templates from templates/emails/ directory.
     """
 
+    def send_mail(self, template_prefix, email, context):
+        """
+        Override the default send_mail to use MailerSend for ALL allauth emails.
+        This handles password reset, email change, and any other allauth emails.
+
+        Args:
+            template_prefix: The template prefix (e.g., "account/email/password_reset_key")
+            email: The recipient email address
+            context: The template context
+        """
+        # Render subject - allauth uses _subject.txt templates
+        try:
+            subject = render_to_string(f"{template_prefix}_subject.txt", context)
+            subject = " ".join(subject.splitlines()).strip()  # Remove newlines
+        except Exception:
+            subject = "Gym Assistant Notification"
+
+        # Try to render HTML template, fall back to text
+        try:
+            html_body = render_to_string(f"{template_prefix}_message.html", context)
+        except Exception:
+            html_body = None
+
+        # Render text template
+        try:
+            text_body = render_to_string(f"{template_prefix}_message.txt", context)
+        except Exception:
+            text_body = "Please view this email in an HTML-capable email client."
+
+        user = context.get("user")
+        name = user.get_username() if user else ""
+
+        send_email(
+            subject=subject,
+            to=[{"email": email, "name": name}],
+            html=html_body or text_body,
+            text=text_body,
+        )
+
     def send_confirmation_mail(self, request, emailconfirmation, signup: bool) -> None:
         """
         Send email confirmation using MailerSend.

@@ -73,6 +73,7 @@ jobs:
           cd db && uv run alembic current
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_DEBUG: "False"
           DJANGO_ALLOWED_HOSTS: "*"
