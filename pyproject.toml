@@ -107,6 +107,7 @@ dependencies = [
     "pytest-django>=4.11.0",
     "pytest>=9.0.0",
     "sqlmodel>=0.0.31",
+    "mailersend>=2.0.0",
 ]
 
 [tool.ruff]

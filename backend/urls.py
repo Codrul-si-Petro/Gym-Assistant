@@ -7,6 +7,7 @@ from rest_framework import permissions
 from backend.authentication.views import (
     CustomAllauthLoginView,
     CustomAllauthSignupView,
+    CustomPasswordChangeView,
     CustomPasswordResetCompleteView,
     CustomPasswordResetConfirmView,
     CustomPasswordResetDoneView,
@@ -43,6 +44,7 @@ urlpatterns = [
     path("accounts/login/", CustomAllauthLoginView.as_view(), name="account_login"),
     path("accounts/signup/", CustomAllauthSignupView.as_view(), name="account_signup"),
     # Include remaining allauth URLs (logout, email verification, etc.)
+    path("accounts/password/change/", CustomPasswordChangeView.as_view(), name="account_change_password"),
     path("accounts/", include("allauth.urls")),
     path("social/", include("allauth.socialaccount.providers.google.urls")),  # google login
     # include Authentication

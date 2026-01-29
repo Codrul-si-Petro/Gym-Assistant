@@ -9,6 +9,7 @@ class User(AbstractUser):
 
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
+    email_address = None
 
     # Let Django manage this table (in public schema)
     # Only core tables use Alembic with separate schemas
