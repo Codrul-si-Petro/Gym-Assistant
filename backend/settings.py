@@ -165,7 +165,7 @@ AUTHENTICATION_BACKENDS = (
 
 SITE_ID = 1  # TODO: learn why this is needed for allauth
 
-ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # Require email verification before login
 ACCOUNT_ADAPTER = "backend.emails.adapters.MailerSendAccountAdapter"  # Use MailerSend for emails

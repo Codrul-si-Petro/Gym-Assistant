@@ -1,4 +1,4 @@
-from allauth.account.models import EmailAddress, EmailConfirmation
+from allauth.account.models import EmailAddress
 from allauth.account.views import LoginView, SignupView
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -10,7 +10,6 @@ from django.contrib.auth.views import (
     PasswordResetView,
 )
 from django.shortcuts import redirect, render
-from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -19,7 +18,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from backend.email_sender import MailerSendPasswordResetForm
-from backend.emails.adapters import MailerSendAccountAdapter
 
 from .serializers import LoginSerializer, SignupSerializer
 
@@ -136,13 +134,13 @@ def api_signup(request):
             verified=False,
         )
 
-        # Create email confirmation and send via MailerSend adapter
-        email_confirmation = EmailConfirmation.create(email_address)
-        email_confirmation.sent = timezone.now()  # Mark as sent (required for validation)
-        email_confirmation.save()
+        # Create email confirmation and send via MailerSend adapter email_confirmation = EmailConfirmation.create(email_address)
+        # email_confirmation.sent = timezone.now()  # Mark as sent (required for validation)
+        # email_confirmation.save()
 
-        adapter = MailerSendAccountAdapter()
-        adapter.send_confirmation_mail(request, email_confirmation, signup=True)
+        # adapter = MailerSendAccountAdapter()
+        # adapter.send_confirmation_mail(request, email_confirmation, signup=True)
+        email_address.send_confirmation(request, signup=True)
 
         return Response(
             {
