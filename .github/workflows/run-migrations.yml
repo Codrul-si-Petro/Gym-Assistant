@@ -28,7 +28,7 @@ jobs:
       - name: Show Django migration status
         run: uv run python manage.py showmigrations
         env:
-          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_DEBUG: "False"
           DJANGO_ALLOWED_HOSTS: "*"
@@ -50,7 +50,7 @@ jobs:
       - name: Run Django migrations
         run: uv run python manage.py migrate --no-input
         env:
-          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_DEBUG: "False"
           DJANGO_ALLOWED_HOSTS: "*"
@@ -61,7 +61,7 @@ jobs:
         run: uv run alembic upgrade head
         working-directory: ./db
         env:
-          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}
+          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}  # alembic uses no pooler connections
 
       # Show state AFTER applying migrations
       - name: Show final migration status
@@ -72,7 +72,7 @@ jobs:
           echo "=== Alembic revision after apply ==="
           cd db && uv run alembic current
         env:
-          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_DEBUG: "False"
           DJANGO_ALLOWED_HOSTS: "*"
