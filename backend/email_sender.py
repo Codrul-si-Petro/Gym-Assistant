@@ -2,26 +2,60 @@
 Custom emails sent for Authentication and other purposes
 """
 
-import os
+from django.conf import settings
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.tokens import default_token_generator
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
-from django.core.mail.backends.smtp import EmailBackend
+from backend.emails.mailersend import send_email
 
 
-class GmailSMTPBackend(EmailBackend):
-    def __init__(self, **kwargs):
-        # get credentials from environment
-        gmail_user = os.getenv("GMAIL_APP_USER")
-        gmail_password = os.getenv("GMAIL_APP_PASSWORD")
+class MailerSendPasswordResetForm(PasswordResetForm):
+    def send_mail(
+        self,
+        subject_template_name,
+        email_template_name,
+        context,
+        from_email,
+        to_email,
+        html_email_template_name=None,
+    ):
+        """
+        Override Django's email sending with MailerSend
+        """
 
-        if not gmail_user or not gmail_password:
-            raise ValueError("Email credentials must be set!")
+        user = context["user"]
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
 
-        kwargs["username"] = gmail_user
-        kwargs["password"] = gmail_password
-        kwargs["host"] = "smtp.mailersend.net"
-        kwargs["port"] = 2525  # these changes are to see
-        kwargs["use_tls"] = True  # if render will allow us to send emails like this
-        kwargs["use_ssl"] = False
-        kwargs["fail_silently"] = False
+        reset_url = (
+            f"{settings.FRONTEND_URL}"
+            f"{context['protocol']}://{context['domain']}"
+            f"{context['url']}?uid={uid}&token={token}"
+        )
 
-        super().__init__(**kwargs)
+        html = render_to_string(
+            email_template_name,
+            {
+                "user": user,
+                "reset_url": reset_url,
+            },
+        )
+
+        text = f"""
+        Hello {user.get_username()},
+
+        Reset your password:
+        {reset_url}
+
+        If you didn’t request this, ignore this email.
+        """
+
+        send_email(
+            subject="Reset your password",
+            to=[{"email": to_email, "name": user.get_username()}],
+            html=html,
+            text=text,
+        )

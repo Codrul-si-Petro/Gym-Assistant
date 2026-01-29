@@ -167,7 +167,12 @@ SITE_ID = 1  # TODO: learn why this is needed for allauth
 
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-ACCOUNT_EMAIL_VERIFICATION = "none"  # keeping it like this until we fix the email service
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # Require email verification before login
+ACCOUNT_ADAPTER = "backend.emails.adapters.MailerSendAccountAdapter"  # Use MailerSend for emails
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Confirm email on GET request (clicking the link)
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Email confirmation link expires in 3 days
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = "/accounts/login/"  # Redirect after confirmation
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True  # Auto-login after email confirmation
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Skip signup form for social login

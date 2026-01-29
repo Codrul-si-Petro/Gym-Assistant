@@ -1,3 +1,4 @@
+from allauth.account.models import EmailAddress, EmailConfirmation
 from allauth.account.views import LoginView, SignupView
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -9,12 +10,16 @@ from django.contrib.auth.views import (
     PasswordResetView,
 )
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+
+from backend.email_sender import MailerSendPasswordResetForm
+from backend.emails.adapters import MailerSendAccountAdapter
 
 from .serializers import LoginSerializer, SignupSerializer
 
@@ -72,6 +77,14 @@ def api_login(request):
         password = serializer.validated_data["password"]
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            # Check if email is verified
+            email_address = EmailAddress.objects.filter(user=user, primary=True).first()
+            if email_address and not email_address.verified:
+                return Response(
+                    {"error": "Please verify your email address before logging in."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             login(request, user)
             return Response(
                 {
@@ -114,15 +127,29 @@ def api_signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        # Specify backend for login when multiple backends are configured
 
-        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+        # Create EmailAddress for allauth tracking
+        email_address = EmailAddress.objects.create(
+            user=user,
+            email=user.email,
+            primary=True,
+            verified=False,
+        )
+
+        # Create email confirmation and send via MailerSend adapter
+        email_confirmation = EmailConfirmation.create(email_address)
+        email_confirmation.sent = timezone.now()  # Mark as sent (required for validation)
+        email_confirmation.save()
+
+        adapter = MailerSendAccountAdapter()
+        adapter.send_confirmation_mail(request, email_confirmation, signup=True)
+
         return Response(
             {
                 "username": user.username,
                 "email": user.email,
                 "id": user.id,
-                "message": "User created successfully",
+                "message": "User created. Please check your email to verify your account.",
             },
             status=status.HTTP_201_CREATED,
         )
@@ -214,6 +241,7 @@ def current_user(request):
 class CustomPasswordResetView(PasswordResetView):
     template_name = "auth/password_reset_request_form.html"
     email_template_name = "emails/password_reset_email.html"
+    form_class = MailerSendPasswordResetForm  # Use MailerSend instead of Django's email backend
 
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
