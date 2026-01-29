@@ -41,4 +41,4 @@ jobs:
         run: uv run alembic upgrade head
         working-directory: ./db
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}
