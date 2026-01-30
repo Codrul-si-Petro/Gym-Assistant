@@ -1,0 +1,52 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+        - 'frontend/**'
+        - 'backend/**'
+        - 'tests/ui/**'
+  push:
+    branches: [main]
+    paths:
+        - 'frontend/**'
+        - 'backend/**'
+        - 'tests/ui/**'
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    environment: Dev  # Use Dev environment for secrets
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      
+      - name: Set up Python
+        run: uv python install 3.12
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Install Playwright browsers
+        run: uv run playwright install --with-deps chromium
+      
+      - name: Run E2E tests
+        run: uv run pytest tests/ui/ -v --tb=short
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          UI_TESTER_USERNAME: ${{ secrets.UI_TESTER_USERNAME }}
+          UI_TESTER_PASS: ${{ secrets.UI_TESTER_PASS }}
+      
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
