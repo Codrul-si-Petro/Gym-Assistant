@@ -23,7 +23,9 @@ class FactWorkouts(CoreTable, table=True):
         {"comment": "Fact table where users log their workouts."},
     )
     workout_id: int = Field(sa_column=Column(INTEGER, primary_key=True, comment="Unique workout identifier"))
-    user_id: int = Field(sa_column=Column(INTEGER, ForeignKey("public.authentication_user.id"), nullable=False))
+    user_id: int = Field(
+        sa_column=Column(INTEGER, ForeignKey("public.authentication_user.id", ondelete="CASCADE"), nullable=False)
+    )
     workout_number: int = Field(sa_column=Column(INTEGER, nullable=False))
     date_id: date = Field(sa_column=Column(DATE, ForeignKey("core.dim_calendar.date_id"), nullable=False))
     exercise_id: int = Field(

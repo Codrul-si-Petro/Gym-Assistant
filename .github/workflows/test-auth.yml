@@ -31,3 +31,5 @@ jobs:
           DJANGO_DEBUG: "False"
           DJANGO_ALLOWED_HOSTS: "*"
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
+          MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}

@@ -1,14 +1,14 @@
-from allauth.account.views import LoginView, SignupView
-from django.contrib import messages
+from allauth.account.models import EmailAddress
+from allauth.account.views import LoginView, PasswordChangeView, SignupView
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import (
     PasswordResetCompleteView,
     PasswordResetConfirmView,
     PasswordResetDoneView,
     PasswordResetView,
 )
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -16,29 +16,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from backend.email_sender import MailerSendPasswordResetForm
+
 from .serializers import LoginSerializer, SignupSerializer
-
-
-def login_success_view(request):
-    return render(request, "auth/login_success_page.html")
-
-
-def login_page_view(request):
-    # If already logged in, redirect to home
-    if request.user.is_authenticated:
-        return redirect("home")
-
-    form = AuthenticationForm(request, data=request.POST or None)
-
-    if request.method == "POST":
-        if form.is_valid():
-            login(request, form.get_user())
-            # After successful login, go to homepage
-            return redirect("home")
-        else:
-            messages.error(request, "Invalid username or password")
-
-    return render(request, "auth/login_form.html", {"form": form})
 
 
 @swagger_auto_schema(
@@ -72,6 +52,14 @@ def api_login(request):
         password = serializer.validated_data["password"]
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            # Check if email is verified
+            email_address = EmailAddress.objects.filter(user=user, primary=True).first()
+            if email_address and not email_address.verified:
+                return Response(
+                    {"error": "Please verify your email address before logging in."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             login(request, user)
             return Response(
                 {
@@ -114,15 +102,29 @@ def api_signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        # Specify backend for login when multiple backends are configured
 
-        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+        # Create EmailAddress for allauth tracking
+        email_address = EmailAddress.objects.create(
+            user=user,
+            email=user.email,
+            primary=True,
+            verified=False,
+        )
+
+        # Create email confirmation and send via MailerSend adapter email_confirmation = EmailConfirmation.create(email_address)
+        # email_confirmation.sent = timezone.now()  # Mark as sent (required for validation)
+        # email_confirmation.save()
+
+        # adapter = MailerSendAccountAdapter()
+        # adapter.send_confirmation_mail(request, email_confirmation, signup=True)
+        email_address.send_confirmation(request, signup=True)
+
         return Response(
             {
                 "username": user.username,
                 "email": user.email,
                 "id": user.id,
-                "message": "User created successfully",
+                "message": "User created. Please check your email to verify your account.",
             },
             status=status.HTTP_201_CREATED,
         )
@@ -214,6 +216,7 @@ def current_user(request):
 class CustomPasswordResetView(PasswordResetView):
     template_name = "auth/password_reset_request_form.html"
     email_template_name = "emails/password_reset_email.html"
+    form_class = MailerSendPasswordResetForm  # Use MailerSend instead of Django's email backend
 
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
@@ -247,3 +250,8 @@ class CustomAllauthSignupView(SignupView):
         if request.user.is_authenticated:
             return redirect("home")
         return super().dispatch(request, *args, **kwargs)
+
+
+class CustomPasswordChangeView(PasswordChangeView):
+    template_name = "auth/password_change.html"
+    success_url = reverse_lazy("account_login")
