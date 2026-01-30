@@ -40,6 +40,10 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           UI_TESTER_USERNAME: ${{ secrets.UI_TESTER_USERNAME }}
           UI_TESTER_PASS: ${{ secrets.UI_TESTER_PASS }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_DEBUG: ${{ secrets.DJANGO_DEBUG}}
+          MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
+          MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
       
       - name: Upload test artifacts on failure
         if: failure()
