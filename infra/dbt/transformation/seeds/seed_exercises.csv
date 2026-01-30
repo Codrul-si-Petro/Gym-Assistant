@@ -1,5 +1,5 @@
 "exercise_id","exercise_name","exercise_movement_type","ta_created_at","ta_updated_at"
--1,N/A,N/A,2025-12-01 15:30:04.030 +0200,
+-1,None,N/A,2025-12-01 15:30:04.030 +0200,
 1,Romanian deadlift,Compound,2025-12-01 15:30:04.030 +0200,
 2,Triceps extension,Isolated,2025-12-01 15:30:04.030 +0200,
 3,Hip adduction,Isolated,2025-12-01 15:30:04.030 +0200,
