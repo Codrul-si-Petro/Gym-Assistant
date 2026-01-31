@@ -1,0 +1,18 @@
+[0m20:56:50.919381 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10b789670>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10be6d460>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10be6d130>]}
+
+
+============================== 20:56:50.931722 | 85360d98-a1f7-4b40-9952-9d3c7fa5c259 ==============================
+[0m20:56:50.931722 [info ] [MainThread]: Running with dbt=1.10.15
+[0m20:56:50.932172 [debug] [MainThread]: running dbt with arguments {'log_format': 'default', 'printer_width': '80', 'profiles_dir': '/Users/codrul/.dbt', 'log_cache_events': 'False', 'introspect': 'True', 'use_experimental_parser': 'False', 'fail_fast': 'False', 'partial_parse': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'quiet': 'False', 'write_json': 'True', 'empty': 'None', 'send_anonymous_usage_stats': 'True', 'invocation_command': 'dbt debug', 'no_print': 'None', 'use_colors': 'True', 'log_path': 'logs', 'target_path': 'None', 'static_parser': 'True', 'indirect_selection': 'eager', 'warn_error': 'None', 'cache_selected_only': 'False', 'debug': 'False', 'version_check': 'True'}
+[0m20:56:51.042532 [info ] [MainThread]: dbt version: 1.10.15
+[0m20:56:51.042909 [info ] [MainThread]: python version: 3.12.10
+[0m20:56:51.043156 [info ] [MainThread]: python path: /Users/codrul/personal/Gym-Assistant/.venv/bin/python
+[0m20:56:51.043395 [info ] [MainThread]: os info: macOS-26.2-arm64-arm-64bit
+[0m20:56:51.051496 [error] [MainThread]: Encountered an error:
+Parsing Error
+  Env var required but not provided: 'DBT_POSTGRES_HOST'
+[0m20:56:51.052109 [debug] [MainThread]: Resource report: {"command_name": "debug", "command_success": false, "command_wall_clock_time": 0.3028555, "process_in_blocks": "0", "process_kernel_time": 0.557921, "process_mem_max_rss": "107020288", "process_out_blocks": "0", "process_user_time": 1.629582}
+[0m20:56:51.052538 [debug] [MainThread]: Command `dbt debug` failed at 20:56:51.052460 after 0.30 seconds
+[0m20:56:51.052936 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10b789670>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10b9406e0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10be6ede0>]}
+[0m20:56:51.053295 [debug] [MainThread]: Flushing usage events
+[0m20:56:51.679966 [debug] [MainThread]: An error was encountered while trying to flush usage events
