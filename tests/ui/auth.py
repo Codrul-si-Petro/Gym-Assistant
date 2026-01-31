@@ -4,10 +4,16 @@ import psycopg2
 import pytest
 from playwright.sync_api import Page, expect
 
-TEST_USER_LOGIN = os.getenv("UI_TESTER_USERNAME", "")
-TEST_USER_PASS = os.getenv("UI_TESTER_PASS", "")
-if not TEST_USER_LOGIN or not TEST_USER_PASS:
-    raise ValueError("UI_TESTER_USERNAME and UI_TESTER_PASS must be set")
+
+@pytest.fixture(scope="module")
+def test_credentials():
+    """Get test credentials, fail if not set."""
+    TEST_USER_LOGIN = os.getenv("UI_TESTER_USERNAME", "")
+    TEST_USER_PASS = os.getenv("UI_TESTER_PASS", "")
+    if not TEST_USER_LOGIN or not TEST_USER_PASS:
+        pytest.skip("UI_TESTER_USERNAME and UI_TESTER_PASS must be set")
+    return TEST_USER_LOGIN, TEST_USER_PASS
+
 
 BASE_URL = "https://gym-assistant-2smv.onrender.com"
 
@@ -22,6 +28,8 @@ def verify_email(email: str):
 
 @pytest.mark.order(1)
 def test_signup(page: Page):
+    TEST_USER_LOGIN, TEST_USER_PASS = test_credentials()
+
     page.context.clear_cookies()
     page.goto(BASE_URL)
     page.wait_for_load_state("networkidle")
@@ -45,6 +53,8 @@ def test_signup(page: Page):
 
 @pytest.mark.order(2)
 def test_login(page: Page):
+    TEST_USER_LOGIN, TEST_USER_PASS = test_credentials()
+
     page.goto(f"{BASE_URL}/accounts/login/")
     page.wait_for_load_state("networkidle")
 
