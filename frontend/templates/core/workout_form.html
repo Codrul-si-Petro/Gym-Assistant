@@ -96,8 +96,6 @@
                 <select id="unit" name="unit">
                     <option value="KG" {% if not form_data.unit or form_data.unit.0 == 'KG' %}selected{% endif %}>KG</option>
                     <option value="LBS" {% if form_data.unit and form_data.unit.0 == 'LBS' %}selected{% endif %}>LBS</option>
-                    <option value="KM" {% if form_data.unit and form_data.unit.0 == 'KM' %}selected{% endif %}>KM</option>
-                    <option value="MILES" {% if form_data.unit and form_data.unit.0 == 'MILES' %}selected{% endif %}>MILES</option>
                 </select>
             </p>
             

@@ -24,9 +24,9 @@ class WorkoutSerializer(serializers.ModelSerializer):
     repetitions = serializers.IntegerField(min_value=0, max_value=1000, default=0)
     load = serializers.IntegerField(min_value=0, default=0)
     unit = serializers.CharField(min_length=2, default="KG")
-    set_type = serializers.CharField(min_length=1, default="N/A")
-    comments = serializers.CharField(min_length=1, required=False, default="N/A")
-    workout_split = serializers.CharField(max_length=50, min_length=1, default="N/A")
+    set_type = serializers.CharField(min_length=1, default="None")
+    comments = serializers.CharField(min_length=1, required=False, default="None")
+    workout_split = serializers.CharField(max_length=50, min_length=1, default="None")
     date = serializers.DateField(write_only=True, required=False, default=datetime.date.today)
 
     class Meta:
@@ -51,7 +51,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
     def validate_attachment_name(self, value):
         """Validate that attachment exists in database, or default to N/A if empty"""
         if not value or not value.strip():
-            return "N/A"
+            return "None"
         if not Attachments.objects.filter(attachment_name=value).exists():
             raise serializers.ValidationError(f"Attachment '{value}' does not exist in the database.")
         return value
@@ -59,15 +59,15 @@ class WorkoutSerializer(serializers.ModelSerializer):
     def validate_equipment_name(self, value):
         """Validate that equipment exists in database, or default to N/A if empty"""
         if not value or not value.strip():
-            return "N/A"
+            return "None"
         if not Equipment.objects.filter(equipment_name=value).exists():
             raise serializers.ValidationError(f"Equipment '{value}' does not exist in the database.")
         return value
 
     def create(self, validated_data):
         exercise_name = validated_data.pop("exercise_name")
-        attachment_name = validated_data.pop("attachment_name", "") or "N/A"
-        equipment_name = validated_data.pop("equipment_name", "") or "N/A"
+        attachment_name = validated_data.pop("attachment_name", "") or "None"
+        equipment_name = validated_data.pop("equipment_name", "") or "None"
         date_input = validated_data.pop("date", datetime.date.today())
 
         exercise = Exercises.objects.get(exercise_name=exercise_name)
@@ -80,9 +80,9 @@ class WorkoutSerializer(serializers.ModelSerializer):
         validated_data["equipment"] = equipment
         validated_data["date"] = calendar_entry
 
-        # Handle empty workout_split - default to "N/A" if not provided
+        # Handle empty workout_split - default to "None" if not provided
         if not validated_data.get("workout_split"):
-            validated_data["workout_split"] = "N/A"
+            validated_data["workout_split"] = "None"
 
         # auto assign user id
         validated_data["user"] = self.context["request"].user
