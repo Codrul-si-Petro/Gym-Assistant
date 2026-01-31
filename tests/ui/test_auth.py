@@ -6,7 +6,7 @@ from playwright.sync_api import Page, expect
 
 
 @pytest.fixture(scope="module")
-def test_credentials():
+def test_credentials() -> tuple[str, str]:
     """Get test credentials, fail if not set."""
     TEST_USER_LOGIN = os.getenv("UI_TESTER_USERNAME", "")
     TEST_USER_PASS = os.getenv("UI_TESTER_PASS", "")
@@ -27,8 +27,8 @@ def verify_email(email: str):
 
 
 @pytest.mark.order(1)
-def test_signup(page: Page):
-    TEST_USER_LOGIN, TEST_USER_PASS = test_credentials()
+def test_signup(page: Page, test_credentials: tuple[str, str]):
+    TEST_USER_LOGIN, TEST_USER_PASS = test_credentials
 
     page.context.clear_cookies()
     page.goto(BASE_URL)
@@ -52,8 +52,8 @@ def test_signup(page: Page):
 
 
 @pytest.mark.order(2)
-def test_login(page: Page):
-    TEST_USER_LOGIN, TEST_USER_PASS = test_credentials()
+def test_login(page: Page, test_credentials: tuple[str, str]):
+    TEST_USER_LOGIN, TEST_USER_PASS = test_credentials
 
     page.goto(f"{BASE_URL}/accounts/login/")
     page.wait_for_load_state("networkidle")
