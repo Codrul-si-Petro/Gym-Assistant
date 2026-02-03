@@ -97,14 +97,35 @@ class WorkoutSerializer(serializers.ModelSerializer):
             validated_data["workout_split"] = "None"
 
         # auto assign user id
-        validated_data["user"] = self.context["request"].user
+        user = self.context["request"].user
+        validated_data["user"] = user
 
-        if Workouts.objects.filter(
+        # Max set_number for this (user, exercise, workout_number); next allowed is max + 1
+        agg = Workouts.objects.filter(
+            user=user,
+            exercise=validated_data["exercise"],
+            workout_number=validated_data["workout_number"],
+        ).aggregate(Max("set_number"))
+        max_set = agg["set_number__max"] or 0
+        next_allowed = min(max_set + 1, 200)
+
+        # Don't allow skipping sets
+        if validated_data["set_number"] > next_allowed:
+            raise serializers.ValidationError(
+                f"You can't skip sets. Next set number for this exercise in this workout is {next_allowed}."
+            )
+
+        # Don't allow duplicate set numbers
+        existing = Workouts.objects.filter(
+            user=user,
             exercise=validated_data["exercise"],
             workout_number=validated_data["workout_number"],
             set_number=validated_data["set_number"],
-        ).exists():
-            raise serializers.ValidationError("This set_number already exists for this exercise in this workout")
+        )
+        if existing.exists():
+            raise serializers.ValidationError(
+                f"This set number already exists for this exercise in this workout. Next set number is {next_allowed}."
+            )
 
         return super().create(validated_data)
 

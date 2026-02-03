@@ -96,10 +96,18 @@ class WorkoutFormView(View):
 
         # Validation passed, try to save
         try:
+            submitted_set_number = request.POST.get("set_number")
             serializer.save()
-            messages.success(request, "Workout submitted successfully!")
-            # Keep most fields for next load; only set_number, repetitions, load will be reset
             v = serializer.validated_data
+            actual_set_number = v.get("set_number")
+            if submitted_set_number is not None and str(actual_set_number) != str(submitted_set_number):
+                messages.success(
+                    request,
+                    f"Workout submitted successfully! Set number was set to {actual_set_number} for this exercise in this workout.",
+                )
+            else:
+                messages.success(request, "Workout submitted successfully!")
+            # Keep most fields for next load; only set_number, repetitions, load will be reset
             date_val = v.get("date")
             if hasattr(date_val, "isoformat"):
                 date_val = date_val.isoformat()

@@ -31,7 +31,7 @@
                 {% if message.tags == 'error' %}
                     <p style="color: red;">{{ message }}</p>
                 {% elif message.tags == 'success' %}
-                    <p style="color: green;">{{ message }}</p>
+                    <p class="flash-message flash-success" style="color: green;">{{ message }}</p>
                 {% else %}
                     <p>{{ message }}</p>
                 {% endif %}
@@ -144,6 +144,26 @@
                     }
                 });
             });
+        })();
+        (function () {
+            // Hide success messages after 3 seconds
+            document.querySelectorAll(".flash-success").forEach(function (el) {
+                setTimeout(function () {
+                    el.style.opacity = "0";
+                    el.style.transition = "opacity 0.3s ease";
+                    setTimeout(function () { el.remove(); }, 300);
+                }, 3000);
+            });
+        })();
+        (function () {
+            // Reset set number to 1 when user switches exercise
+            var exerciseInput = document.getElementById("exercise_name");
+            var setNumberInput = document.getElementById("set_number");
+            if (exerciseInput && setNumberInput) {
+                exerciseInput.addEventListener("change", function () {
+                    setNumberInput.value = "1";
+                });
+            }
         })();
     </script>
 </body>
