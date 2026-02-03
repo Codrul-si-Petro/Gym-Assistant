@@ -16,22 +16,56 @@ def homepageView(request):
 class WorkoutFormView(View):
     template_name = "core/workout_form.html"
 
-    def get_context_data(self):
+    def get_context_data(self, request):
         """Get context data with available options"""
+        last_workout = Workouts.objects.filter(user=request.user).order_by("-ta_created_at").first()
+        if last_workout:
+            default_workout_number = last_workout.workout_number
+            # Next set for same (workout, exercise); reset to 1 when user changes exercise or workout
+            default_set_number = min(last_workout.set_number + 1, 200)
+            last_exercise_name = last_workout.exercise.exercise_name
+        else:
+            default_workout_number = 1
+            default_set_number = 1
+            last_exercise_name = ""
+
         return {
             "exercises": Exercises.objects.all().order_by("exercise_name"),
             "attachments": Attachments.objects.all().order_by("attachment_name"),
             "equipment": Equipment.objects.all().order_by("equipment_name"),
             "today_date": datetime.date.today().isoformat(),
+            "default_workout_number": default_workout_number,
+            "default_set_number": default_set_number,
+            "last_exercise_name": last_exercise_name,
         }
 
     def get(self, request):
         storage = messages.get_messages(request)
         storage.used = True
-        context = self.get_context_data()
-        # Restore form data from session if it exists (from previous POST with errors)
+        context = self.get_context_data(request)
+        # Restore form data from session (validation errors) or prefill (success: keep fields, reset set/reps/load)
         if "workout_form_data" in request.session:
             context["form_data"] = request.session.pop("workout_form_data")
+        elif "workout_form_prefill" in request.session:
+            prefill = request.session.pop("workout_form_prefill")
+            default_set = context["default_set_number"]
+            # Template expects list values (form_data.field.0)
+            context["form_data"] = {
+                "workout_number": [str(prefill["workout_number"])],
+                "exercise_name": [prefill["exercise_name"]],
+                "attachment_name": [prefill["attachment_name"]],
+                "equipment_name": [prefill["equipment_name"]],
+                "workout_split": [prefill["workout_split"]],
+                "date": [prefill["date"] or context["today_date"]],
+                "set_type": [prefill["set_type"]],
+                "unit": [prefill["unit"]],
+                "comments": [prefill["comments"]],
+                "set_number": [str(default_set)],
+                "repetitions": ["0"],
+                "load": ["0"],
+            }
+        else:
+            context["form_data"] = {}
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -64,7 +98,22 @@ class WorkoutFormView(View):
         try:
             serializer.save()
             messages.success(request, "Workout submitted successfully!")
-            # Redirect on success to clear form data
+            # Keep most fields for next load; only set_number, repetitions, load will be reset
+            v = serializer.validated_data
+            date_val = v.get("date")
+            if hasattr(date_val, "isoformat"):
+                date_val = date_val.isoformat()
+            request.session["workout_form_prefill"] = {
+                "workout_number": v.get("workout_number"),
+                "exercise_name": v.get("exercise_name"),
+                "attachment_name": v.get("attachment_name") or "",
+                "equipment_name": v.get("equipment_name") or "",
+                "workout_split": v.get("workout_split") or "",
+                "date": date_val,
+                "set_type": v.get("set_type") or "Working set",
+                "unit": v.get("unit") or "KG",
+                "comments": v.get("comments") or "",
+            }
             return redirect("workout-logger")
         except serializers.ValidationError as e:
             # Handle validation errors from create() method

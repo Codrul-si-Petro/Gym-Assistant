@@ -73,12 +73,12 @@
             
             <p>
                 <label for="workout_number">Workout Number</label>
-                <input type="number" id="workout_number" name="workout_number" min="1" max="10000" value="{% if form_data.workout_number %}{{ form_data.workout_number.0 }}{% else %}1{% endif %}" required>
+                <input type="number" id="workout_number" name="workout_number" min="1" max="10000" value="{% if form_data.workout_number %}{{ form_data.workout_number.0 }}{% else %}{{ default_workout_number }}{% endif %}" required>
             </p>
             
             <p>
                 <label for="set_number">Set Number</label>
-                <input type="number" id="set_number" name="set_number" min="1" max="200" value="{% if form_data.set_number %}{{ form_data.set_number.0 }}{% else %}1{% endif %}" required>
+                <input type="number" id="set_number" name="set_number" min="1" max="200" value="{% if form_data.set_number %}{{ form_data.set_number.0 }}{% else %}{{ default_set_number }}{% endif %}" required>
             </p>
             
             <p>
@@ -88,7 +88,7 @@
             
             <p>
                 <label for="load">Load</label>
-                <input type="number" id="load" name="load" min="0" value="{% if form_data.load %}{{ form_data.load.0 }}{% else %}0{% endif %}" required>
+                <input type="number" id="load" name="load" min="0" step="any" value="{% if form_data.load %}{{ form_data.load.0 }}{% else %}0{% endif %}" required>
             </p>
             
             <p>
@@ -127,5 +127,24 @@
             <button type="submit" name="delete_last" onclick="return confirm('Are you sure you want to delete your last workout entry?');" style="background-color: #dc3545; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 12px;">Delete Last Entry</button>
         </form>
     </div>
+    <script>
+        (function () {
+            // Clear "0" on focus only for set number, repetitions, load; restore on blur if left empty
+            var selector = "input#set_number, input#repetitions, input#load";
+            document.querySelectorAll(selector).forEach(function (input) {
+                input.addEventListener("focus", function () {
+                    if (this.value === "0" || this.value === "0.0") {
+                        this.value = "";
+                    }
+                });
+                input.addEventListener("blur", function () {
+                    if (this.value === "" || this.value === null) {
+                        var min = parseInt(input.getAttribute("min"), 10);
+                        this.value = isNaN(min) ? "0" : String(min);
+                    }
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

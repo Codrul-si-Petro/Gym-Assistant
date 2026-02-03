@@ -1,5 +1,6 @@
 import datetime
 
+from django.db.models import Max
 from rest_framework import serializers
 
 from .models import Attachments, Calendar, Equipment, Exercises, Muscles, Workouts
@@ -19,10 +20,10 @@ class WorkoutSerializer(serializers.ModelSerializer):
     equipment_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     # Other required input fields
-    workout_number = serializers.IntegerField(min_value=1, max_value=10000, default=1)
+    workout_number = serializers.IntegerField(min_value=1, default=1)
     set_number = serializers.IntegerField(min_value=1, max_value=200, default=1)
-    repetitions = serializers.IntegerField(min_value=0, max_value=1000, default=0)
-    load = serializers.IntegerField(min_value=0, default=0)
+    repetitions = serializers.IntegerField(min_value=1, max_value=1000, default=0)
+    load = serializers.FloatField(min_value=0, default=0, max_value=1500)
     unit = serializers.CharField(min_length=2, default="KG")
     set_type = serializers.CharField(min_length=1, default="None")
     comments = serializers.CharField(min_length=1, required=False, default="None")
@@ -62,6 +63,17 @@ class WorkoutSerializer(serializers.ModelSerializer):
             return "None"
         if not Equipment.objects.filter(equipment_name=value).exists():
             raise serializers.ValidationError(f"Equipment '{value}' does not exist in the database.")
+        return value
+
+    def validate_workout_number(self, value):
+        """Workout number must not be less than the user's highest workout number."""
+        user = self.context["request"].user
+        agg = Workouts.objects.filter(user=user).aggregate(Max("workout_number"))
+        max_workout_number = agg["workout_number__max"]
+        if max_workout_number is not None and value < max_workout_number:
+            raise serializers.ValidationError(
+                f"Workout number must be at least {max_workout_number} (your highest so far). You entered {value}."
+            )
         return value
 
     def create(self, validated_data):
