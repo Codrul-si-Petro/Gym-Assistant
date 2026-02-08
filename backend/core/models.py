@@ -50,7 +50,7 @@ class Exercises(models.Model):
 
 
 class Muscles(models.Model):
-    """Dimension table for muscles. Managed by Alembic in core schema."""
+    """Dimension table for muscles. Managed by dbt in core schema."""
 
     muscle_id = models.AutoField(primary_key=True, db_index=True)
     muscle_name = models.TextField(max_length=256)
@@ -64,7 +64,7 @@ class Muscles(models.Model):
 
 
 class Exercise_Muscle_Bridge(models.Model):
-    """Bridge table linking exercises to muscles. Managed by Alembic in core schema."""
+    """Bridge table linking exercises to muscles. Managed by dbt in core schema."""
 
     exercise = models.ForeignKey(to="Exercises", on_delete=models.CASCADE, default="1")
     muscle = models.ForeignKey(to="Muscles", on_delete=models.CASCADE, default="1")
@@ -78,7 +78,7 @@ class Exercise_Muscle_Bridge(models.Model):
 
 
 class Equipment(models.Model):
-    """Dimension table for equipment. Managed by Alembic in core schema."""
+    """Dimension table for equipment. Managed by dbt in core schema."""
 
     equipment_id = models.AutoField(primary_key=True, db_index=True)
     equipment_name = models.TextField()
@@ -107,7 +107,7 @@ class Attachments(models.Model):
 
 
 class Calendar(models.Model):
-    """Dimension table for calendar/dates. Managed by Alembic in core schema."""
+    """Dimension table for calendar/dates. Managed by nothing actually."""
 
     date_id = models.DateField(primary_key=True, db_index=True, default="1900-01-01")
     week_day = models.SmallIntegerField()

@@ -23,6 +23,28 @@
     </style>
 </head>
 <body style="min-height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center;">
+ <div style="position: fixed; top: 16px; left: 16px;">
+    <a href="{% url 'home' %}">
+      <button type="button">Home</button>
+    </a>
+  </div>
+
+  <div style="position: fixed; top: 16px; right: 16px; font-weight: bold; font-size: 16px;">
+      <p>
+      <label for="workout_number">Workout Number</label>
+      <input type="number" id="workout_number" name="workout_number" min="1" max="10000" value="{% if form_data.workout_number %}{{ form_data.workout_number.0 }}{% else %}{{ default_workout_number }}{% endif %}" required>
+  </p>
+
+      <p>
+          <label for="workout_split">Workout Split</label>
+          <input type="text" id="workout_split" name="workout_split" maxlength="50" value="{% if form_data.workout_split %}{{ form_data.workout_split.0 }}{% endif %}">
+      </p>
+      <p>
+          <label for="date">Date</label>
+          <input type="date" id="date" name="date" value="{% if form_data.date %}{{ form_data.date.0 }}{% else %}{{ today_date }}{% endif %}">
+      </p>
+  </div>
+
     <div>
         <h2>Input Your Workout</h2>
         
@@ -72,11 +94,6 @@
             </p>
             
             <p>
-                <label for="workout_number">Workout Number</label>
-                <input type="number" id="workout_number" name="workout_number" min="1" max="10000" value="{% if form_data.workout_number %}{{ form_data.workout_number.0 }}{% else %}{{ default_workout_number }}{% endif %}" required>
-            </p>
-            
-            <p>
                 <label for="set_number">Set Number</label>
                 <input type="number" id="set_number" name="set_number" min="1" max="200" value="{% if form_data.set_number %}{{ form_data.set_number.0 }}{% else %}{{ default_set_number }}{% endif %}" required>
             </p>
@@ -102,16 +119,6 @@
             <p>
                 <label for="set_type">Set Type</label>
                 <input type="text" id="set_type" name="set_type" value="{% if form_data.set_type %}{{ form_data.set_type.0 }}{% else %}Working set{% endif %}">
-            </p>
-            
-            <p>
-                <label for="workout_split">Workout Split</label>
-                <input type="text" id="workout_split" name="workout_split" maxlength="50" value="{% if form_data.workout_split %}{{ form_data.workout_split.0 }}{% endif %}">
-            </p>
-            
-            <p>
-                <label for="date">Date</label>
-                <input type="date" id="date" name="date" value="{% if form_data.date %}{{ form_data.date.0 }}{% else %}{{ today_date }}{% endif %}">
             </p>
             
             <p>

@@ -12,7 +12,6 @@ class WorkoutSerializer(serializers.ModelSerializer):
     exercise = serializers.PrimaryKeyRelatedField(read_only=True)
     attachment = serializers.PrimaryKeyRelatedField(read_only=True)
     equipment = serializers.PrimaryKeyRelatedField(read_only=True)
-    date = serializers.SerializerMethodField(read_only=True)
 
     # define write only input fields to be associated for FK
     exercise_name = serializers.CharField(write_only=True, required=True)
@@ -24,15 +23,35 @@ class WorkoutSerializer(serializers.ModelSerializer):
     set_number = serializers.IntegerField(min_value=1, max_value=200, default=1)
     repetitions = serializers.IntegerField(min_value=1, max_value=1000, default=0)
     load = serializers.FloatField(min_value=0, default=0, max_value=1500)
-    unit = serializers.CharField(min_length=2, default="KG")
+    unit = serializers.ChoiceField(default="KG", choices=["KG", "LBS"])
     set_type = serializers.CharField(min_length=1, default="None")
     comments = serializers.CharField(min_length=1, required=False, default="None")
     workout_split = serializers.CharField(max_length=50, min_length=1, default="None")
-    date = serializers.DateField(write_only=True, required=False, default=datetime.date.today)
+    date = serializers.DateField(write_only=True)
 
     class Meta:
         model = Workouts
-        fields = "__all__"
+        fields = [
+            "workout_id",
+            "user",
+            "exercise",
+            "exercise_name",
+            "attachment",
+            "attachment_name",
+            "equipment",
+            "equipment_name",
+            "workout_number",
+            "set_number",
+            "repetitions",
+            "load",
+            "unit",
+            "set_type",
+            "comments",
+            "workout_split",
+            "date",
+            "ta_created_at",
+            "ta_updated_at",
+        ]
         read_only_fields = [
             "workout_id",
             "ta_created_at",
