@@ -24,7 +24,7 @@ jobs:
         run: uv sync
       
       - name: Run tests
-        run: uv run pytest tests/unit/test_auth.py -v
+        run: uv run pytest tests/unit/ -v
         env:
           DJANGO_SETTINGS_MODULE: backend.settings
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

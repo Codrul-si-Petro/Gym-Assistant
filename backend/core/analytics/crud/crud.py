@@ -28,3 +28,15 @@ def get_rest_days(user_id):
             "user_id": user_id,
         },
     )
+
+
+def get_favourite_exercises(user_id):
+    query_file = SQL_DIR / "get_favourite_exercises.sql"
+    query = query_file.read_text()
+
+    return execute_sql(
+        query,
+        {
+            "user_id": user_id,
+        },
+    )
