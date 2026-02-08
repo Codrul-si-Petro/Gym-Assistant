@@ -149,6 +149,10 @@ ignore_errors = true
 django_settings_module = "backend.settings"
 
 [tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::UserWarning:django.core.handlers.base",
+    "ignore::pydantic.PydanticDeprecatedSince212",
+]
 DJANGO_SETTINGS_MODULE = "backend.settings"
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
