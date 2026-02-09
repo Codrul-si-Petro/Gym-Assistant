@@ -1,3 +1,5 @@
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
@@ -39,6 +41,19 @@ class WorkoutsViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.G
 
     @swagger_auto_schema(tags=["Core"])
     def list(self, request, *args, **kwargs):
+        accept = request.META.get("HTTP_ACCEPT", "")
+        if "text/html" in accept:
+            queryset = (
+                self.get_queryset()
+                .select_related("exercise", "attachment", "equipment", "date")
+                .order_by("-ta_created_at")
+            )
+            content = render_to_string(
+                "core/workout_table.html",
+                {"rows": queryset},
+                request=request,
+            )
+            return HttpResponse(content, content_type="text/html; charset=utf-8")
         return super().list(request, *args, **kwargs)
 
 
