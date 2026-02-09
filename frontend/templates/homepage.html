@@ -15,8 +15,9 @@
 <nav class="container">
 
   <a href="#workout" id="item1">&#10051; Workout Assistant</a>
-  <a href="{% url 'workout-logger' %}" id="item3">Log a workout session!</a>
   {% if user.is_authenticated %}
+  <a href="{% url 'workout-logger' %}" id="item3">Log a workout session!</a>
+  <a href="{% url 'workouts-list' %}" id="item6">View workout history</a>
     <a href="{% url 'account_logout' %}" id="item4">Logout</a>
   {% else %}
     <a href="{% url 'account_login' %}" id="item4">Login</a>
