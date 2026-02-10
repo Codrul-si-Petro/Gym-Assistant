@@ -12,7 +12,7 @@ jobs:
 
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      RCLONE_CONFIG_MEGA: ${{ secrets.RCLONE_CONFIG_MEGA }}
+      RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
 
     steps:
       - name: Checkout repo
@@ -46,7 +46,7 @@ jobs:
         run: |
           set -x
           mkdir -p ~/.config/rclone
-          echo "$RCLONE_CONFIG_MEGA" > ~/.config/rclone/rclone.conf
+          echo "$RCLONE_CONFIG" | base64 --decode > ~/.config/rclone/rclone.conf
           rclone copy -vv "$FILENAME" mega:DB_BACKUPS -P
 
       - name: Keep only last 10 files
