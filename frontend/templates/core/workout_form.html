@@ -29,21 +29,21 @@
     </a>
   </div>
 
-  <div style="position: fixed; top: 16px; right: 16px; font-weight: bold; font-size: 16px;">
-      <p>
-      <label for="workout_number">Workout Number</label>
-      <input type="number" id="workout_number" name="workout_number" min="1" max="10000" value="{% if form_data.workout_number %}{{ form_data.workout_number.0 }}{% else %}{{ default_workout_number }}{% endif %}" required>
-  </p>
+    <div style="position: fixed; top: 16px; right: 16px; font-weight: bold; font-size: 16px;">
+        <p>
+        <label for="workout_number">Workout Number</label>
+        <input type="number" id="workout_number" name="workout_number" min="1" max="10000" value="{% if form_data.workout_number %}{{ form_data.workout_number.0 }}{% else %}{{ default_workout_number }}{% endif %}" required form="workout-form">
+    </p>
 
-      <p>
-          <label for="workout_split">Workout Split</label>
-          <input type="text" id="workout_split" name="workout_split" maxlength="50" value="{% if form_data.workout_split %}{{ form_data.workout_split.0 }}{% endif %}">
-      </p>
-      <p>
-          <label for="date">Date</label>
-          <input type="date" id="date" name="date" value="{% if form_data.date %}{{ form_data.date.0 }}{% else %}{{ today_date }}{% endif %}">
-      </p>
-  </div>
+        <p>
+            <label for="workout_split">Workout Split</label>
+            <input type="text" id="workout_split" name="workout_split" maxlength="50" value="{% if form_data.workout_split %}{{ form_data.workout_split.0 }}{% endif %}" form="workout-form">
+        </p>
+        <p>
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" value="{% if form_data.date %}{{ form_data.date.0 }}{% else %}{{ today_date }}{% endif %}" form="workout-form">
+        </p>
+    </div>
 
     <div>
         <h2>Input Your Workout</h2>
@@ -60,7 +60,7 @@
             {% endfor %}
         {% endif %}
         
-        <form method="post" action="">
+        <form method="post" action="" id="workout-form">
             {% csrf_token %}
             
             <p>
