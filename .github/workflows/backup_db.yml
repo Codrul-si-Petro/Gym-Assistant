@@ -21,10 +21,20 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-client gzip
+          sudo apt-get install -y gzip
 
           # Install rclone
           curl https://rclone.org/install.sh | sudo bash
+          # Install correct pg client
+          # Add PostgreSQL repository key
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql-archive-keyring.gpg
+          # Add PostgreSQL APT repository
+          echo "deb [signed-by=/usr/share/keyrings/postgresql-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+
+          # Update package list and install PostgreSQL 17 client + gzip
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17 gzip
 
       - name: Dump & gzip fact_workouts
         run: |
@@ -33,7 +43,7 @@ jobs:
 
       - name: Upload to Mega
         run: |
-          mkdir -p ~/.config/rclone/rclone.conf
+          mkdir -p ~/.config/rclone
           echo "$RCLONE_CONFIG_MEGA" > ~/.config/rclone/rclone.conf
           rclone copy "$FILENAME" mega:DB_BACKUPS -P
 
