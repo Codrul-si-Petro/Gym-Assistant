@@ -52,8 +52,9 @@ jobs:
           export PATH="/usr/lib/postgresql/17/bin:$PATH"
           pg_dump --table=core.fact_workouts --dbname="$DATABASE_URL" | gzip > "$FILENAME"
 
-          # Upload to Mega with debug logs
-          rclone copy -vv "$FILENAME" mega:DB_BACKUPS -P
+          # Upload to Mega with debug logs need to add --config to correctly pick up config
+          rclone --config ~/.config/rclone/rclone.conf ls mega:
+          rclone --config ~/.config/rclone/rclone.conf copy "$FILENAME" mega:DB_BACKUPS -P
 
       - name: Keep only last 10 files
         run: |
