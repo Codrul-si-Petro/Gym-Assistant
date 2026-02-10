@@ -42,13 +42,14 @@ jobs:
 
           # Ensure rclone config exists
           mkdir -p ~/.config/rclone
-          echo "$RCLONE_CONFIG_MEGA" | base64 --decode > ~/.config/rclone/rclone.conf
+          echo "$RCLONE_CONFIG" | base64 --decode > ~/.config/rclone/rclone.conf
 
           # Make timestamped filename
           FILENAME="db_backups/fact_workouts_$(date +%Y%m%d_%H%M%S).sql.gz"
           mkdir -p db_backups
 
           # Dump PostgreSQL table and gzip
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
           pg_dump --table=core.fact_workouts --dbname="$DATABASE_URL" | gzip > "$FILENAME"
 
           # Upload to Mega with debug logs
