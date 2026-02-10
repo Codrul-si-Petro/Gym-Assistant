@@ -1,4 +1,4 @@
-name: Weekly DB Backup
+name: 🗄️ DB Backup
 
 on:
   workflow_dispatch:
@@ -39,13 +39,15 @@ jobs:
       - name: Dump & gzip fact_workouts
         run: |
           FILENAME="fact_workouts_$(date +%Y%m%d_%H%M%S).sql.gz"
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
           pg_dump --table=core.fact_workouts --dbname="$DATABASE_URL" | gzip > "$FILENAME"
 
       - name: Upload to Mega
         run: |
+          set -x
           mkdir -p ~/.config/rclone
           echo "$RCLONE_CONFIG_MEGA" > ~/.config/rclone/rclone.conf
-          rclone copy "$FILENAME" mega:DB_BACKUPS -P
+          rclone copy -vv "$FILENAME" mega:DB_BACKUPS -P
 
       - name: Keep only last 10 files
         run: |
