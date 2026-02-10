@@ -33,6 +33,7 @@ jobs:
 
       - name: Upload to Mega
         run: |
+          mkdir -p ~/.config/rclone/rclone.conf
           echo "$RCLONE_CONFIG_MEGA" > ~/.config/rclone/rclone.conf
           rclone copy "$FILENAME" mega:DB_BACKUPS -P
 
