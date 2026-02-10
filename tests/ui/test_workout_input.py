@@ -1,3 +1,6 @@
+# TODO: refactor this horrible duplicated shit and actually put these helper functions somewhere. this is horrible but it works for now
+
+
 import os
 from datetime import date
 
