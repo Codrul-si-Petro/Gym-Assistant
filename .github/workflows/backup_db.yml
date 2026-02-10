@@ -1,0 +1,48 @@
+name: Weekly DB Backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Runs every Sunday at 02:00 UTC
+    - cron: '0 2 * * 0'
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      RCLONE_CONFIG_MEGA: ${{ secrets.RCLONE_CONFIG_MEGA }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client gzip
+
+          # Install rclone
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Dump & gzip fact_workouts
+        run: |
+          FILENAME="fact_workouts_$(date +%Y%m%d_%H%M%S).sql.gz"
+          pg_dump --table=core.fact_workouts --dbname="$DATABASE_URL" | gzip > "$FILENAME"
+
+      - name: Upload to Mega
+        run: |
+          echo "$RCLONE_CONFIG_MEGA" > ~/.config/rclone/rclone.conf
+          rclone copy "$FILENAME" mega:DB_BACKUPS -P
+
+      - name: Keep only last 10 files
+        run: |
+          # List files in ascending order (oldest first)
+          FILES=$(rclone lsf mega:DB_BACKUPS --sort --files-only)
+          COUNT=$(echo "$FILES" | wc -l)
+          REMOVE_COUNT=$((COUNT - 10))
+          if [ "$REMOVE_COUNT" -gt 0 ]; then
+            echo "$FILES" | head -n "$REMOVE_COUNT" | xargs -I {} rclone delete mega:DB_BACKUPS/{}
+          fi
+
