@@ -36,17 +36,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client-17 gzip
 
-      - name: Dump & gzip fact_workouts
+      - name: Dump & upload fact_workouts to Mega 💾
         run: |
-          FILENAME="fact_workouts_$(date +%Y%m%d_%H%M%S).sql.gz"
-          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          set -eux  # exit on error, show commands
+
+          # Ensure rclone config exists
+          mkdir -p ~/.config/rclone
+          echo "$RCLONE_CONFIG_MEGA" | base64 --decode > ~/.config/rclone/rclone.conf
+
+          # Make timestamped filename
+          FILENAME="db_backups/fact_workouts_$(date +%Y%m%d_%H%M%S).sql.gz"
+          mkdir -p db_backups
+
+          # Dump PostgreSQL table and gzip
           pg_dump --table=core.fact_workouts --dbname="$DATABASE_URL" | gzip > "$FILENAME"
 
-      - name: Upload to Mega
-        run: |
-          set -x
-          mkdir -p ~/.config/rclone
-          echo "$RCLONE_CONFIG" | base64 --decode > ~/.config/rclone/rclone.conf
+          # Upload to Mega with debug logs
           rclone copy -vv "$FILENAME" mega:DB_BACKUPS -P
 
       - name: Keep only last 10 files
