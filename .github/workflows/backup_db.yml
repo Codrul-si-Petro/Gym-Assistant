@@ -59,10 +59,15 @@ jobs:
       - name: Keep only last 10 files
         run: |
           # List files in ascending order (oldest first)
-          FILES=$(rclone lsf mega:DB_BACKUPS --sort --files-only)
+          FILES=$(rclone lsf mega:DB_BACKUPS --files-only --config ~/.config/rclone/rclone.conf | sort)
           COUNT=$(echo "$FILES" | wc -l)
           REMOVE_COUNT=$((COUNT - 10))
-          if [ "$REMOVE_COUNT" -gt 0 ]; then
-            echo "$FILES" | head -n "$REMOVE_COUNT" | xargs -I {} rclone delete mega:DB_BACKUPS/{}
+
+          if [ "$COUNT" -gt 10 ]; then
+            OLDEST=$(echo "$FILES" | head -n 1)
+            echo "Deleting oldest file: $OLDEST"
+            rclone delete mega:DB_BACKUPS/"$OLDEST" --config ~/.config/rclone/rclone.conf
+          else
+            echo "10 or fewer files exist. Nothing to delete."
           fi
 
