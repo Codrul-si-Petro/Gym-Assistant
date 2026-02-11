@@ -1,0 +1,73 @@
+name: 🗄️ DB Backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Runs every Sunday at 02:00 UTC
+    - cron: '0 2 * * 0'
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gzip
+
+          # Install rclone
+          curl https://rclone.org/install.sh | sudo bash
+          # Install correct pg client
+          # Add PostgreSQL repository key
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql-archive-keyring.gpg
+          # Add PostgreSQL APT repository
+          echo "deb [signed-by=/usr/share/keyrings/postgresql-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+
+          # Update package list and install PostgreSQL 17 client + gzip
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17 gzip
+
+      - name: Dump & upload fact_workouts to Mega 💾
+        run: |
+          set -eux  # exit on error, show commands
+
+          # Ensure rclone config exists
+          mkdir -p ~/.config/rclone
+          echo "$RCLONE_CONFIG" | base64 --decode > ~/.config/rclone/rclone.conf
+
+          # Make timestamped filename
+          FILENAME="db_backups/fact_workouts_$(date +%Y%m%d_%H%M%S).sql.gz"
+          mkdir -p db_backups
+
+          # Dump PostgreSQL table and gzip
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          pg_dump --table=core.fact_workouts --dbname="$DATABASE_URL" | gzip > "$FILENAME"
+
+          # Upload to Mega with debug logs need to add --config to correctly pick up config
+          rclone --config ~/.config/rclone/rclone.conf ls mega:
+          rclone --config ~/.config/rclone/rclone.conf copy "$FILENAME" mega:DB_BACKUPS -P
+
+      - name: Keep only last 10 files
+        run: |
+          # List files in ascending order (oldest first)
+          FILES=$(rclone lsf mega:DB_BACKUPS --files-only --config ~/.config/rclone/rclone.conf | sort)
+          COUNT=$(echo "$FILES" | wc -l)
+          REMOVE_COUNT=$((COUNT - 10))
+
+          if [ "$COUNT" -gt 10 ]; then
+            OLDEST=$(echo "$FILES" | head -n 1)
+            echo "Deleting oldest file: $OLDEST"
+            rclone delete mega:DB_BACKUPS/"$OLDEST" --config ~/.config/rclone/rclone.conf
+          else
+            echo "10 or fewer files exist. Nothing to delete."
+          fi
+
