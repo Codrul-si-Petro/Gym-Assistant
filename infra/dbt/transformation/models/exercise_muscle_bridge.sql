@@ -1,6 +1,5 @@
 {{ config(
-    materialized='view',
-    schema='views',
+    materialized='table',
     depends_on={'model': ['dim_exercises', 'dim_muscles']}
 ) }}
 

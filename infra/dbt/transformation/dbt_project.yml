@@ -27,3 +27,19 @@ seeds:
       +alias: seed_dim_attachments
     seed_exercise_muscle:
       +alias: seed_exercise_muscle_bridge
+
+models:
+  transformation:
+    +schema: core
+    dim_calendar:
+      +materialized: table
+      +primary_key: date_id
+    dim_equipment:
+      +materialized: table
+      +primary_key: equipment_id
+    dim_attachments:
+      +materialized: table
+      +primary_key: attachment_id
+    exercise_muscle_bridge:
+      +materialized: table
+      +primary_key: id

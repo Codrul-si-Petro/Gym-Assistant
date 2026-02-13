@@ -1,8 +1,9 @@
 version: 2
 
 models:
+
   - name: dim_exercises # this points to a django model
-    description: "Existing dimension for exercises, Django managed"
+    description: "Existing dimension for exercises"
     columns: 
       - name: exercise_id
         tests:
@@ -12,8 +13,9 @@ models:
         tests:
           - not_null
           - unique
+
   - name: dim_muscles 
-    description: "Existing dimension for muscles, Django managed"
+    description: "Existing dimension for muscles"
     columns: 
     - name: muscle_id
       tests:
@@ -23,3 +25,53 @@ models:
       tests:
         - not_null
         - unique
+
+  - name: dim_attachments
+    description: "Existing dimension for attachments"
+    columns: 
+    - name: attachment_id
+      tests:
+        - not_null
+        - unique
+    - name: attachment_name
+      tests:
+        - not_null
+        - unique
+
+  - name: dim_equipment
+    description: "Existing dimension for equipment"
+    columns: 
+    - name: equipment_id
+      tests:
+        - not_null
+        - unique
+    - name: equipment_name
+      tests:
+        - not_null
+        - unique
+
+  - name: dim_calendar
+    description: "Existing dimension for calendar dates"
+    columns: 
+    - name: date_id
+      tests:
+        - not_null
+        - unique
+
+  - name: exercise_muscle_bridge
+    description: "Bridge table to link muscles with exercises"
+    columns:
+      - name: exercise_id
+        tests:
+          - not_null
+          - relationships:
+              to: core.dim_exercises
+              field: exercise_id
+
+      - name: muscle_id
+        tests:
+          - not_null
+          - relationships:
+              to: core.dim_muscles
+              field: muscle_id
+
