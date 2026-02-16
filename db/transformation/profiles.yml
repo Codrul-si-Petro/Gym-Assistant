@@ -1,7 +1,7 @@
 transformation:
-  target: dev
+  target: postgres
   outputs:
-    dev:
+    postgres:
       type: postgres
       host: "{{ env_var('DBT_HOST') }}"
       user: "{{ env_var('DBT_USER') }}"
@@ -9,5 +9,5 @@ transformation:
       port: 5432
       dbname: "{{ env_var('DBT_DBNAME') }}"
       schema: dbt
-      threads: 4
+      threads: 8
       sslmode: require

@@ -2,8 +2,8 @@
 
 This project uses **Alembic** for database migrations with a multi-schema setup:
 
-- `auth` schema: User authentication tables
-- `core` schema: Application data tables (workouts, exercises, etc.)
+- `core.fact_workouts`: Only the fact table is Alembic managed right now. Other dim_tables are managed by dbt + seeds. 
+- `everything else`: Managed by dbt or Django's migrations service
 
 ## Setup
 
@@ -54,21 +54,3 @@ alembic current
 alembic history
 ```
 
-## Schema Structure
-
-### auth schema
-- `users` - Custom user model
-- `groups` - Permission groups
-- `permissions` - Individual permissions
-- `user_groups` - User-group relationships
-- `user_permissions` - User-permission relationships
-- `group_permissions` - Group-permission relationships
-
-### core schema
-- `dim_calendar` - Date dimension
-- `dim_exercises` - Exercise dimension
-- `dim_muscles` - Muscle dimension
-- `dim_equipment` - Equipment dimension
-- `dim_attachments` - Attachment dimension
-- `exercise_muscle_bridge` - Exercise-muscle relationships
-- `fact_workouts` - Workout fact table

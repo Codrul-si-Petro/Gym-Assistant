@@ -1,0 +1,48 @@
+name: 'transformation'
+version: '1.0.0'
+
+profile: 'transformation'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+seeds:
+  transformation:
+    +schema: staging
+    +tags: seeds
+    seed_exercises:
+      +primary_key: exercise_id
+    seed_muscles:
+      +primary_key: muscle_id
+    seed_equipment:
+      +primary_key: equipment_id
+    seed_attachments:
+      +primary_key: attachment_id
+    seed_exercise_muscle:
+      +primary_key: id
+
+models:
+  transformation:
+    +tags: models
+    +schema: core
+    +materialized: table
+    dim_calendar:
+      +primary_key: date_id
+    dim_equipment:
+      +primary_key: equipment_id
+    dim_attachments:
+      +primary_key: attachment_id
+    exercise_muscle_bridge:
+      +primary_key: id
+    dim_exercises:
+      +primary_key: exercise_id
+    dim_muscles:
+      +primary_key: muscle_id

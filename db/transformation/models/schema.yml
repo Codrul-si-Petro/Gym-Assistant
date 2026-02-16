@@ -1,0 +1,21 @@
+version: 2
+
+models:
+
+  - name: dim_exercises 
+    description: "Existing dimension for exercises"
+
+  - name: dim_muscles 
+    description: "Existing dimension for muscles"
+
+  - name: dim_attachments
+    description: "Existing dimension for attachments"
+
+  - name: dim_equipment
+    description: "Existing dimension for equipment"
+
+  - name: dim_calendar
+    description: "Existing dimension for calendar dates"
+
+  - name: exercise_muscle_bridge
+    description: "Bridge table to link muscles with exercises"
