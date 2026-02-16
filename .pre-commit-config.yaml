@@ -15,3 +15,10 @@ repos:
         types: [python]
         pass_filenames: false
         args: ["."]
+      - id: dbt-compilation
+        name: dbt-compilation
+        entry: bash -c 'cd db/transformation && uv run dbt compile'
+        language: system
+        pass_filenames: false 
+        files: ^db/transformation/
+

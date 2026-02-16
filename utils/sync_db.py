@@ -71,7 +71,7 @@ target_engine = engine_map[args.target]
 for table_name in args.tables:
     print(f"Syncing table {table_name} from {args.source} to {args.target}...")
 
-    df = pd.read_sql_table(table_name, source_engine)
+    df = pd.read_sql_table(table_name, source_engine, schema="core")
 
     with target_engine.begin() as conn:
         conn.execute(text(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE"))
