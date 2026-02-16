@@ -9,6 +9,10 @@ seeds:
         tests:
           - not_null
           - unique
+          - relationships:
+              arguments:
+                to: ref('seed_exercise_muscle')
+                field: exercise_id
       - name: exercise_name
         tests:
           - not_null
@@ -95,3 +99,4 @@ sources:
                   arguments:
                     to: ref('seed_attachments')
                     field: attachment_id
+

@@ -2,70 +2,20 @@ version: 2
 
 models:
 
-  - name: dim_exercises # this points to a django model
+  - name: dim_exercises 
     description: "Existing dimension for exercises"
-    columns: 
-      - name: exercise_id
-        tests:
-          - not_null
-          - unique
-      - name: exercise_name
-        tests:
-          - not_null
-          - unique
 
   - name: dim_muscles 
     description: "Existing dimension for muscles"
-    columns: 
-    - name: muscle_id
-      tests:
-        - not_null
-        - unique
-    - name: muscle_name
-      tests:
-        - not_null
-        - unique
 
   - name: dim_attachments
     description: "Existing dimension for attachments"
-    columns: 
-    - name: attachment_id
-      tests:
-        - not_null
-        - unique
-    - name: attachment_name
-      tests:
-        - not_null
-        - unique
 
   - name: dim_equipment
     description: "Existing dimension for equipment"
-    columns: 
-    - name: equipment_id
-      tests:
-        - not_null
-        - unique
-    - name: equipment_name
-      tests:
-        - not_null
-        - unique
 
   - name: dim_calendar
     description: "Existing dimension for calendar dates"
-    columns: 
-    - name: date_id
-      tests:
-        - not_null
-        - unique
 
   - name: exercise_muscle_bridge
     description: "Bridge table to link muscles with exercises"
-    columns:
-      - name: exercise_id
-        tests:
-          - not_null
-
-      - name: muscle_id
-        tests:
-          - not_null
-

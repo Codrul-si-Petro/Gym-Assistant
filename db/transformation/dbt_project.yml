@@ -10,11 +10,10 @@ seed-paths: ["seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
-clean-targets:         # directories to be removed by `dbt clean`
+clean-targets:
   - "target"
   - "dbt_packages"
 
-  # TODO: use seeds directly instead of models since we don't do any actual transformations here
 seeds:
   transformation:
     +schema: staging
@@ -24,9 +23,9 @@ seeds:
     seed_muscles:
       +primary_key: muscle_id
     seed_equipment:
-      +primary_key: equipment_id_id
+      +primary_key: equipment_id
     seed_attachments:
-      +primary_key: attachment_id_id
+      +primary_key: attachment_id
     seed_exercise_muscle:
       +primary_key: id
 
