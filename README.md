@@ -69,8 +69,7 @@ alembic upgrade head
 ```bash
 # from project root
 cd infra/dbt/transformation
-dbt run
-dbt test
+dbt build -s tag:seeds && dbt build -s tag:models
 ```
 
 ## API Documentation
