@@ -1,8 +1,8 @@
 version: 2
 
-models:
+seeds:
 
-  - name: dim_exercises # this points to a django model
+  - name: seed_exercises
     description: "Existing dimension for exercises"
     columns: 
       - name: exercise_id
@@ -14,7 +14,7 @@ models:
           - not_null
           - unique
 
-  - name: dim_muscles 
+  - name: seed_muscles 
     description: "Existing dimension for muscles"
     columns: 
     - name: muscle_id
@@ -26,7 +26,7 @@ models:
         - not_null
         - unique
 
-  - name: dim_attachments
+  - name: seed_attachments
     description: "Existing dimension for attachments"
     columns: 
     - name: attachment_id
@@ -38,7 +38,7 @@ models:
         - not_null
         - unique
 
-  - name: dim_equipment
+  - name: seed_equipment
     description: "Existing dimension for equipment"
     columns: 
     - name: equipment_id
@@ -50,28 +50,48 @@ models:
         - not_null
         - unique
 
-  - name: dim_calendar
-    description: "Existing dimension for calendar dates"
-    columns: 
-    - name: date_id
-      tests:
-        - not_null
-        - unique
 
-  - name: exercise_muscle_bridge
+  - name: seed_exercise_muscle
     description: "Bridge table to link muscles with exercises"
     columns:
       - name: exercise_id
         tests:
           - not_null
           - relationships:
-              to: core.dim_exercises
-              field: exercise_id
+              arguments:
+                to: ref('seed_exercises')
+                field: exercise_id
 
       - name: muscle_id
         tests:
           - not_null
           - relationships:
-              to: core.dim_muscles
-              field: muscle_id
+              arguments:
+                to: ref('seed_muscles')
+                field: muscle_id
 
+sources:
+  - name: core
+    schema: core
+    tables:
+      - name: fact_workouts
+        description: "Workout fact table; FKs validated against seeds in seed phase"
+        columns:
+          - name: exercise_id
+            tests:
+              - relationships:
+                  arguments:
+                    to: ref('seed_exercises')
+                    field: exercise_id
+          - name: equipment_id
+            tests:
+              - relationships:
+                  arguments:
+                    to: ref('seed_equipment')
+                    field: equipment_id
+          - name: attachment_id
+            tests:
+              - relationships:
+                  arguments:
+                    to: ref('seed_attachments')
+                    field: attachment_id

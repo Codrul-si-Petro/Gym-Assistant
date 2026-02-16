@@ -14,32 +14,36 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
 
+  # TODO: use seeds directly instead of models since we don't do any actual transformations here
 seeds:
   transformation:
     +schema: staging
+    +tags: seeds
     seed_exercises:
-      +alias: seed_dim_exercises
+      +primary_key: exercise_id
     seed_muscles:
-      +alias: seed_dim_muscles
+      +primary_key: muscle_id
     seed_equipment:
-      +alias: seed_dim_equipment
+      +primary_key: equipment_id_id
     seed_attachments:
-      +alias: seed_dim_attachments
+      +primary_key: attachment_id_id
     seed_exercise_muscle:
-      +alias: seed_exercise_muscle_bridge
+      +primary_key: id
 
 models:
   transformation:
+    +tags: models
     +schema: core
+    +materialized: table
     dim_calendar:
-      +materialized: table
       +primary_key: date_id
     dim_equipment:
-      +materialized: table
       +primary_key: equipment_id
     dim_attachments:
-      +materialized: table
       +primary_key: attachment_id
     exercise_muscle_bridge:
-      +materialized: table
       +primary_key: id
+    dim_exercises:
+      +primary_key: exercise_id
+    dim_muscles:
+      +primary_key: muscle_id

@@ -1,5 +1,4 @@
 {{ config(
-    materialized='table',
     depends_on={'model': ['dim_exercises', 'dim_muscles']}
 ) }}
 
