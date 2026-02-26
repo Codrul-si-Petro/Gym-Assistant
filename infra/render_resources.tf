@@ -10,8 +10,11 @@ resource "render_web_service" "backend" {
       branch        = "main"
       build_command = "uv sync && uv run python manage.py collectstatic --noinput"
       auto_deploy   = false
+      repo_url      = "https://github.com/Codrul-si-Petro/Gym-Assistant"
+      runtime       = "python"
     }
     repo_url      = "https://github.com/Codrul-si-Petro/Gym-Assistant"
     runtime       = "python"
   }
+
 }
