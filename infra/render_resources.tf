@@ -1,4 +1,4 @@
-resource "render_service" "backend" {
+resource "render_web_service" "backend" {
   name = "Gym Assistant Backend"
   repo = "https://github.com/Codrul-si-Petro/Gym-Assistant"
   type = "web_service"
