@@ -3,6 +3,9 @@ resource "render_web_service" "backend" {
   plan = "free"
   region = "frankfurt"
 
+  skip_deploy_after_service_update = true
+  wait_for_deploy_completion = true
+
   runtime_source = {
     native_runtime = {
       repo_url = "https://github.com/Codrul-si-Petro/Gym-Assistant"
@@ -22,10 +25,3 @@ resource "render_web_service" "backend" {
   }
 }
 
-
-
-# import existing state
-import {
-  to = render_web_service.backend
-  id = var.RENDER_SERVICE_ID # this only accepts string vars and not locals variable
-}

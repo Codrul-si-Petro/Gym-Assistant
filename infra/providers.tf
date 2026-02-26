@@ -17,6 +17,4 @@ provider "github" {
 
 provider "render" {
   api_key = var.RENDER_TOKEN
-  skip_deploy_after_service_update = True # to not auto deploy on changes
-  wait_for_deploy_completion = True
 }
