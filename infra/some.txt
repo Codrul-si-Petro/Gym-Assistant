@@ -1,0 +1,65 @@
+
+Build & Deploy
+Repository
+The repository used for your Web Service.
+https://github.com/Codrul-si-Petro/Gym-Assistant
+
+Edit
+Branch
+The Git branch to build and deploy.
+Branch
+main
+
+Edit
+Git Credentials
+User providing the credentials to pull the repository.
+codreanu.andrei1125@gmail.com (you)
+Use My Credentials
+Root DirectoryOptional
+If set, Render runs commands from this directory instead of the repository root. Additionally, code changes outside of this directory do not trigger an auto-deploy. Most commonly used with a monorepo.
+
+Edit
+Build Filters
+Include or ignore specific paths in your repo when determining whether to trigger an auto-deploy. Paths are relative to your repo's root directory. Learn more.
+
+Edit
+Included Paths
+Changes that match these paths will trigger a new build.
+
+
+Add Included Path
+Ignored Paths
+Changes that match these paths will not trigger a new build.
+
+
+Add Ignored Path
+Build Command
+Render runs this command to build your app before each deploy.
+$
+uv sync && uv run python manage.py collectstatic --noinput
+
+Edit
+Pre-Deploy CommandOptional
+Render runs this command before the start command. Useful for database migrations and static asset uploads.
+$
+
+Edit
+Start Command
+Render runs this command to start your app with each deploy.
+$
+gunicorn backend.wsgi:application
+
+Edit
+Auto-Deploy
+By default, Render automatically deploys your service whenever you update its code or configuration. Disable to handle deploys manually. Learn more.
+autoDeployTrigger
+
+Off
+
+Edit
+Deploy Hook
+Your private URL to trigger a deploy for this server. Remember to keep this a secret.
+https://api.render.com/deploy/srv-d4hjc79r0fns73a9uea0?key=R4o6ypCh5d0
+
+
+
