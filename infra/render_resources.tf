@@ -14,4 +14,4 @@ resource "render_web_service" "backend" {
       start_command = "gunicorn backend.wsgi:application"
     }
   }
-
+}
