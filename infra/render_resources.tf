@@ -1,16 +1,16 @@
 resource "render_web_service" "backend" {
-  name = "Gym Assistant Backend"
-  repo = "https://github.com/Codrul-si-Petro/Gym-Assistant"
-  type = "web_service"
+  name   = "Gym Assistant Backend"
+  plan   = "free"
+  region = "frankfurt"
 
-  web_service_details = {
-    env    = "python"
-    region = "frankfurt"
-    plan   = "free"
-
-    native = {
+  runtime_source = {
+    native_runtime = {
+      repo_url      = "https://github.com/Codrul-si-Petro/Gym-Assistant"
+      branch        = "main"
+      runtime       = "python"
       build_command = "uv sync && uv run python manage.py collectstatic --noinput"
       start_command = "gunicorn backend.wsgi:application"
+      auto_deploy   = false
     }
   }
 }
