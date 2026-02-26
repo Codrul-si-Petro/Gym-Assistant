@@ -4,12 +4,12 @@ resource "render_web_service" "backend" {
   region = "frankfurt"
 
 
-  runtime_source = {
+  runtime_source  {
     native_runtime = {
       repo_url = "https://github.com/Codrul-si-Petro/Gym-Assistant"
       branch = "main"
       runtime = "python"
-      auto_deploy = "false"
+      auto_deploy = false
       build_command = "uv sync && uv run python manage.py collectstatic --noinput"
       start_command = "gunicorn backend.wsgi:application"
     }
