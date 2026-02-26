@@ -15,11 +15,3 @@ resource "render_web_service" "backend" {
     }
   }
 
-
-  # need to get key-values for Render env vars
-  render_env_vars = {
-    for k,v in local.shared_secrets :
-      k => { value = v }
-  }
-}
-
