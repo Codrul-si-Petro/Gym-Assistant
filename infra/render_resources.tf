@@ -3,8 +3,6 @@ resource "render_web_service" "backend" {
   plan = "free"
   region = "frankfurt"
 
-  skip_deploy_after_service_update = true
-  wait_for_deploy_completion = true
 
   runtime_source = {
     native_runtime = {
