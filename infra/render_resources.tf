@@ -17,4 +17,19 @@ resource "render_web_service" "backend" {
     runtime       = "python"
   }
 
+  lifecycle {
+    ignore_changes = [
+      active_custom_domains,
+      id,
+      slug,
+      url,
+      log_stream_override,
+      maintenance_mode,
+      max_shutdown_delay_seconds,
+      notification_override,
+      previews,
+      pull_request_previews_enabled,
+    ]
+  }
 }
+
