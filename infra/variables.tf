@@ -1,10 +1,24 @@
 variable "GITHUB_TOKEN" {
   type      = string
   sensitive = true
-  # No default - must be set in TFC or via TF_VAR_GITHUB_TOKEN
 }
 
-# --- GitHub Actions secrets ---
+variable "RENDER_TOKEN" {
+  type      = string
+  sensitive = true
+}
+
+variable "RENDER_OWNER_ID" {
+  type = string
+  sensitive = true
+}
+
+variable "RENDER_SERVICE_ID" {
+  type = string
+  sensitive = true
+}
+
+# --- GitHub Actions + Render secrets ---
 variable "DATABASE_URL" {
   type      = string
   sensitive = true

@@ -3,6 +3,10 @@ name: Pre-commit
 on:
   pull_request:
     branches: [main, dev]
+    paths:
+        - 'frontend/**'
+        - 'backend/**'
+        - 'tests/ui/**'
 
 jobs:
   lint-and-typecheck:
