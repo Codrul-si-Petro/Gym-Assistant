@@ -8,3 +8,5 @@ infra/dbt/logs
 .terraform/
 terraform.tfstate
 terraform.tfstate.backupnfra/dbt/transformation/logs
+cloud.tfstate
+terraform.tfvars
