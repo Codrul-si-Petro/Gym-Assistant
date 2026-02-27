@@ -17,4 +17,6 @@ provider "github" {
 
 provider "render" {
   api_key = var.RENDER_TOKEN
+  owner_id = var.RENDER_OWNER_ID
+
 }

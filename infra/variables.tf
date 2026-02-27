@@ -8,6 +8,11 @@ variable "RENDER_TOKEN" {
   sensitive = true
 }
 
+variable "RENDER_OWNER_ID" {
+  type = string
+  sensitive = true
+}
+
 variable "RENDER_SERVICE_ID" {
   type = string
   sensitive = true
