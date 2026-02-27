@@ -4,4 +4,7 @@
 __pycache/
 *.py[cod]
 infra/dbt/logs
-infra/dbt/transformation/logs
+.terraform.lock.hcl
+.terraform/
+terraform.tfstate
+terraform.tfstate.backupnfra/dbt/transformation/logs
