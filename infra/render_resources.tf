@@ -3,6 +3,7 @@ resource "render_web_service" "backend" {
   plan   = "free"
   region = "frankfurt"
   start_command = "gunicorn backend.wsgi:application"
+  root_directory = ""
 
   runtime_source = {
     native_runtime = {
@@ -12,12 +13,25 @@ resource "render_web_service" "backend" {
       auto_deploy   = false
       repo_url      = "https://github.com/Codrul-si-Petro/Gym-Assistant"
       runtime       = "python"
+      auto_deploy_trigger = "off"
     }
     repo_url      = "https://github.com/Codrul-si-Petro/Gym-Assistant"
     runtime       = "python"
   }
 
   env_vars = {
+    ADMIN_PASS = {
+      value = var.ADMIN_PASS
+    }
+
+    DJANGO_ALLOWED_HOSTS = {
+      value = var.DJANGO_ALLOWED_HOSTS
+    }
+
+    RCLONE_CONFIG = {
+      value = var.RCLONE_CONFIG
+    }
+
     DATABASE_URL = {
       value = var.DATABASE_URL
     }
