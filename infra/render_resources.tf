@@ -18,20 +18,61 @@ resource "render_web_service" "backend" {
   }
 
   env_vars = {
-    DATABASE_URL          = var.DATABASE_URL
-    DATABASE_URL_NO_POOLER = var.DATABASE_URL_NO_POOLER
-    DBT_DBNAME            = var.DBT_DBNAME
-    DBT_HOST              = var.DBT_HOST
-    DBT_PASSWORD          = var.DBT_PASSWORD
-    DBT_USER              = var.DBT_USER
-    DJANGO_DEBUG          = var.DJANGO_DEBUG
-    DJANGO_SECRET_KEY     = var.DJANGO_SECRET_KEY
-    MAILERSEND_API_TOKEN  = var.MAILERSEND_API_TOKEN
-    MAILERSEND_FROM_EMAIL = var.MAILERSEND_FROM_EMAIL
-    OAUTH_CLIENT_ID       = var.OAUTH_CLIENT_ID
-    OAUTH_SECRET_KEY      = var.OAUTH_SECRET_KEY
-    UI_TESTER_PASS        = var.UI_TESTER_PASS
-    UI_TESTER_USERNAME    = var.UI_TESTER_USERNAME
+    DATABASE_URL = {
+      value = var.DATABASE_URL
+    }
+
+    DATABASE_URL_NO_POOLER = {
+      value = var.DATABASE_URL_NO_POOLER
+    }
+
+    DBT_DBNAME = {
+      value = var.DBT_DBNAME
+    }
+
+    DBT_HOST = {
+      value = var.DBT_HOST
+    }
+
+    DBT_PASSWORD = {
+      value = var.DBT_PASSWORD
+    }
+
+    DBT_USER = {
+      value = var.DBT_USER
+    }
+
+    DJANGO_DEBUG = {
+      value = var.DJANGO_DEBUG
+    }
+
+    DJANGO_SECRET_KEY = {
+      value = var.DJANGO_SECRET_KEY
+    }
+
+    MAILERSEND_API_TOKEN = {
+      value = var.MAILERSEND_API_TOKEN
+    }
+
+    MAILERSEND_FROM_EMAIL = {
+      value = var.MAILERSEND_FROM_EMAIL
+    }
+
+    OAUTH_CLIENT_ID = {
+      value = var.OAUTH_CLIENT_ID
+    }
+
+    OAUTH_SECRET_KEY = {
+      value = var.OAUTH_SECRET_KEY
+    }
+
+    UI_TESTER_PASS = {
+      value = var.UI_TESTER_PASS
+    }
+
+    UI_TESTER_USERNAME = {
+      value = var.UI_TESTER_USERNAME
+    }
   }
 
   lifecycle {
