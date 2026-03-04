@@ -101,6 +101,9 @@ resource "render_web_service" "backend" {
       notification_override,
       previews,
       pull_request_previews_enabled,
+      secret_files,
+      environment_id,
+      num_instances,
     ]
   }
 }
