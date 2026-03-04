@@ -3,6 +3,21 @@ variable "GITHUB_TOKEN" {
   sensitive = true
 }
 
+variable "DJANGO_ALLOWED_HOSTS" {
+  type      = string
+  sensitive = true
+}
+
+variable "ADMIN_PASS" {
+  type      = string
+  sensitive = true
+}
+
+variable "RCLONE_CONFIG" {
+  type      = string
+  sensitive = true
+}
+
 variable "RENDER_TOKEN" {
   type      = string
   sensitive = true

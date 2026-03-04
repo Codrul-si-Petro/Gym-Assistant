@@ -1,4 +1,10 @@
 terraform {
+  cloud {
+    organization = "Gym-Assistant"
+
+    workspaces { name = "Gym-Assistant" }
+  }
+
   required_providers {
     github = {
       source = "integrations/github"
