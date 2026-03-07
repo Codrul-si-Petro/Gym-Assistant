@@ -3,6 +3,8 @@ from django.urls import include, path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
+from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
+from backend.authentication.google_login_view import google_oauth_jwt_redirect
 
 from backend.authentication.views import (
     CustomAllauthLoginView,
@@ -33,6 +35,10 @@ urlpatterns = [
     path("api/", include("backend.core.urls_api")),
     path("api/", include("backend.core.analytics.urls")),
     path("api/auth/", include("backend.authentication.urls_api")),
+    # JWT Token stuff
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("social/google/login/callback/", google_oauth_jwt_redirect, name="google_jwt_redirect"), # this overrides google allauth below
     # Swagger UI
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from datetime import timedelta
 import os
 import warnings
 from pathlib import Path
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",  # Required for allauth
     "django.contrib.staticfiles",
     "django.contrib.messages",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -62,7 +64,15 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "https://gym-assistant-6z0m.onrender.com", # production frontend domain
+        *(["http://localhost:5500"] if DEBUG else "") # using this to be able to use CORS in local development
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = "backend.urls"
 
@@ -70,7 +80,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
-            BASE_DIR / "frontend" / "templates",
+            BASE_DIR / "django_frontend" / "templates",
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -139,6 +149,8 @@ USE_TZ = True
 
 AUTH_USER_MODEL = "authentication.User"
 
+FRONTEND_URL = "http://localhost:5500"
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -146,7 +158,7 @@ STATIC_URL = "/static/"
 
 # tell django where to find static files. will be needed later once i have static files
 STATICFILES_DIRS = [
-    BASE_DIR / "frontend" / "static",
+    BASE_DIR / "django_frontend" / "static",
 ]
 
 # for prod, need this to collect static files for Render. If this isnt correct swagger is blank
@@ -186,6 +198,7 @@ LOGOUT_REDIRECT_URL = "/"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
     ],
@@ -201,6 +214,19 @@ REST_FRAMEWORK = {
         "backend.core.api_throttle.DefaultThrottle",
     ],
 }
+
+
+# token lifetime config
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+
+}
+
+# google auth login stuff below
 CLIENT_ID = os.getenv("OAUTH_CLIENT_ID")
 OAUTH_SECRET = os.getenv("OAUTH_SECRET_KEY")
 
