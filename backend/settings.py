@@ -31,6 +31,7 @@ DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() in ("true")
 print(f"Debugging set to: {DEBUG}")
 
 ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 
 # Application definition
@@ -69,10 +70,14 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "https://gym-assistant-6z0m.onrender.com", # production frontend domain
-        *(["http://localhost:5500"] if DEBUG else "") # using this to be able to use CORS in local development
+        *(["http://localhost:5500"] if DEBUG == False else "") # using this to be able to use CORS in local development
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# need this now since separating frontend and backend
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
 
 ROOT_URLCONF = "backend.urls"
 
@@ -149,7 +154,6 @@ USE_TZ = True
 
 AUTH_USER_MODEL = "authentication.User"
 
-FRONTEND_URL = "http://localhost:5500"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -191,10 +195,12 @@ SOCIALACCOUNT_AUTO_SIGNUP = True  # Skip signup form for social login
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Auto-link if email matches existing account
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Automatically connect social to existing account
 
-# login redirect override variables
-LOGIN_REDIRECT_URL = "/"
+ACCOUNT_SIGNUP_REDIRECT_URL = None
+ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = True
+LOGIN_REDIRECT_URL = f"{FRONTEND_URL}/homepage.html"
 LOGOUT_REDIRECT_URL = "/"
 
+SOCIALACCOUNT_ADAPTER = "backend.authentication.adapters.JWTRedirectAdapter"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -231,9 +237,6 @@ CLIENT_ID = os.getenv("OAUTH_CLIENT_ID")
 OAUTH_SECRET = os.getenv("OAUTH_SECRET_KEY")
 
 SOCIALACCOUNT_PROVIDERS = {"google": {"APP": {"client_id": CLIENT_ID, "secret": OAUTH_SECRET, "key": ""}}}
-
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {

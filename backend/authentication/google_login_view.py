@@ -17,17 +17,19 @@ def google_oauth_jwt_redirect(request):
     if user.is_authenticated:
         # Issue JWTs
         refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token) # TODO: find out why this branch isnt taken into consideration with the new frontend
+        access_token = str(refresh.access_token)
         refresh_token = str(refresh)
 
         # Redirect to frontend home
-        frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5500")
+        frontend_url = getattr(settings, "FRONTEND_URL")
         params = urlencode({"access": access_token, "refresh": refresh_token})
         redirect_url = f"{frontend_url}/homepage.html?{params}"
         print(settings.FRONTEND_URL)
         print(f"REDIRECTING TO: {redirect_url}")
+        print(request.user, request.user.is_authenticated)
         return redirect(redirect_url)
     
     # Not logged in: redirect to login
     print(f"LOGIN FAILED REDIRECTING TO login html")
+    print(request.user, request.user.is_authenticated)
     return redirect(f"{settings.FRONTEND_URL}/pages/login.html")

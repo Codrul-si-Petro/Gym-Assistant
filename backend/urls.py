@@ -38,10 +38,12 @@ urlpatterns = [
     # JWT Token stuff
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("social/google/login/callback/", google_oauth_jwt_redirect, name="google_jwt_redirect"), # this overrides google allauth below
+    path("auth/google/jwt", google_oauth_jwt_redirect, name="google_oauth_jwt_redirect"),
     # Swagger UI
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    # custom view to redirect to frontend
+    path("social/google/login/callback/", google_oauth_jwt_redirect, name="google_oauth_jwt_redirect"),
     # Authentication - Override Django's built-in password reset views with custom templates
     path("auth/password_reset/", CustomPasswordResetView.as_view(), name="password_reset"),
     path("auth/password_reset/done/", CustomPasswordResetDoneView.as_view(), name="password_reset_done"),
