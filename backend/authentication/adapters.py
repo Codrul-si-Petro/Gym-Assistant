@@ -24,6 +24,7 @@ class JWTAccountAdapter(DefaultAccountAdapter):
     """
     Account adapter: JWT redirect after login/signup. No MailerSend; uses Django default email.
     """
+
     def get_login_redirect_url(self, request):
         url = get_jwt_login_redirect_url(request)
         if url:
