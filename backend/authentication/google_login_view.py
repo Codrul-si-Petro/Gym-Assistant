@@ -1,9 +1,11 @@
-from rest_framework_simplejwt.tokens import RefreshToken
+from urllib.parse import urlencode
+
 from django.conf import settings
 from django.shortcuts import redirect
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
-from urllib.parse import urlencode
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -14,6 +16,7 @@ def google_oauth_jwt_redirect(request):
     Otherwise redirect to frontend login.
     """
     user = request.user
+    print("DEBUG+++ Google oauth view is actually used!")
     if user.is_authenticated:
         # Issue JWTs
         refresh = RefreshToken.for_user(user)
@@ -23,13 +26,13 @@ def google_oauth_jwt_redirect(request):
         # Redirect to frontend home
         frontend_url = getattr(settings, "FRONTEND_URL")
         params = urlencode({"access": access_token, "refresh": refresh_token})
-        redirect_url = f"{frontend_url}/homepage.html?{params}"
+        redirect_url = f"{frontend_url}/index.html?{params}"
         print(settings.FRONTEND_URL)
         print(f"REDIRECTING TO: {redirect_url}")
         print(request.user, request.user.is_authenticated)
         return redirect(redirect_url)
-    
+
     # Not logged in: redirect to login
-    print(f"LOGIN FAILED REDIRECTING TO login html")
+    print("LOGIN FAILED REDIRECTING TO login html")
     print(request.user, request.user.is_authenticated)
     return redirect(f"{settings.FRONTEND_URL}/pages/login.html")

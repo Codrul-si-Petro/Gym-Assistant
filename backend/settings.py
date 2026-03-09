@@ -10,9 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from datetime import timedelta
 import os
 import warnings
+from datetime import timedelta
 from pathlib import Path
 from urllib.parse import parse_qsl, urlparse
 
@@ -69,8 +69,8 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "https://gym-assistant-6z0m.onrender.com", # production frontend domain
-        *(["http://localhost:5500"] if DEBUG == False else "") # using this to be able to use CORS in local development
+    "https://gym-assistant-6z0m.onrender.com",  # production frontend domain
+    *(["http://localhost:5500"] if DEBUG == True else ""),  # using this to be able to use CORS in local development
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -183,7 +183,7 @@ SITE_ID = 1  # TODO: learn why this is needed for allauth
 
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # Require email verification before login
+ACCOUNT_EMAIL_VERIFICATION = "none"  # Require email verification before login
 ACCOUNT_ADAPTER = "backend.emails.adapters.MailerSendAccountAdapter"  # Use MailerSend for emails
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Confirm email on GET request (clicking the link)
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Email confirmation link expires in 3 days
@@ -197,7 +197,7 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Automatically connect 
 
 ACCOUNT_SIGNUP_REDIRECT_URL = None
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = True
-LOGIN_REDIRECT_URL = f"{FRONTEND_URL}/homepage.html"
+LOGIN_REDIRECT_URL = f"{FRONTEND_URL}/index.html"
 LOGOUT_REDIRECT_URL = "/"
 
 SOCIALACCOUNT_ADAPTER = "backend.authentication.adapters.JWTRedirectAdapter"
@@ -229,7 +229,6 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
-
 }
 
 # google auth login stuff below

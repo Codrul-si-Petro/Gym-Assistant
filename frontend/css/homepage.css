@@ -1,51 +1,89 @@
+/* --- Page background (dark mode) --- */
 body {
     width: 100%;
     max-width: 100%;
     height: 100%;
     margin: 0;
-    background: linear-gradient(to top right, #453649, #471f68, #342f47, #291e30);
+    background: #0c0c0e;
+    background: linear-gradient(180deg, #0c0c0e 0%, #12121a 50%, #0c0c0e 100%);
     background-attachment: fixed;
+    color: #f4f4f5;
 }
 
-#word{
-    color: rgb(108, 115, 158);
+/* Prevent horizontal overflow on small screens */
+html, body {
+    overflow-x: hidden;
 }
 
-.Intro{
+/* --- Rotating word in hero ("inspiration." / "passion." / "motivation.") --- */
+#word {
+    color: #22d3ee;
+}
+
+/* --- Hero / intro block --- */
+.Intro {
     padding-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
+/* --- Big CTA button below hero text --- */
+.cta-button {
+    display: inline-block;
+    margin-top: 32px;
+    padding: 16px 32px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #0c0c0e;
+    background: #22d3ee;
+    border-radius: 12px;
+    text-decoration: none;
+    text-align: center;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.cta-button:hover {
+    background: #06b6d4;
+    transform: scale(1.02);
+}
+
+/* --- Top nav bar (.container) --- */
 .container {
     display: flex;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.20);
-    background-color: #4d3a5a;
-    height: 60px;
-    padding-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    background-color: #16161a;
+    border: 1px solid #2a2a2e;
+    min-height: 48px;
+    padding: 8px 12px 10px;
     border-bottom-right-radius: 10px;
     border-bottom-left-radius: 10px;
 }
 
+/* --- All links inside nav --- */
 .container a {
-     flex-wrap: wrap;
-     gap: 10px;
-     margin-top: 40px;
-     margin-bottom: 40px;
-     padding: auto;
-     font-family: Georgia, serif;
-     color: rgb(139, 138, 138);
-     text-align: left;
-     text-decoration: none;
-     font-size: 14px;
+    font-family: Georgia, serif;
+    color: #a1a1aa;
+    text-align: left;
+    text-decoration: none;
+    font-size: 14px;
 }
 
-#item1{
+/* --- Nav: first item (logo / "Workout Assistant") --- */
+#item1 {
     flex: 1 1 150px;
     min-width: 150px;
-    padding-left: 30px;
-    border-right: 2px solid #000;
+    padding: 6px 12px 6px 20px;
+    border-right: 1px solid #2a2a2e;
+    color: #f4f4f5;
+    font-size: 14px;
 }
 
-#item2{
+/* --- Nav: item 2 (not used in current homepage markup) --- */
+#item2 {
     flex: 1 1 120px;
     padding-left: 10px;
     padding-right: 10px;
@@ -53,16 +91,18 @@ body {
     border-right: 2px solid #000;
 }
 
-#item3{
+/* --- Nav: item 3 (not used in current homepage markup) --- */
+#item3 {
     flex: 1 1 120px;
     padding-left: 10px;
-    padding-right: 80px; 
+    padding-right: 80px;
     margin-right: 90px;
     color: rgb(20, 27, 27);
     border-right: 2px solid #000;
 }
 
-#item4{
+/* --- Nav: item 4 (not used in current homepage markup) --- */
+#item4 {
     flex: 1 1 120px;
     margin-left: 40px;
     padding-left: 90px;
@@ -70,13 +110,126 @@ body {
     color: rgb(20, 27, 27);
 }
 
-#item5{
+/* --- Nav: item 5 (not used in current homepage markup) --- */
+#item5 {
     flex: 1 1 100px;
     color: rgb(20, 27, 27);
 }
 
-.container a:hover{
-   font-size: 13px;
-   text-shadow: 3px 3px 4px rgba(0,0,0,0.20);
-   background-color: #bbbabe;
+/* --- Nav link hover --- */
+.container a:hover {
+    color: #22d3ee;
+    background-color: #27272a;
+    border-radius: 4px;
+}
+
+/* --- Auth links: right-aligned, bigger button style --- */
+#auth-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+#auth-links a {
+    white-space: nowrap;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 10px 18px;
+    background: #27272a;
+    border-radius: 8px;
+    color: #f4f4f5;
+}
+
+#auth-links a:hover {
+    background: #22d3ee;
+    color: #0c0c0e;
+}
+
+/* --- Tablet --- */
+@media (max-width: 768px) {
+    .container {
+        padding: 8px 10px 10px;
+        min-height: 0;
+    }
+
+    #item1 {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding-left: 10px;
+        padding-right: 10px;
+        border-right: none;
+        font-size: 14px;
+    }
+
+    #auth-links {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 4px;
+        padding-top: 6px;
+        border-top: 1px solid #2a2a2e;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+
+    #auth-links a {
+        font-size: 15px;
+        padding: 10px 16px;
+    }
+
+    .Intro {
+        padding: 20px 16px;
+    }
+
+    .Intro h2 {
+        font-size: clamp(1.15rem, 4vw, 1.75rem);
+        word-wrap: break-word;
+        color: #f4f4f5;
+    }
+
+    .cta-button {
+        margin-top: 24px;
+        padding: 14px 28px;
+        font-size: 1rem;
+    }
+}
+
+/* --- Phone: ~412×915 --- */
+@media (max-width: 412px) {
+    .container {
+        padding: 6px 8px 8px;
+        min-height: 0;
+    }
+
+    #item1 {
+        font-size: 13px;
+    }
+
+    #auth-links {
+        margin-top: 4px;
+        padding-top: 6px;
+        gap: 6px;
+    }
+
+    #auth-links a {
+        font-size: 15px;
+        padding: 10px 14px;
+    }
+
+    .Intro {
+        padding: 16px 12px;
+    }
+
+    .Intro h2 {
+        font-size: clamp(1.1rem, 4vw, 1.5rem);
+    }
+
+    .cta-button {
+        margin-top: 20px;
+        padding: 14px 24px;
+        font-size: 1rem;
+        width: 90%;
+        max-width: 280px;
+    }
 }

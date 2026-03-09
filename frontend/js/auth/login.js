@@ -24,7 +24,7 @@ window.addEventListener("DOMContentLoaded", () => {
         if (res.ok && data.access && data.refresh) {
           localStorage.setItem("access_token", data.access);
           localStorage.setItem("refresh_token", data.refresh);
-          window.location.href = `${FRONTEND_URL}/homepage.html`;
+          window.location.href = `${FRONTEND_URL}/index.html`;
         } else {
           errorDiv.textContent = data.detail || "Login failed";
         }
@@ -34,12 +34,17 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Google OAuth login ---
+  // --- Google OAuth login (popup so main window stays on frontend) ---
   const googleLogin = document.getElementById("googleLogin");
   if (googleLogin) {
     googleLogin.addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href = `${API_BASE}/social/google/login/`;
+      const w = window.open(
+        `${API_BASE}/social/google/login/`,
+        "googleLogin",
+        "width=500,height=600,scrollbars=yes"
+      );
+      if (w) w.focus();
     });
   }
 
@@ -57,34 +62,4 @@ window.addEventListener("DOMContentLoaded", () => {
     window.history.replaceState({}, document.title, cleanPath);
   }
 
-  // --- Update nav links dynamically ---
-  updateAuthLinks();
 });
-
-// --- Dynamic nav links based on login state ---
-function updateAuthLinks() {
-  const loggedIn = !!localStorage.getItem("access_token");
-
-  const loginLink = document.getElementById("login-link");
-  const signupLink = document.getElementById("signup-link");
-  const logoutLink = document.getElementById("logout-link");
-
-  if (!loginLink || !signupLink || !logoutLink) return;
-
-  if (loggedIn) {
-    loginLink.style.display = "none";
-    signupLink.style.display = "none";
-    logoutLink.style.display = "inline-block";
-
-    logoutLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      window.location.href = `${FRONTEND_URL}/homepage.html`;
-    });
-  } else {
-    loginLink.style.display = "inline-block";
-    signupLink.style.display = "inline-block";
-    logoutLink.style.display = "none";
-  }
-}
