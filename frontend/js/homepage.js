@@ -17,7 +17,13 @@ if (window.location.hostname === "localhost" || window.location.hostname === "12
 }
 
 const API_PREFIX = "/api/";
-const FRONTEND_URL = window.FRONTEND_URL || "http://localhost:5500";
+
+let FRONTEND_URL;
+if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+  FRONTEND_URL = "http://localhost:5500"; // local frontend
+} else {
+  FRONTEND_URL = 'https://gym-assistant-6z0m.onrender.com';
+}
 
 function updateAuthLinks() {
   const loggedIn = !!localStorage.getItem("access_token");
@@ -69,7 +75,7 @@ window.addEventListener("DOMContentLoaded", () => {
         if (res.ok && data.access && data.refresh) {
           localStorage.setItem("access_token", data.access);
           localStorage.setItem("refresh_token", data.refresh);
-          window.location.href = (window.FRONTEND_URL || "http://localhost:5500") + "/index.html";
+          window.location.href = `${FRONTEND_URL}/index.html`;
         } else {
           errorDiv.textContent = data.detail || "Login failed";
         }
