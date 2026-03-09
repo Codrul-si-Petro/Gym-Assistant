@@ -32,14 +32,28 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
         window.location.href = "login.html";
       }, 2000);
     } else {
-      const msg = typeof data === "object" ? (data.email?.[0] || data.username?.[0] || data.password2?.[0] || JSON.stringify(data)) : data;
-      errorDiv.textContent = msg || "Sign up failed.";
-      errorDiv.style.color = "#ffaaaa";
+  // API returned an error (400, 401, etc.)
+        let messages = [];
+
+        if (typeof data === "object") {
+          // flatten all fields into one message array
+          for (const [key, value] of Object.entries(data)) {
+            if (Array.isArray(value)) {
+              messages.push(`${key}: ${value.join(", ")}`);
+            } else {
+              messages.push(`${key}: ${value}`);
+            }
+          }
+        } else {
+          messages.push(data);
+        }
+
+        errorDiv.textContent = messages.join(" | ") || "Sign up failed.";
+      }
+    } catch (err) {
+      // Real network error
+      errorDiv.textContent = `Network error: ${err.message}`;
     }
-  } catch (err) {
-    errorDiv.textContent = "Network error.";
-    errorDiv.style.color = "#ffaaaa";
-  }
 });
 
 document.getElementById("googleSignup").addEventListener("click", (e) => {
