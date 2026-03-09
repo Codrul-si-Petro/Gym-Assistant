@@ -34,17 +34,12 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Google OAuth login (popup so main window stays on frontend) ---
+  // --- Google OAuth login (same-tab redirect; works on mobile) ---
   const googleLogin = document.getElementById("googleLogin");
   if (googleLogin) {
     googleLogin.addEventListener("click", (e) => {
       e.preventDefault();
-      const w = window.open(
-        `${API_BASE}/social/google/login/`,
-        "googleLogin",
-        "width=500,height=600,scrollbars=yes"
-      );
-      if (w) w.focus();
+      window.location.href = `${API_BASE}/social/google/login/`;
     });
   }
 

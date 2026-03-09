@@ -44,10 +44,5 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
 
 document.getElementById("googleSignup").addEventListener("click", (e) => {
   e.preventDefault();
-  const w = window.open(
-    `${API_BASE}/social/google/login/`,
-    "googleLogin",
-    "width=500,height=600,scrollbars=yes"
-  );
-  if (w) w.focus();
+  window.location.href = `${API_BASE}/social/google/login/`;
 });

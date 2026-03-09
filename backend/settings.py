@@ -184,7 +184,7 @@ SITE_ID = 1  # TODO: learn why this is needed for allauth
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Require email verification before login
-ACCOUNT_ADAPTER = "backend.emails.adapters.MailerSendAccountAdapter"  # Use MailerSend for emails
+ACCOUNT_ADAPTER = "backend.authentication.adapters.JWTAccountAdapter"  # Use MailerSend for emails
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Confirm email on GET request (clicking the link)
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Email confirmation link expires in 3 days
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = "/accounts/login/"  # Redirect after confirmation
@@ -194,6 +194,7 @@ ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True  # Auto-login after email confirmatio
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Skip signup form for social login
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Auto-link if email matches existing account
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Automatically connect social to existing account
+SOCIAL_ACCOUNT_LOGIN_ON_GET = True # skip You are about to sign in bullshit. Ill advised but it is for frontend for now
 
 ACCOUNT_SIGNUP_REDIRECT_URL = None
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = True
