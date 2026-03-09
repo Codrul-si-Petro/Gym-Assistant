@@ -103,3 +103,13 @@ variable "UI_TESTER_USERNAME" {
   type      = string
   sensitive = false
 }
+
+variable "FRONTEND_URL" {
+  type      = string
+  sensitive = false
+}
+
+variable "BACKEND_URL" {
+  type      = string
+  sensitive = false
+}
