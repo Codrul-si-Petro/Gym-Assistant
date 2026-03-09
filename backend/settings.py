@@ -70,7 +70,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "https://gym-assistant-6z0m.onrender.com",  # production frontend domain
-    *(["http://localhost:5500"] if DEBUG == True else ""),  # using this to be able to use CORS in local development
+    *(["http://localhost:5500"] if DEBUG else ""),  # using this to be able to use CORS in local development
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -194,7 +194,7 @@ ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True  # Auto-login after email confirmatio
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Skip signup form for social login
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Auto-link if email matches existing account
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Automatically connect social to existing account
-SOCIAL_ACCOUNT_LOGIN_ON_GET = True # skip You are about to sign in bullshit. Ill advised but it is for frontend for now
+SOCIAL_ACCOUNT_LOGIN_ON_GET = True  # skip You are about to sign in bullshit. Ill advised but it is for frontend for now
 
 ACCOUNT_SIGNUP_REDIRECT_URL = None
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = True

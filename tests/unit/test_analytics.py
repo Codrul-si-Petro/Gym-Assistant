@@ -25,10 +25,10 @@ class TestRestDaysEndpoint(TestCase):
         self.assertIn("count", response.data)
         self.assertIn("results", response.data)
 
-    def test_rest_days_unauthenticated_returns_403(self):
+    def test_rest_days_unauthenticated_returns_401(self):
         url = "/api/v1/rest-days"
         response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 @pytest.mark.django_db
