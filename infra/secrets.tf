@@ -14,6 +14,8 @@ locals {
     OAUTH_SECRET_KEY       = var.OAUTH_SECRET_KEY
     UI_TESTER_PASS         = var.UI_TESTER_PASS
     UI_TESTER_USERNAME     = var.UI_TESTER_USERNAME
+    FRONTEND_URL          = var.FRONTEND_URL_DEV
+    BACKEND_URL           = var.BACKEND_URL_DEV
   }
   MONOREPO                = "Gym-Assistant"
 }

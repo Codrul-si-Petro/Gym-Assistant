@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+  <link rel="stylesheet" href="css/homepage.css?v=2">
+</head>
+<body>
+
+<nav class="container">
+  <a href="#workout" id="item1">&#10051; Workout Assistant</a>
+  <div id="auth-links">
+    <a href="pages/auth/login.html" id="login-link">Login</a>
+    <a href="pages/auth/signup.html" id="signup-link">Sign up</a>
+    <a href="#" id="logout-link" style="display:none;">Log out</a>
+  </div>
+</nav>
+
+<div class="Intro">
+  <h2>Find your <span id="word">motivation.</span></h2>
+  <a href="pages/core/workouts_table.html" class="cta-button">View workout history</a>
+  <a href="pages/core/workouts_input.html" class="cta-button">Start logging a workout</a>
+</div>
+
+<script src="js/auth/store-jwt.js"></script>
+<script src="js/homepage.js"></script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+const API_BASE = window.API_BASE || "http://127.0.0.1:8000";
+
+function getAuthHeaders() {
+    const token = localStorage.getItem("access_token");
+    if (!token) return null;
+    return {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+    };
+}
+
+function showMessage(text, type) {
+    const el = document.getElementById("message");
+    el.textContent = text;
+    el.className = "message " + (type === "success" ? "success" : "error");
+    el.removeAttribute("hidden");
+    if (type === "success") {
+        setTimeout(function () {
+            el.style.opacity = "0";
+            el.style.transition = "opacity 0.3s ease";
+            setTimeout(function () {
+                el.textContent = "";
+                el.className = "message";
+                el.style.opacity = "";
+            }, 300);
+        }, 3500);
+    }
+}
+
+function clearMessage() {
+    const el = document.getElementById("message");
+    el.textContent = "";
+    el.className = "message";
+}
+
+function formatApiErrors(data) {
+    if (!data || typeof data !== "object") return "Something went wrong.";
+    var parts = [];
+    if (Array.isArray(data)) {
+        parts = data.map(String);
+    } else if (data.non_field_errors) {
+        parts = data.non_field_errors;
+    } else {
+        Object.keys(data).forEach(function (key) {
+            var val = data[key];
+            var label = key.replace(/_/g, " ");
+            if (Array.isArray(val)) parts.push(label + ": " + val.join(" "));
+            else parts.push(label + ": " + String(val));
+        });
+    }
+    return parts.length ? parts.join(" ") : "Something went wrong.";
+}
+
+function fillDatalist(id, items, key) {
+    var list = document.getElementById(id);
+    if (!list) return;
+    list.innerHTML = "";
+    (items || []).forEach(function (item) {
+        var opt = document.createElement("option");
+        opt.value = item[key];
+        list.appendChild(opt);
+    });
+}
+
+function loadOptions() {
+    var headers = getAuthHeaders();
+    if (!headers) {
+        showMessage("Please log in to log workouts.", "error");
+        return;
+    }
+    Promise.all([
+        fetch(API_BASE + "/api/exercises/", { headers: headers }).then(function (r) { return r.ok ? r.json() : []; }),
+        fetch(API_BASE + "/api/attachments/", { headers: headers }).then(function (r) { return r.ok ? r.json() : []; }),
+        fetch(API_BASE + "/api/equipment/", { headers: headers }).then(function (r) { return r.ok ? r.json() : []; }),
+    ]).then(function (results) {
+        fillDatalist("exercises_list", results[0], "exercise_name");
+        fillDatalist("attachments_list", results[1], "attachment_name");
+        fillDatalist("equipment_list", results[2], "equipment_name");
+    }).catch(function () {
+        showMessage("Could not load exercise/attachment/equipment lists.", "error");
+    });
+}
+
+function setDefaultDate() {
+    var dateInput = document.getElementById("date");
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().slice(0, 10);
+    }
+}
+
+function getPayload() {
+    var dateVal = document.getElementById("date").value;
+    return {
+        exercise_name: (document.getElementById("exercise_name").value || "").trim(),
+        attachment_name: (document.getElementById("attachment_name").value || "").trim() || "None",
+        equipment_name: (document.getElementById("equipment_name").value || "").trim() || "None",
+        workout_number: parseInt(document.getElementById("workout_number").value, 10) || 1,
+        set_number: parseInt(document.getElementById("set_number").value, 10) || 1,
+        repetitions: parseInt(document.getElementById("repetitions").value, 10) || 0,
+        load: parseFloat(document.getElementById("load").value) || 0,
+        unit: document.getElementById("unit").value || "KG",
+        set_type: (document.getElementById("set_type").value || "").trim() || "Working set",
+        comments: (document.getElementById("comments").value || "").trim() || "None",
+        workout_split: (document.getElementById("workout_split").value || "").trim() || "None",
+        date: dateVal || new Date().toISOString().slice(0, 10),
+    };
+}
+
+function onSubmit(e) {
+    e.preventDefault();
+    clearMessage();
+    var headers = getAuthHeaders();
+    if (!headers) {
+        showMessage("Please log in to log workouts.", "error");
+        return;
+    }
+    var btn = document.getElementById("submit-btn");
+    btn.disabled = true;
+    fetch(API_BASE + "/api/workouts/", {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(getPayload()),
+    })
+        .then(function (res) {
+            return res.json().then(function (data) { return { status: res.status, data: data }; });
+        })
+        .then(function (result) {
+            if (result.status >= 200 && result.status < 300) {
+                showMessage("Workout saved.", "success");
+                document.getElementById("set_number").value = (parseInt(document.getElementById("set_number").value, 10) || 1) + 1;
+                document.getElementById("repetitions").value = "0";
+                document.getElementById("load").value = "0";
+            } else {
+                showMessage(formatApiErrors(result.data), "error");
+            }
+        })
+        .catch(function () {
+            showMessage("Network error. Try again.", "error");
+        })
+        .finally(function () {
+            btn.disabled = false;
+        });
+}
+
+function onDeleteLast() {
+    clearMessage();
+    var headers = getAuthHeaders();
+    if (!headers) {
+        showMessage("Please log in first.", "error");
+        return;
+    }
+    fetch(API_BASE + "/api/workouts/", { headers: headers })
+        .then(function (r) { return r.json(); })
+        .then(function (list) {
+            if (!list || list.length === 0) {
+                showMessage("No workouts to delete.", "error");
+                return;
+            }
+            var byDate = list.slice().sort(function (a, b) {
+                var t1 = (a.ta_created_at || "").replace(/[-T:Z.]/g, "");
+                var t2 = (b.ta_created_at || "").replace(/[-T:Z.]/g, "");
+                return t2.localeCompare(t1);
+            });
+            var last = byDate[0];
+            var id = last.workout_id;
+            return fetch(API_BASE + "/api/workouts/" + id + "/", {
+                method: "DELETE",
+                headers: headers,
+            });
+        })
+        .then(function (res) {
+            if (res && res.status === 204) {
+                showMessage("Last entry deleted.", "success");
+            } else if (res && res.status === 404) {
+                showMessage("Entry already deleted or not found.", "error");
+            } else if (res && res.status === 405) {
+                showMessage("Delete is not enabled for workouts on the server.", "error");
+            } else {
+                showMessage("Could not delete last entry.", "error");
+            }
+        })
+        .catch(function () {
+            showMessage("Could not delete last entry.", "error");
+        });
+}
+
+function initNumberInputs() {
+    var ids = ["set_number", "repetitions", "load"];
+    ids.forEach(function (id) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        input.addEventListener("focus", function () {
+            if (this.value === "0" || this.value === "0.0") this.value = "";
+        });
+        input.addEventListener("blur", function () {
+            if (this.value === "" || this.value == null) {
+                var min = parseInt(this.getAttribute("min"), 10);
+                this.value = isNaN(min) ? "0" : String(min);
+            }
+        });
+    });
+}
+
+function initExerciseChangeResetSet() {
+    var exerciseInput = document.getElementById("exercise_name");
+    var setInput = document.getElementById("set_number");
+    if (exerciseInput && setInput) {
+        exerciseInput.addEventListener("change", function () {
+            setInput.value = "1";
+        });
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    setDefaultDate();
+    loadOptions();
+    initNumberInputs();
+    initExerciseChangeResetSet();
+    document.getElementById("workout-form").addEventListener("submit", onSubmit);
+    document.getElementById("delete-last-btn").addEventListener("click", onDeleteLast);
+});

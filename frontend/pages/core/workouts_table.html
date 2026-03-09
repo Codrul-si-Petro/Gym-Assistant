@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout History</title>
+    <link rel="stylesheet" href="../../css/core/workouts_table.css">
+</head>
+<body>
+    <div class="nav-links">
+        <a href="../../index.html">Home</a>
+    </div>
+    <h1>Workout History</h1>
+    <div id="auth-msg" class="auth-msg"></div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Exercise</th>
+                    <th>Attachment</th>
+                    <th>Equipment</th>
+                    <th>Workout #</th>
+                    <th>Set</th>
+                    <th>Reps</th>
+                    <th>Load</th>
+                    <th>Unit</th>
+                    <th>Type</th>
+                    <th>Comments</th>
+                    <th>Split</th>
+                </tr>
+            </thead>
+            <tbody id="workout-tbody">
+                <tr><td colspan="13" class="empty-msg">Loading…</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <script src="../../js/core/workouts_table.js"></script>
+</body>
+</html>
