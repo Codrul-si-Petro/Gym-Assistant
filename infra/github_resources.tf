@@ -85,10 +85,10 @@ resource "github_actions_secret" "UI_TESTER_USERNAME" {
 resource "github_actions_secret" "FRONTEND_URL" {
   repository      = local.MONOREPO
   secret_name     = "FRONTEND_URL"
-  plaintext_value = var.FRONTEND_URL
+  plaintext_value = var.FRONTEND_URL_DEV
 }
 resource "github_actions_secret" "BACKEND_URL" {
   repository      = local.MONOREPO
   secret_name     = "BACKEND_URL"
-  plaintext_value = var.BACKEND_URL
+  plaintext_value = var.BACKEND_URL_DEV
 }
