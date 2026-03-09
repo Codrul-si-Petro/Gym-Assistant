@@ -1,6 +1,11 @@
 // URLS for local development and production
 const FRONTEND_URL = window.FRONTEND_URL || "http://localhost:5500";
-const API_BASE = window.API_BASE || "http://127.0.0.1:8000";
+// Use localhost/127 if running locally, otherwise use current host
+if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+  API_BASE = "http://127.0.0.1:8000"; // local backend
+} else {
+  API_BASE = 'https://gym-assistant-2smv.onrender.com';
+}
 const API_PREFIX = "/api/";
 
 window.addEventListener("DOMContentLoaded", () => {
