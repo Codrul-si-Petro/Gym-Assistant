@@ -3,19 +3,21 @@ Pytest configuration for Django tests.
 pytest-django will automatically configure Django settings.
 Tests use the actual database instead of creating a test database.
 """
+
 import os
-import pytest
 import subprocess
-import requests
 import time
 from pathlib import Path
+
+import pytest
+import requests
+
 from tests.helpers import delete_test_user
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 print(BASE_DIR)
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 print(FRONTEND_DIR)
-
 
 
 FRONTEND_URL: str | None = os.getenv("FRONTEND_URL")
@@ -53,7 +55,7 @@ def start_servers():
     """
 
     django_process = subprocess.Popen(
-        ["python", "manage.py", "runserver", "--noreload"], # noreload so django doesnt spawn two processes
+        ["python", "manage.py", "runserver", "--noreload"],  # noreload so django doesnt spawn two processes
         cwd=BASE_DIR,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -100,15 +102,16 @@ def test_credentials():
 
     return username, password
 
+
 @pytest.fixture
 def test_user_cleanup(test_credentials):
     username, _ = test_credentials
     yield username
     delete_test_user(username)
 
+
 @pytest.fixture
 def homepage(page, frontend_url):
     page.goto(frontend_url)
     page.wait_for_load_state("networkidle")
     return page
-

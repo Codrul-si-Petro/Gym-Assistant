@@ -1,5 +1,7 @@
-import psycopg2
 import os
+
+import psycopg2
+
 
 def delete_test_user(username: str):
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
