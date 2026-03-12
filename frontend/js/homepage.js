@@ -52,7 +52,12 @@ function updateAuthLinks() {
     if (signupLink) signupLink.style.display = "inline-block";
     if (logoutLink) logoutLink.style.display = "none";
     authContainer.setAttribute("data-auth", "logged-out");
+
   }
+    const authenticatedLinks = document.getElementById("authenticated-links");
+    if (authenticatedLinks) {
+      authenticatedLinks.style.display = loggedIn ? "flex" : "none";
+    }
 }
 
 window.addEventListener("DOMContentLoaded", updateAuthLinks);
