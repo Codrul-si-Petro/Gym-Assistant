@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charts</title>
+    <link rel="stylesheet" href="../../css/core/dashboard.css">
+</head>
+<body>
+    <!-- Top navigation: link back to home -->
+    <div class="nav-links">
+        <a href="../../index.html">Home</a>
+    </div>
+
+    <!-- Centered main content: title, message area, date filters, chart -->
+    <div class="dashboard-main">
+        <h1>These are your favourite exercises</h1>
+
+        <!-- Shown when there's no data, an error, or a backend message -->
+        <p id="chart-msg" class="chart-msg" aria-live="polite"></p>
+
+        <!-- Date range filter: no value attribute = empty until user picks a date (avoids default value) -->
+        <div class="chart-controls">
+            <label for="start_date" class="chart-date-label">From</label>
+            <input type="date" id="start_date" class="chart-date" aria-label="From date" />
+            <span class="chart-date-sep" aria-hidden="true">—</span>
+            <label for="end_date" class="chart-date-label">To</label>
+            <input type="date" id="end_date" class="chart-date" aria-label="To date" />
+          </div>
+
+        <!-- Scrollable container for the chart (scrollbar styled in CSS to be almost invisible) -->
+        <div class="chart-scroll-wrap">
+            <!-- Skeleton shown while chart data is loading -->
+            <div id="chart-skeleton" class="chart-skeleton">
+                <div class="skeleton-bar" style="width: 90%"></div>
+                <div class="skeleton-bar" style="width: 80%"></div>
+                <div class="skeleton-bar" style="width: 70%"></div>
+                <div class="skeleton-bar" style="width: 55%"></div>
+                <div class="skeleton-bar" style="width: 45%"></div>
+            </div>
+            <div class="chart-inner">
+                <canvas id="chart-canvas" aria-label="Bar chart of favourite exercises"></canvas>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <script src="../../js/auth/require-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="../../js/core/dashboard.js"></script>
+</body>
+</html>

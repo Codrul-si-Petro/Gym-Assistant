@@ -30,7 +30,7 @@ def get_rest_days(user_id):
     )
 
 
-def get_favourite_exercises(user_id):
+def get_favourite_exercises(user_id, start_date, end_date):
     query_file = SQL_DIR / "get_favourite_exercises.sql"
     query = query_file.read_text()
 
@@ -38,5 +38,7 @@ def get_favourite_exercises(user_id):
         query,
         {
             "user_id": user_id,
+            "start_date": start_date,
+            "end_date": end_date,
         },
     )

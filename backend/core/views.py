@@ -25,8 +25,8 @@ class WorkoutsViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.G
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return Workouts.objects.all()
-        return Workouts.objects.filter(user=user)
+            return Workouts.objects.all().order_by("-date_id")
+        return Workouts.objects.filter(user=user).order_by("-date_id")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
