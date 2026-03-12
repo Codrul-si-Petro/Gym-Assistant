@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Workout</title>
+    <link rel="stylesheet" href="../../css/core/workouts_input.css">
+</head>
+<body>
+    <nav class="nav-links">
+        <a href="../../index.html">Home</a>
+        <a href="workouts_table.html">View workouts</a>
+    </nav>
+
+    <main class="workout-input">
+        <h1>Log workout</h1>
+        <div id="message" class="message" role="alert" aria-live="polite"></div>
+
+        <form id="workout-form">
+            <div class="form-row form-meta">
+                <div class="field">
+                    <label for="workout_number">Workout number</label>
+                    <input type="number" id="workout_number" name="workout_number" min="1" max="10000" value="1" required>
+                </div>
+                <div class="field">
+                    <label for="workout_split">Split</label>
+                    <input type="text" id="workout_split" name="workout_split" maxlength="50" placeholder="e.g. Push">
+                </div>
+                <div class="field">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="exercise_name">Exercise name *</label>
+                <input type="text" id="exercise_name" name="exercise_name" list="exercises_list" required autocomplete="off">
+                <datalist id="exercises_list"></datalist>
+            </div>
+            <div class="field">
+                <label for="attachment_name">Attachment</label>
+                <input type="text" id="attachment_name" name="attachment_name" list="attachments_list" placeholder="None" autocomplete="off">
+                <datalist id="attachments_list"></datalist>
+            </div>
+            <div class="field">
+                <label for="equipment_name">Equipment</label>
+                <input type="text" id="equipment_name" name="equipment_name" list="equipment_list" placeholder="None" autocomplete="off">
+                <datalist id="equipment_list"></datalist>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="set_number">Set</label>
+                    <input type="number" id="set_number" name="set_number" min="1" max="200" value="1" required>
+                </div>
+                <div class="field">
+                    <label for="repetitions">Reps</label>
+                    <input type="number" id="repetitions" name="repetitions" min="0" max="1000" value="0" required>
+                </div>
+                <div class="field">
+                    <label for="load">Load</label>
+                    <input type="number" id="load" name="load" min="0" step="any" value="0" required>
+                </div>
+                <div class="field">
+                    <label for="unit">Unit</label>
+                    <select id="unit" name="unit">
+                        <option value="KG" selected>KG</option>
+                        <option value="LBS">LBS</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="set_type">Set type</label>
+                <input type="text" id="set_type" name="set_type" value="Working set" placeholder="Working set">
+            </div>
+            <div class="field">
+                <label for="comments">Comments</label>
+                <textarea id="comments" name="comments" rows="2" placeholder="Optional"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" id="submit-btn">Submit</button>
+            </div>
+        </form>
+
+        <div class="delete-section">
+            <button type="button" id="delete-last-btn" class="btn-delete">Delete last entry</button>
+        </div>
+    </main>
+
+    <script src="../../js/auth/require-auth.js"></script>
+    <script src="../../js/core/workouts_input.js"></script>
+</body>
+</html>

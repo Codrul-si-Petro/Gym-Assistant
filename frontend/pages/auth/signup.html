@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign up</title>
+  <link rel="stylesheet" href="../../css/auth/login.css">
+</head>
+<body>
+
+<div class="login-container">
+  <h1>Sign up</h1>
+
+  <div id="error" class="error"></div>
+
+  <form id="signupForm">
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password1" placeholder="Password" required>
+    <input type="password" id="password2" placeholder="Confirm password" required>
+    <button type="submit">Sign up</button>
+  </form>
+
+  <p>Or continue with:</p>
+  <a href="http://127.0.0.1:8000/social/google/login/" id="googleSignup" class="social-button">Sign up with Google</a>
+
+  <p>Already have an account? <a href="login.html">Log in</a></p>
+</div>
+
+<script src="../../js/auth/signup.js"></script>
+</body>
+</html>

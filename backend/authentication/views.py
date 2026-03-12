@@ -102,29 +102,12 @@ def api_signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-
-        # Create EmailAddress for allauth tracking
-        email_address = EmailAddress.objects.create(
-            user=user,
-            email=user.email,
-            primary=True,
-            verified=False,
-        )
-
-        # Create email confirmation and send via MailerSend adapter email_confirmation = EmailConfirmation.create(email_address)
-        # email_confirmation.sent = timezone.now()  # Mark as sent (required for validation)
-        # email_confirmation.save()
-
-        # adapter = MailerSendAccountAdapter()
-        # adapter.send_confirmation_mail(request, email_confirmation, signup=True)
-        email_address.send_confirmation(request, signup=True)
-
         return Response(
             {
                 "username": user.username,
                 "email": user.email,
                 "id": user.id,
-                "message": "User created. Please check your email to verify your account.",
+                "message": "User created. Please log in to your account.",
             },
             status=status.HTTP_201_CREATED,
         )

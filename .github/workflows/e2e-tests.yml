@@ -6,7 +6,7 @@ on:
     paths:
         - 'frontend/**'
         - 'backend/**'
-        - 'tests/ui/**'
+        - 'tests/e2e/**'
   push:
     branches: [main]
     paths:
@@ -35,7 +35,7 @@ jobs:
         run: uv run playwright install --with-deps chromium
       
       - name: Run E2E tests
-        run: uv run pytest tests/ui/ -v --tb=short
+        run: uv run pytest tests/e2e/ -v --tb=short
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           UI_TESTER_USERNAME: ${{ secrets.UI_TESTER_USERNAME }}
@@ -45,4 +45,6 @@ jobs:
           MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
           MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
           DJANGO_ALLOWED_HOSTS: "*"
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
       

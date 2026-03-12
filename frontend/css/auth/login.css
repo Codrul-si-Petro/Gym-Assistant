@@ -1,0 +1,91 @@
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background: #0c0c0e;
+    background: linear-gradient(180deg, #0c0c0e 0%, #12121a 100%);
+    color: #f4f4f5;
+}
+
+.login-container {
+    background: #16161a;
+    border: 1px solid #2a2a2e;
+    padding: 40px;
+    border-radius: 12px;
+    color: #f4f4f5;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.login-container input {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #2a2a2e;
+    background: #1a1a1e;
+    color: #f4f4f5;
+    box-sizing: border-box;
+}
+
+.login-container input::placeholder {
+    color: #71717a;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 10px;
+    background: #06b6d4;
+    color: #0c0c0e;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.login-container button:hover {
+    background: #22d3ee;
+    color: #0c0c0e;
+}
+
+.error {
+    color: #f87171;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.social-button {
+    display: inline-block;
+    background: transparent;
+    color: #22d3ee;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #2a2a2e;
+    text-decoration: none;
+    margin-top: 10px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.social-button:hover {
+    background: #27272a;
+    border-color: #22d3ee;
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        width: calc(100% - 32px);
+        max-width: 300px;
+        padding: 24px 20px;
+        margin: 16px;
+    }
+
+    .login-container input,
+    .login-container button {
+        padding: 10px 12px;
+    }
+}

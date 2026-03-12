@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 import warnings
+from datetime import timedelta
 from pathlib import Path
 from urllib.parse import parse_qsl, urlparse
 
@@ -30,6 +31,7 @@ DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() in ("true")
 print(f"Debugging set to: {DEBUG}")
 
 ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 
 # Application definition
@@ -50,6 +52,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",  # Required for allauth
     "django.contrib.staticfiles",
     "django.contrib.messages",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -62,7 +65,19 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "https://gym-assistant-6z0m.onrender.com",  # production frontend domain
+    *(["http://localhost:5500"] if DEBUG else ""),  # using this to be able to use CORS in local development
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# need this now since separating frontend and backend
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
 
 ROOT_URLCONF = "backend.urls"
 
@@ -70,7 +85,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
-            BASE_DIR / "frontend" / "templates",
+            BASE_DIR / "django_frontend" / "templates",
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -139,6 +154,7 @@ USE_TZ = True
 
 AUTH_USER_MODEL = "authentication.User"
 
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -146,7 +162,7 @@ STATIC_URL = "/static/"
 
 # tell django where to find static files. will be needed later once i have static files
 STATICFILES_DIRS = [
-    BASE_DIR / "frontend" / "static",
+    BASE_DIR / "django_frontend" / "static",
 ]
 
 # for prod, need this to collect static files for Render. If this isnt correct swagger is blank
@@ -167,8 +183,8 @@ SITE_ID = 1  # TODO: learn why this is needed for allauth
 
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # Require email verification before login
-ACCOUNT_ADAPTER = "backend.emails.adapters.MailerSendAccountAdapter"  # Use MailerSend for emails
+ACCOUNT_EMAIL_VERIFICATION = "none"  # Require email verification before login
+ACCOUNT_ADAPTER = "backend.authentication.adapters.JWTAccountAdapter"  # Use MailerSend for emails
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Confirm email on GET request (clicking the link)
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Email confirmation link expires in 3 days
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = "/accounts/login/"  # Redirect after confirmation
@@ -178,14 +194,18 @@ ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True  # Auto-login after email confirmatio
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Skip signup form for social login
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Auto-link if email matches existing account
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Automatically connect social to existing account
+SOCIAL_ACCOUNT_LOGIN_ON_GET = True  # skip You are about to sign in bullshit. Ill advised but it is for frontend for now
 
-# login redirect override variables
-LOGIN_REDIRECT_URL = "/"
+ACCOUNT_SIGNUP_REDIRECT_URL = None
+ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = True
+LOGIN_REDIRECT_URL = f"{FRONTEND_URL}/index.html"
 LOGOUT_REDIRECT_URL = "/"
 
+SOCIALACCOUNT_ADAPTER = "backend.authentication.adapters.JWTRedirectAdapter"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
     ],
@@ -201,13 +221,22 @@ REST_FRAMEWORK = {
         "backend.core.api_throttle.DefaultThrottle",
     ],
 }
+
+
+# token lifetime config
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+# google auth login stuff below
 CLIENT_ID = os.getenv("OAUTH_CLIENT_ID")
 OAUTH_SECRET = os.getenv("OAUTH_SECRET_KEY")
 
 SOCIALACCOUNT_PROVIDERS = {"google": {"APP": {"client_id": CLIENT_ID, "secret": OAUTH_SECRET, "key": ""}}}
-
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {

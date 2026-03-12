@@ -130,14 +130,14 @@ class AuthenticationAPITestCase(TestCase):
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_logout_unauthenticated_returns_403(self):
-        """Test that logout without authentication returns 403."""
+    def test_logout_unauthenticated_returns_401(self):
+        """Test that logout without authentication returns 401."""
         url = f"{BASE_URL}/logout/"
         response = self.client.post(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_delete_account_unauthenticated_returns_403(self):
-        """Test that delete account without authentication returns 403."""
+    def test_delete_account_unauthenticated_returns_401(self):
+        """Test that delete account without authentication returns 401."""
         url = f"{BASE_URL}/delete-account/"
         response = self.client.delete(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
