@@ -2,11 +2,11 @@
 if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
     var API_BASE = "http://127.0.0.1:8000";
   } else {
-    var API_BASE = "https://gym-assistant-2smv.onrender.com";
+    var API_BASE = "https://api.gym-assistant.app";
   }
   var base = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? "http://localhost:5500"
-    : "https://gym-assistant-6z0m.onrender.com";
+    : "https://gym-assistant.app";
   
   // Today's date as YYYY-MM-DD (used for date guards and default end_date)
   var TODAY = new Date().toISOString().slice(0, 10);
