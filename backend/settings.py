@@ -69,7 +69,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "https://gym-assistant-6z0m.onrender.com",  # production frontend domain
+    f"{FRONTEND_URL}",  # production frontend domain
     *(["http://localhost:5500"] if DEBUG else ""),  # using this to be able to use CORS in local development
 ]
 
