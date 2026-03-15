@@ -2,7 +2,7 @@
 if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
   API_BASE = "http://127.0.0.1:8000"; // local backend
 } else {
-  API_BASE = 'https://gym-assistant-2smv.onrender.com';
+  API_BASE = 'https://api.gym-assistant.app';
 }
 
 function getAuthHeaders() {
