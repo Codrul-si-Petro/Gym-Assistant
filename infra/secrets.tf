@@ -1,4 +1,4 @@
-data "doppler_secrets" "production" {
+data "doppler_secrets" "prod" {
   project = "gym-assistant"
   config = "prd_gym-assistant"
 }
