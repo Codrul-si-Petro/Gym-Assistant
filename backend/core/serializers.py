@@ -1,9 +1,7 @@
-import datetime
-
 from django.db.models import Max
 from rest_framework import serializers
 
-from .models import Attachments, Calendar, Equipment, Exercises, Muscles, Workouts
+from .models import Attachments, Equipment, Exercises, Muscles, Workouts
 from .workout_validations import validate_workout_number
 
 
@@ -13,7 +11,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
 
     exercise = serializers.PrimaryKeyRelatedField(queryset=Exercises.objects.all())
     attachment = serializers.PrimaryKeyRelatedField(queryset=Attachments.objects.all(), required=False)
-    equipment = serializers.PrimaryKeyRelatedField(queryse=Equipment.objects.all())
+    equipment = serializers.PrimaryKeyRelatedField(queryset=Equipment.objects.all())
 
     workout_number = serializers.IntegerField(min_value=1, default=1)
     set_number = serializers.IntegerField(min_value=1, max_value=200, default=1)
@@ -66,10 +64,8 @@ class WorkoutSerializer(serializers.ModelSerializer):
         Dimensions should be resolved by now
         """
 
-        date_input = validated_data.pop("date", datetime.date.today())
         if not validated_data.get("workout_split"):
             validated_data["workout_split"] = "None"
-        calendar_entry = Calendar.objects.get(date_id=date_input)
         user = self.context["request"].user
         validated_data["user"] = user
 
