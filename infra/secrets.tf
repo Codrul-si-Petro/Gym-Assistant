@@ -26,7 +26,8 @@ locals {
     "DBT_PASSWORD",
     "DBT_SCHEMA",
     "DBT_USER",
-    "DBT_DBNAME"
+    "DBT_DBNAME",
+    "BACKEND_URL"
   ]
 }
 
