@@ -25,7 +25,8 @@ locals {
     "DBT_HOST",
     "DBT_PASSWORD",
     "DBT_SCHEMA",
-    "DBT_USER"
+    "DBT_USER",
+    "DBT_DBNAME"
   ]
 }
 
