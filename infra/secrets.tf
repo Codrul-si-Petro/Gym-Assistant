@@ -3,10 +3,6 @@ data "doppler_secrets" "gym-assistant" {
   config = "prd_gym-assistant"
 }
 
-# to test this for now to check if I can see it in tf cloud
-output "db_password" {
-  value = nonsensitive(locals.db_password)
-}
 
 locals {
   shared_secrets = {
@@ -32,3 +28,7 @@ locals {
 }
 
 
+# to test this for now to check if I can see it in tf cloud
+output "db_password" {
+  value = nonsensitive(locals.db_password)
+}
