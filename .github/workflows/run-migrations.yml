@@ -1,40 +1,49 @@
-name: Run Database Migrations
+name: 🛠️ Run Database Migrations
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'backend/**/migrations/**'
-      - 'db/alembic/versions/**'
+    inputs:
+      environment:
+        description: "Environment to run migrations in"
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - prod
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
-    
+    environment: ${{ inputs.environment }}  # GitHub picks secrets from this environment
+
+    # Top-level env block: all steps inherit these
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: "*"
+      MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
+      MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
+
     steps:
       - uses: actions/checkout@v4
       
       - name: Install uv
         uses: astral-sh/setup-uv@v4
-      
+
       - name: Set up Python
         run: uv python install 3.12
-      
+
       - name: Install dependencies
         run: uv sync
 
-      # Show current state BEFORE applying migrations
+      # Show Django migration status before running
       - name: Show Django migration status
         run: uv run python manage.py showmigrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-          DJANGO_DEBUG: "False"
-          DJANGO_ALLOWED_HOSTS: "*"
-          MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
-          MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
 
+      # Show Alembic migration status
       - name: Show Alembic migration status
         run: |
           echo "=== Current Alembic revision ==="
@@ -43,27 +52,17 @@ jobs:
           echo "=== Alembic history ==="
           uv run alembic history
         working-directory: ./db
-        env:
-          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}
 
-      # Apply migrations
+      # Apply Django migrations
       - name: Run Django migrations
         run: uv run python manage.py migrate --no-input
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-          DJANGO_DEBUG: "False"
-          DJANGO_ALLOWED_HOSTS: "*"
-          MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
-          MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
-      
+
+      # Apply Alembic migrations
       - name: Run Alembic migrations
         run: uv run alembic upgrade head
         working-directory: ./db
-        env:
-          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}  # alembic uses no pooler connections
 
-      # Show state AFTER applying migrations
+      # Show final status
       - name: Show final migration status
         run: |
           echo "=== Django migrations after apply ==="
@@ -71,11 +70,4 @@ jobs:
           echo ""
           echo "=== Alembic revision after apply ==="
           cd db && uv run alembic current
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DATABASE_URL_NO_POOLER: ${{ secrets.DATABASE_URL_NO_POOLER }}
-          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-          DJANGO_DEBUG: "False"
-          DJANGO_ALLOWED_HOSTS: "*"
-          MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
-          MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
+
