@@ -1,12 +1,10 @@
 # this defines environments
 resource "github_repository_environment" "dev" {
-  provider = doppler.dev
   repository = "Gym-Assistant"
   environment = "dev"
 }
 
 resource "github_repository_environment" "prod" {
-  provider = doppler.prod
   repository = "Gym-Assistant"
   environment = "prod"
 }
