@@ -29,7 +29,7 @@ def test_signup(page: Page, test_credentials: tuple[str, str], frontend_url: str
 
 
 @pytest.mark.order(2)
-def test_login(page: Page, test_credentials: tuple[str, str], frontend_url, test_user_cleanup):
+def test_login(page: Page, test_credentials: tuple[str, str], frontend_url):
     TEST_USER_LOGIN, TEST_USER_PASS = test_credentials
 
     page.goto(f"{frontend_url}/pages/auth/login.html")
