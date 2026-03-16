@@ -21,3 +21,18 @@ locals {
 }
 
 
+data "doppler_secrets" "gym-assistant" {
+  project = "gym-assistant"
+  config = "prd_gym-assistant"
+}
+
+# to test this for now to check if I can see it in tf cloud
+output "db_password" {
+  value = nonsensitive(data.doppler_secrets.gym-assistant.map.DATABASE_URL)
+}
+
+variable "db_password" {
+  type = string
+  sensitive = false
+  default = data.doppler_secrets.gym-assistant.map.DATABASE_URL
+}
