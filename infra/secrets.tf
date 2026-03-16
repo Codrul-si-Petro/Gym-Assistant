@@ -17,6 +17,7 @@ locals {
     FRONTEND_URL          = var.FRONTEND_URL_DEV
     BACKEND_URL           = var.BACKEND_URL_DEV
   }
+  db_password             = data.doppler_secrets.gym-assistant.map.DATABASE_URL
   MONOREPO                = "Gym-Assistant"
 }
 
@@ -28,11 +29,10 @@ data "doppler_secrets" "gym-assistant" {
 
 # to test this for now to check if I can see it in tf cloud
 output "db_password" {
-  value = nonsensitive(data.doppler_secrets.gym-assistant.map.DATABASE_URL)
+  value = nonsensitive(locals.db_password)
 }
 
 variable "db_password" {
   type = string
   sensitive = false
-  default = data.doppler_secrets.gym-assistant.map.DATABASE_URL
 }
