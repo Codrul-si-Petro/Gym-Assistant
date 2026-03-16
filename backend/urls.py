@@ -15,7 +15,7 @@ from backend.authentication.views import (
     CustomPasswordResetView,
 )
 
-from .views import WorkoutFormView, homepageView
+from .views import homepageView
 
 schema_view = get_schema_view(
     openapi.Info(

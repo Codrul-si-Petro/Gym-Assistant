@@ -3,11 +3,8 @@ import datetime
 from django.db.models import Max
 from rest_framework import serializers
 
-
-from .models import Attachments, Equipment, Exercises, Muscles, Workouts, Calendar
-from .workout_validations import (
-    validate_workout_number
-)
+from .models import Attachments, Calendar, Equipment, Exercises, Muscles, Workouts
+from .workout_validations import validate_workout_number
 
 
 class WorkoutSerializer(serializers.ModelSerializer):
@@ -55,7 +52,6 @@ class WorkoutSerializer(serializers.ModelSerializer):
             "ta_updated_at",
         ]
 
-
     def validate_workout_number(self, value):
         """
         DRF calls this automatically for field-level validation.
@@ -64,7 +60,6 @@ class WorkoutSerializer(serializers.ModelSerializer):
         """
         user = self.context["request"].user
         return validate_workout_number(user, value)
-
 
     def create(self, validated_data):
         """

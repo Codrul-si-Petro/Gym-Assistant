@@ -1,12 +1,10 @@
-from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.parsers import FormParser, JSONParser
+from rest_framework.response import Response
 
 from backend.core.workout_validations import get_next_workout
 
