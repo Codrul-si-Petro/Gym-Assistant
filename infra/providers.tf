@@ -12,7 +12,6 @@ terraform {
     }
     doppler = {
       source = "DopplerHQ/doppler"
-      version = "~> 0.3"
     }
 
     # render = {
