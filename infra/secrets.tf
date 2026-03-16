@@ -32,7 +32,4 @@ output "db_password" {
   value = nonsensitive(locals.db_password)
 }
 
-variable "db_password" {
-  type = string
-  sensitive = false
-}
+
