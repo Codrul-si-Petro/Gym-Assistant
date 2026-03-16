@@ -21,7 +21,13 @@ locals {
     "UI_TESTER_PASS",
     "UI_TESTER_USERNAME",
     "RCLONE_CONFIG",
-    "FRONTEND_URL"
+    "FRONTEND_URL",
+    "DBT_HOST",
+    "DBT_PASSWORD",
+    "DBT_SCHEMA",
+    "DBT_USER",
+    "DBT_DBNAME",
+    "BACKEND_URL"
   ]
 }
 
