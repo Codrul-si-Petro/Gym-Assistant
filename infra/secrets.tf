@@ -30,7 +30,7 @@ resource "github_actions_environment_secret" "dev_secrets" {
   repository = "Gym-Assistant"
   environment = github_repository_environment.dev.environment
   secret_name = each.key
-  plaintext_value = data.doppler_secrets.dev.map(each.key)
+  plaintext_value = data.doppler_secrets.dev.map[each.key]
 
 }
 
@@ -41,6 +41,6 @@ resource "github_actions_environment_secret" "prod_secrets" {
   repository = "Gym-Assistant"
   environment = github_repository_environment.prod.environment
   secret_name = each.key
-  plaintext_value = data.doppler_secrets.prod.map(each.key)
+  plaintext_value = data.doppler_secrets.prod.map[each.key]
 
 }
