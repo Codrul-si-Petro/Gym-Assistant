@@ -56,6 +56,4 @@ urlpatterns = [
     path("", include("backend.authentication.urls")),
     # Home page
     path("", homepageView, name="home"),
-    # Workouts input form
-    path("workouts/", WorkoutFormView.as_view(), name="workout-logger"),
 ]

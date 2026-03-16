@@ -5,6 +5,10 @@ if (window.location.hostname === "localhost" || window.location.hostname === "12
   API_BASE = 'https://api.gym-assistant.app';
 }
 
+var exerciseMap = {};
+var attachmentMap = {};
+var equipmentMap = {};
+
 function getAuthHeaders() {
     const token = localStorage.getItem("access_token");
     if (!token) return null;
@@ -14,6 +18,7 @@ function getAuthHeaders() {
         "Content-Type": "application/json",
     };
 }
+
 
 function showMessage(text, type) {
     const el = document.getElementById("message");
@@ -57,15 +62,17 @@ function formatApiErrors(data) {
     return parts.length ? parts.join(" ") : "Something went wrong.";
 }
 
-function fillDatalist(id, items, key) {
-    var list = document.getElementById(id);
-    if (!list) return;
-    list.innerHTML = "";
-    (items || []).forEach(function (item) {
-        var opt = document.createElement("option");
-        opt.value = item[key];
-        list.appendChild(opt);
-    });
+
+function fillDimensionList(id, items, nameKey, idKey, map) {
+  var list = document.getElementById(id);
+  if (!list) return;
+  list.innerHTML = "";
+  (items || []).forEach(function(item) {
+    var opt = document.createElement("option");
+    opt.value = item[nameKey];
+    list.appendChild(opt);
+    if (map) map[item[nameKey]] = item[idKey];
+  });
 }
 
 function loadOptions() {
@@ -79,12 +86,33 @@ function loadOptions() {
         fetch(API_BASE + "/api/attachments/", { headers: headers }).then(function (r) { return r.ok ? r.json() : []; }),
         fetch(API_BASE + "/api/equipment/", { headers: headers }).then(function (r) { return r.ok ? r.json() : []; }),
     ]).then(function (results) {
-        fillDatalist("exercises_list", results[0], "exercise_name");
-        fillDatalist("attachments_list", results[1], "attachment_name");
-        fillDatalist("equipment_list", results[2], "equipment_name");
+        fillDimensionList("exercises_list", results[0], "exercise_name", "exercise_id", exerciseMap);
+        fillDimensionList("attachments_list", results[1], "attachment_name", "attachment_id", attachmentMap);
+        fillDimensionList("equipment_list", results[2], "equipment_name", "equipment_id", equipmentMap);
     }).catch(function () {
         showMessage("Could not load exercise/attachment/equipment lists.", "error");
     });
+}
+
+function loadWorkoutNumber() {
+    var headers = getAuthHeaders();
+    if (!headers) return;
+
+    fetch(API_BASE + "/api/workouts/next-workout-info/", { headers: headers })
+        .then(function (res) { return res.ok ? res.json() : null; })
+        .then(function (data) {
+            if (!data) return;
+            var input = document.getElementById("workout_number");
+            if (input) input.value = data.next_workout_number;
+
+            if (data.hour_elapsed) {
+                showMessage(
+                    "Over 6 hours since last input — starting workout #" + data.next_workout_number + ".",
+                    "success"
+                );
+            }
+        })
+        .catch(function () {});
 }
 
 function setDefaultDate() {
@@ -220,6 +248,7 @@ function initExerciseChangeResetSet() {
 document.addEventListener("DOMContentLoaded", function () {
     setDefaultDate();
     loadOptions();
+    loadWorkoutNumber();
     initNumberInputs();
     initExerciseChangeResetSet();
     document.getElementById("workout-form").addEventListener("submit", onSubmit);

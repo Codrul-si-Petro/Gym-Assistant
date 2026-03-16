@@ -4,7 +4,11 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import mixins, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.parsers import FormParser, JSONParser
+
+from backend.core.workout_validations import get_next_workout
 
 from .api_throttle import EndpointThrottle
 from .models import Attachments, Equipment, Exercises, Muscles, Workouts
@@ -41,20 +45,11 @@ class WorkoutsViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.G
 
     @swagger_auto_schema(tags=["Core"])
     def list(self, request, *args, **kwargs):
-        accept = request.META.get("HTTP_ACCEPT", "")
-        if "text/html" in accept:
-            queryset = (
-                self.get_queryset()
-                .select_related("exercise", "attachment", "equipment", "date")
-                .order_by("-ta_created_at")
-            )
-            content = render_to_string(
-                "core/workout_table.html",
-                {"rows": queryset},
-                request=request,
-            )
-            return HttpResponse(content, content_type="text/html; charset=utf-8")
         return super().list(request, *args, **kwargs)
+
+    @action(detail=False, methods=["get"], url_path="next-workout-info")
+    def next_workout_info(self, request):
+        return Response(get_next_workout(request.user))
 
 
 class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
