@@ -16,8 +16,6 @@ from .serializers import (
     WorkoutSerializer,
 )
 
-# TODO: migrate to Django-Redis to implement a more fine grained caching strategy
-
 
 class WorkoutsViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = WorkoutSerializer
@@ -42,7 +40,6 @@ class WorkoutsViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.G
         return super().create(request, *args, **kwargs)
 
     @swagger_auto_schema(tags=["Core"])
-    @method_decorator(cache_page(60 * 2, key_prefix="user_workout_list"))  # cache for 2 minutes
     def list(self, request, *args, **kwargs):
         accept = request.META.get("HTTP_ACCEPT", "")
         if "text/html" in accept:
