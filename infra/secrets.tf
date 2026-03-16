@@ -8,25 +8,39 @@ data "doppler_secrets" "dev" {
   config = "dev"
 }
 
+# do this to have these set as keys so terraform doesnt complain about these being sensitive and still output
+locals {
+  secret_names = [
+    "DATABASE_URL",
+    "DATABASE_URL_NO_POOLER",
+    "DJANGO_SECRET_KEY",
+    "DJANGO_DEBUG",
+    "OAUTH_CLIENT_ID",
+    "OAUTH_SECRET_KEY",
+    "UI_TESTER_PASS",
+    "UI_TESTER_USERNAME"
+  ]
+}
+
 
 # these loop over doppler secrets
 resource "github_actions_environment_secret" "dev_secrets" {
-  for_each = data.doppler_secrets.dev.map
+  for_each = toset(local.secret_names)
 
   repository = "Gym-Assistant"
   environment = github_repository_environment.dev.environment
   secret_name = each.key
-  plaintext_value = each.value
+  plaintext_value = data.doppler_secrets.dev.map(each.key)
 
 }
 
 
 resource "github_actions_environment_secret" "prod_secrets" {
-  for_each = data.doppler_secrets.prod.map
+  for_each = toset(local.secret_names)
 
   repository = "Gym-Assistant"
   environment = github_repository_environment.prod.environment
   secret_name = each.key
-  plaintext_value = each.value
+  plaintext_value = data.doppler_secrets.prod.map(each.key)
 
 }
