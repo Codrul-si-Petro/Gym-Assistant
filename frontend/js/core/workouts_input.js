@@ -124,10 +124,14 @@ function setDefaultDate() {
 
 function getPayload() {
     var dateVal = document.getElementById("date").value;
+    var exerciseName = (document.getElementById("exercise_name").value || "").trim();
+    var attachmentName = (document.getElementById("attachment_name").value || "").trim() || "None";
+    var equipmentName = (document.getElementById("equipment_name").value || "").trim() || "None";
+
     return {
-        exercise_name: (document.getElementById("exercise_name").value || "").trim(),
-        attachment_name: (document.getElementById("attachment_name").value || "").trim() || "None",
-        equipment_name: (document.getElementById("equipment_name").value || "").trim() || "None",
+        exercise: exerciseMap[exerciseName] || null,
+        attachment: attachmentMap[attachmentName] || attachmentMap["None"] || null,
+        equipment: equipmentMap[equipmentName] || equipmentMap["None"] || null,
         workout_number: parseInt(document.getElementById("workout_number").value, 10) || 1,
         set_number: parseInt(document.getElementById("set_number").value, 10) || 1,
         repetitions: parseInt(document.getElementById("repetitions").value, 10) || 0,
@@ -160,10 +164,12 @@ function onSubmit(e) {
         })
         .then(function (result) {
             if (result.status >= 200 && result.status < 300) {
+              // reset fields below
                 showMessage("Workout saved.", "success");
                 document.getElementById("set_number").value = (parseInt(document.getElementById("set_number").value, 10) || 1) + 1;
                 document.getElementById("repetitions").value = "0";
                 document.getElementById("load").value = "0";
+                document.getElementById("comments").value = "";
             } else {
                 showMessage(formatApiErrors(result.data), "error");
             }

@@ -52,26 +52,27 @@ async function fetchWorkouts() {
             (eqJson || []).forEach(e => { equipmentMap[e.equipment_id] = e.equipment_name; });
         } catch (_) { /* use IDs if lookups fail */ }
 
-        tbody.innerHTML = data.map(row => {
-            const date = row.ta_created_at ? row.ta_created_at.slice(0, 10) : "";
-            const exercise = exerciseMap[row.exercise] ?? row.exercise;
-            const attachment = attachmentMap[row.attachment] ?? row.attachment;
-            const equipment = equipmentMap[row.equipment] ?? row.equipment;
-            return `<tr>
-                <td>${date}</td>
-                <td>${escapeHtml(String(exercise))}</td>
-                <td>${escapeHtml(String(attachment))}</td>
-                <td>${escapeHtml(String(equipment))}</td>
-                <td>${row.workout_number}</td>
-                <td>${row.set_number}</td>
-                <td>${row.repetitions}</td>
-                <td>${row.load}</td>
-                <td>${row.unit}</td>
-                <td>${escapeHtml(String(row.set_type || ""))}</td>
-                <td>${escapeHtml(String(row.comments || ""))}</td>
-                <td>${escapeHtml(String(row.workout_split || ""))}</td>
-            </tr>`;
-        }).join("");
+          tbody.innerHTML = data.map(row => {
+              const date = row.ta_created_at ? row.ta_created_at.slice(0, 10) : "";
+              const exercise = exerciseMap[row.exercise] ?? row.exercise;
+              const attachment = attachmentMap[row.attachment] ?? row.attachment;
+              const equipment = equipmentMap[row.equipment] ?? row.equipment;
+              return `<tr>
+                  <td>${row.workout_number}</td>
+                  <td>${date}</td>
+                  <td>${escapeHtml(String(exercise))}</td>
+                  <td>${row.set_number}</td>
+                  <td>${row.repetitions}</td>
+                  <td>${row.load}</td>
+                  <td>${escapeHtml(String(equipment))}</td>
+                  <td>${escapeHtml(String(attachment))}</td>
+                  <td>${row.unit}</td>
+                  <td>${escapeHtml(String(row.set_type || ""))}</td>
+                  <td>${escapeHtml(String(row.comments || ""))}</td>
+                  <td>${escapeHtml(String(row.workout_split || ""))}</td>
+              </tr>`;
+          }).join("");
+
     } catch (err) {
         document.getElementById("auth-msg").textContent = "Failed to load workouts.";
         document.getElementById("workout-tbody").innerHTML =

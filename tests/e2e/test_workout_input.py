@@ -7,6 +7,7 @@ from playwright.sync_api import Page, expect
 from tests.helpers import (
     create_test_user,
     delete_latest_workout_for_user,
+    get_first_equipment,
     get_first_exercise,
     get_latest_workout_for_user,
     get_max_workout_number,
@@ -33,13 +34,16 @@ def test_workout_form_submit_then_delete(
     if exercise is None:
         pytest.skip("No exercises in core.dim_exercises")
 
+    equipment = get_first_equipment()
+    if equipment is None:
+        pytest.skip("No equipments in core.dim_equipment")
+
     next_workout_number = get_max_workout_number(user_id) + 1
     today = date.today().isoformat()
 
     # Login via SPA
     page.goto(f"{frontend_url}/pages/auth/login.html")
     page.wait_for_load_state("networkidle")
-    page.wait_for_selector("#exercises_list option", timeout=1000)
     page.fill("#username", username)
     page.fill("#password", password)
     page.click('button[type="submit"]')
@@ -51,13 +55,16 @@ def test_workout_form_submit_then_delete(
     page.wait_for_load_state("networkidle")
 
     # Fill the form
+    page.wait_for_selector("#exercises_list option", state="attached", timeout=1000)
     page.fill("#exercise_name", exercise["exercise_name"])
+    page.fill("#equipment_name", equipment["equipment_name"])
     page.fill("#set_number", "1")
     page.fill("#repetitions", "10")
     page.fill("#load", "50")
     page.fill("#workout_number", str(next_workout_number))
     page.fill("#date", today)
     page.fill("#workout_split", "E2E test split")
+    page.fill("#comments", "This is such a bad test, isn't it?")
 
     # Submit — SPA form submits via fetch(), no page reload
     page.click("#submit-btn")

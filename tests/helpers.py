@@ -38,6 +38,21 @@ def get_first_exercise(conn=None) -> dict | None:
     return {"exercise_id": row[0], "exercise_name": row[1]}
 
 
+def get_first_equipment(conn=None) -> dict | None:
+    own_conn = conn is None
+    if own_conn:
+        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+    cur = conn.cursor()
+    cur.execute("SELECT equipment_id, equipment_name FROM core.dim_equipment ORDER BY equipment_name LIMIT 1")
+    row = cur.fetchone()
+    cur.close()
+    if own_conn:
+        conn.close()
+    if not row:
+        return None
+    return {"equipment_id": row[0], "equipment_name": row[1]}
+
+
 def get_max_workout_number(user_id: int) -> int:
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
     cur = conn.cursor()
