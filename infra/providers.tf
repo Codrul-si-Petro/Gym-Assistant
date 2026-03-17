@@ -10,10 +10,9 @@ terraform {
       source = "integrations/github"
       version = "~> 5.0"
     }
-    # render = {
-    #   source = "render-oss/render"
-    #   version = "~> 1.0"
-    # }
+    doppler = {
+      source = "DopplerHQ/doppler"
+    }
   }
 }
 
@@ -21,8 +20,13 @@ provider "github" {
   token = var.GITHUB_TOKEN
 }
 
-# provider "render" {
-#   api_key = var.RENDER_TOKEN
-#   owner_id = var.RENDER_OWNER_ID
-#
-# }
+provider "doppler" {
+  alias         = "prod"
+  doppler_token = var.DOPPLER_PRODUCTION_SECRETS_TOKEN
+}
+
+provider "doppler" {
+  alias         = "dev"
+  doppler_token = var.DOPPLER_DEV_SECRETS
+}
+
