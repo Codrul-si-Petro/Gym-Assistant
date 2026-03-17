@@ -7,6 +7,7 @@ from tests.helpers import delete_test_user
 @pytest.mark.order(1)
 def test_signup(page: Page, test_credentials: tuple[str, str], frontend_url: str):
     TEST_USER_LOGIN, TEST_USER_PASS = test_credentials
+    delete_test_user(TEST_USER_LOGIN)
     page.context.clear_cookies()
     page.goto(frontend_url)
     page.wait_for_load_state("networkidle")

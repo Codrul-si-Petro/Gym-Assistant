@@ -39,6 +39,7 @@ def test_workout_form_submit_then_delete(
     # Login via SPA
     page.goto(f"{frontend_url}/pages/auth/login.html")
     page.wait_for_load_state("networkidle")
+    page.wait_for_selector("#exercises_list option", timeout=1000)
     page.fill("#username", username)
     page.fill("#password", password)
     page.click('button[type="submit"]')
