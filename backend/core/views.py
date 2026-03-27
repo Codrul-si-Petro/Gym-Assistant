@@ -60,8 +60,20 @@ class WorkoutsViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.G
         row = qs.first()
         if row is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        exercise_name = row.exercise.exercise_name
+        date_str = row.date_id.isoformat() if row.date_id else ""
+        message = (
+            f"Deleted: {exercise_name}, {date_str}, "
+            f"set {row.set_number}, {row.load} {row.unit} × {row.repetitions} reps"
+        )
         row.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+
+        return Response(
+            {
+                "message": message,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
