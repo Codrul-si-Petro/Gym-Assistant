@@ -108,26 +108,26 @@ class WorkoutSerializer(serializers.ModelSerializer):
 class ExercisesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exercises
-        fields = ["exercise_id", "exercise_name", "exercise_movement_type", "ta_created_at"]
+        fields = ["exercise_id", "exercise_name", "exercise_movement_type"]
         read_only_fields = ["exercise_id", "ta_created_at"]
 
 
 class MusclesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Muscles
-        fields = "__all__"
+        fields = ["muscle_id", "muscle_name"]
         read_only_fields = ["muscle_id", "ta_created_at"]
 
 
 class EquipmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Equipment
-        fields = "__all__"
+        fields = ["equipment_id", "equipment_name", "equipment_description"]
         read_only_fields = ["equipment_id", "ta_created_at"]
 
 
 class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachments
-        fields = "__all__"
+        fields = ["attachment_id", "attachment_name", "attachment_description"]
         read_only_fields = ["attachment_id", "ta_created_at"]

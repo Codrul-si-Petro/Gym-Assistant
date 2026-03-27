@@ -1,47 +1,95 @@
 // Use localhost/127 if running locally, otherwise use current host
 if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-  API_BASE = "http://127.0.0.1:8000"; // local backend
+    API_BASE = "http://127.0.0.1:8000";
 } else {
-  API_BASE = 'https://api.gym-assistant.app';
+    API_BASE = "https://api.gym-assistant.app";
 }
 
 var exerciseMap = {};
 var attachmentMap = {};
 var equipmentMap = {};
 
+/** Default time before success messages fade (ms). */
+var DEFAULT_SUCCESS_MS = 3500;
+/** Delete-last confirmation: keep visible longer (5–10s range). */
+var DELETE_SUCCESS_MS = 7500;
+var MESSAGE_FADE_MS = 300;
+var MESSAGE_MIN_MS = 1000;
+
+/** Cleared when a new success message is shown so old timers do not clear the new text. */
+var successHideTimer = null;
+var successFadeTimer = null;
+
 function getAuthHeaders() {
-    const token = localStorage.getItem("access_token");
+    var token = localStorage.getItem("access_token");
     if (!token) return null;
     return {
-        Authorization: `Bearer ${token}`,
+        Authorization: "Bearer " + token,
         Accept: "application/json",
         "Content-Type": "application/json",
     };
 }
 
-
-function showMessage(text, type) {
-    const el = document.getElementById("message");
-    el.textContent = text;
-    el.className = "message " + (type === "success" ? "success" : "error");
-    el.removeAttribute("hidden");
-    if (type === "success") {
-        setTimeout(function () {
-            el.style.opacity = "0";
-            el.style.transition = "opacity 0.3s ease";
-            setTimeout(function () {
-                el.textContent = "";
-                el.className = "message";
-                el.style.opacity = "";
-            }, 300);
-        }, 3500);
+function cancelSuccessTimers() {
+    if (successHideTimer !== null) {
+        clearTimeout(successHideTimer);
+        successHideTimer = null;
+    }
+    if (successFadeTimer !== null) {
+        clearTimeout(successFadeTimer);
+        successFadeTimer = null;
     }
 }
 
+/**
+ * @param {string} text
+ * @param {"success"|"error"} type
+ * @param {number} [duration] visible time before fade (success only); defaults to DEFAULT_SUCCESS_MS
+ */
+function showMessage(text, type, duration) {
+    var el = document.getElementById("message");
+    if (!el) return;
+
+    cancelSuccessTimers();
+
+    el.textContent = text;
+    el.className = "message " + (type === "success" ? "success" : "error");
+    el.removeAttribute("hidden");
+    el.style.opacity = "";
+    el.style.transition = "";
+
+    if (type !== "success") {
+        return;
+    }
+
+    var effectiveDuration = Math.max(
+        duration != null ? duration : DEFAULT_SUCCESS_MS,
+        MESSAGE_MIN_MS
+    );
+
+    successHideTimer = setTimeout(function () {
+        successHideTimer = null;
+        el.style.opacity = "0";
+        el.style.transition = "opacity " + MESSAGE_FADE_MS + "ms ease";
+
+        successFadeTimer = setTimeout(function () {
+            successFadeTimer = null;
+            el.textContent = "";
+            el.className = "message";
+            el.style.opacity = "";
+            el.style.transition = "";
+        }, MESSAGE_FADE_MS);
+    }, effectiveDuration);
+}
+
 function clearMessage() {
-    const el = document.getElementById("message");
+    cancelSuccessTimers();
+    var el = document.getElementById("message");
+    if (!el) return;
     el.textContent = "";
     el.className = "message";
+    el.style.opacity = "";
+    el.style.transition = "";
 }
 
 function formatApiErrors(data) {
@@ -62,17 +110,16 @@ function formatApiErrors(data) {
     return parts.length ? parts.join(" ") : "Something went wrong.";
 }
 
-
 function fillDimensionList(id, items, nameKey, idKey, map) {
-  var list = document.getElementById(id);
-  if (!list) return;
-  list.innerHTML = "";
-  (items || []).forEach(function(item) {
-    var opt = document.createElement("option");
-    opt.value = item[nameKey];
-    list.appendChild(opt);
-    if (map) map[item[nameKey]] = item[idKey];
-  });
+    var list = document.getElementById(id);
+    if (!list) return;
+    list.innerHTML = "";
+    (items || []).forEach(function (item) {
+        var opt = document.createElement("option");
+        opt.value = item[nameKey];
+        list.appendChild(opt);
+        if (map) map[item[nameKey]] = item[idKey];
+    });
 }
 
 function loadOptions() {
@@ -82,30 +129,45 @@ function loadOptions() {
         return;
     }
     Promise.all([
-        fetch(API_BASE + "/api/exercises/", { headers: headers }).then(function (r) { return r.ok ? r.json() : []; }),
-        fetch(API_BASE + "/api/attachments/", { headers: headers }).then(function (r) { return r.ok ? r.json() : []; }),
-        fetch(API_BASE + "/api/equipment/", { headers: headers }).then(function (r) { return r.ok ? r.json() : []; }),
-    ]).then(function (results) {
-        fillDimensionList("exercises_list", results[0], "exercise_name", "exercise_id", exerciseMap);
-        fillDimensionList("attachments_list", results[1], "attachment_name", "attachment_id", attachmentMap);
-        fillDimensionList("equipment_list", results[2], "equipment_name", "equipment_id", equipmentMap);
-    }).catch(function () {
-        showMessage("Could not load exercise/attachment/equipment lists.", "error");
-    });
+        fetch(API_BASE + "/api/exercises/", { headers: headers }).then(function (r) {
+            return r.ok ? r.json() : [];
+        }),
+        fetch(API_BASE + "/api/attachments/", { headers: headers }).then(function (r) {
+            return r.ok ? r.json() : [];
+        }),
+        fetch(API_BASE + "/api/equipment/", { headers: headers }).then(function (r) {
+            return r.ok ? r.json() : [];
+        }),
+    ])
+        .then(function (results) {
+            fillDimensionList("exercises_list", results[0], "exercise_name", "exercise_id", exerciseMap);
+            fillDimensionList("attachments_list", results[1], "attachment_name", "attachment_id", attachmentMap);
+            fillDimensionList("equipment_list", results[2], "equipment_name", "equipment_id", equipmentMap);
+        })
+        .catch(function () {
+            showMessage("Could not load exercise/attachment/equipment lists.", "error");
+        });
 }
 
-function loadWorkoutNumber() {
+/**
+ * @param {{ silent?: boolean }} [options]
+ *   silent: if true, only updates workout number input — no "6 hours elapsed" toast.
+ */
+function loadWorkoutNumber(options) {
+    var silent = options && options.silent === true;
     var headers = getAuthHeaders();
     if (!headers) return;
 
     fetch(API_BASE + "/api/workouts/next-workout-info/", { headers: headers })
-        .then(function (res) { return res.ok ? res.json() : null; })
+        .then(function (res) {
+            return res.ok ? res.json() : null;
+        })
         .then(function (data) {
             if (!data) return;
             var input = document.getElementById("workout_number");
             if (input) input.value = data.next_workout_number;
 
-            if (data.hour_elapsed) {
+            if (!silent && data.hour_elapsed) {
                 showMessage(
                     "Over 6 hours since last input — starting workout #" + data.next_workout_number + ".",
                     "success"
@@ -160,13 +222,15 @@ function onSubmit(e) {
         body: JSON.stringify(getPayload()),
     })
         .then(function (res) {
-            return res.json().then(function (data) { return { status: res.status, data: data }; });
+            return res.json().then(function (data) {
+                return { status: res.status, data: data };
+            });
         })
         .then(function (result) {
             if (result.status >= 200 && result.status < 300) {
-              // reset fields below
                 showMessage("Workout saved.", "success");
-                document.getElementById("set_number").value = (parseInt(document.getElementById("set_number").value, 10) || 1) + 1;
+                document.getElementById("set_number").value =
+                    (parseInt(document.getElementById("set_number").value, 10) || 1) + 1;
                 document.getElementById("repetitions").value = "0";
                 document.getElementById("load").value = "0";
                 document.getElementById("comments").value = "";
@@ -189,38 +253,43 @@ function onDeleteLast() {
         showMessage("Please log in first.", "error");
         return;
     }
-    fetch(API_BASE + "/api/workouts/", { headers: headers })
-        .then(function (r) { return r.json(); })
-        .then(function (list) {
-            if (!list || list.length === 0) {
-                showMessage("No workouts to delete.", "error");
-                return;
-            }
-            var byDate = list.slice().sort(function (a, b) {
-                var t1 = (a.ta_created_at || "").replace(/[-T:Z.]/g, "");
-                var t2 = (b.ta_created_at || "").replace(/[-T:Z.]/g, "");
-                return t2.localeCompare(t1);
-            });
-            var last = byDate[0];
-            var id = last.workout_id;
-            return fetch(API_BASE + "/api/workouts/" + id + "/", {
-                method: "DELETE",
-                headers: headers,
+    var btn = document.getElementById("delete-last-btn");
+    if (btn) btn.disabled = true;
+
+    fetch(API_BASE + "/api/workouts/last/", {
+        method: "DELETE",
+        headers: headers,
+    })
+        .then(function (res) {
+            return res.json().then(function (data) {
+                return { status: res.status, data: data };
             });
         })
-        .then(function (res) {
-            if (res && res.status === 204) {
-                showMessage("Last entry deleted.", "success");
-            } else if (res && res.status === 404) {
-                showMessage("Entry already deleted or not found.", "error");
-            } else if (res && res.status === 405) {
-                showMessage("Delete is not enabled for workouts on the server.", "error");
-            } else {
-                showMessage("Could not delete last entry.", "error");
+        .then(function (result) {
+            if (result.status === 200 && result.data && result.data.message) {
+                showMessage(result.data.message, "success", DELETE_SUCCESS_MS);
+                var input = document.getElementById("workout_number");
+                if (input && result.data.next_workout_number != null) {
+                    input.value = result.data.next_workout_number;
+                } else {
+                    loadWorkoutNumber({ silent: true });
+                }
+                return;
             }
+            if (result.status === 404) {
+                showMessage(
+                    (result.data && result.data.detail) || "No workouts to delete.",
+                    "error"
+                );
+                return;
+            }
+            showMessage(formatApiErrors(result.data), "error");
         })
         .catch(function () {
             showMessage("Could not delete last entry.", "error");
+        })
+        .finally(function () {
+            if (btn) btn.disabled = false;
         });
 }
 
