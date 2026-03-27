@@ -56,7 +56,7 @@ class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Exercises.objects.all()
+        return Exercises.objects.filter(is_leaf=True)
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
@@ -70,7 +70,7 @@ class MusclesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Muscles.objects.all()
+        return Muscles.objects.filter(is_leaf=True)
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
@@ -84,7 +84,7 @@ class EquipmentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Equipment.objects.all()
+        return Equipment.objects.filter(is_leaf=True)
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
@@ -98,7 +98,7 @@ class AttachmentsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Attachments.objects.all()
+        return Attachments.objects.filter(is_leaf=True)
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
