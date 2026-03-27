@@ -1,7 +1,7 @@
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser
 from rest_framework.response import Response
@@ -48,6 +48,20 @@ class WorkoutsViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.G
     @action(detail=False, methods=["get"], url_path="next-workout-info")
     def next_workout_info(self, request):
         return Response(get_next_workout(request.user))
+
+    @swagger_auto_schema(
+        tags=["Core"],
+        operation_description="Delete the most recently created workout row for the current user (by timestamp).",
+        responses={204: "No content", 404: "No workouts to delete"},
+    )
+    @action(detail=False, methods=["delete"], url_path="last")
+    def delete_last(self, request):
+        qs = Workouts.objects.filter(user=request.user).order_by("-ta_created_at", "-workout_id")
+        row = qs.first()
+        if row is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        row.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):

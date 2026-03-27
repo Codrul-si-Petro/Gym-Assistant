@@ -189,41 +189,33 @@ function onDeleteLast() {
         showMessage("Please log in first.", "error");
         return;
     }
-    fetch(API_BASE + "/api/workouts/", { headers: headers })
-        .then(function (r) { return r.json(); })
-        .then(function (list) {
-            if (!list || list.length === 0) {
+    var btn = document.getElementById("delete-last-btn");
+    if (btn) btn.disabled = true;
+    fetch(API_BASE + "/api/workouts/last/", {
+        method: "DELETE",
+        headers: headers,
+    })
+        .then(function (res) {
+            if (res.status === 204) {
+                showMessage("Last entry deleted.", "success");
+                loadWorkoutNumber();
+                return;
+            }
+            if (res.status === 404) {
                 showMessage("No workouts to delete.", "error");
                 return;
             }
-            var byDate = list.slice().sort(function (a, b) {
-                var t1 = (a.ta_created_at || "").replace(/[-T:Z.]/g, "");
-                var t2 = (b.ta_created_at || "").replace(/[-T:Z.]/g, "");
-                return t2.localeCompare(t1);
+            return res.json().then(function (data) {
+                showMessage(formatApiErrors(data), "error");
             });
-            var last = byDate[0];
-            var id = last.workout_id;
-            return fetch(API_BASE + "/api/workouts/" + id + "/", {
-                method: "DELETE",
-                headers: headers,
-            });
-        })
-        .then(function (res) {
-            if (res && res.status === 204) {
-                showMessage("Last entry deleted.", "success");
-            } else if (res && res.status === 404) {
-                showMessage("Entry already deleted or not found.", "error");
-            } else if (res && res.status === 405) {
-                showMessage("Delete is not enabled for workouts on the server.", "error");
-            } else {
-                showMessage("Could not delete last entry.", "error");
-            }
         })
         .catch(function () {
             showMessage("Could not delete last entry.", "error");
+        })
+        .finally(function () {
+            if (btn) btn.disabled = false;
         });
 }
-
 function initNumberInputs() {
     var ids = ["set_number", "repetitions", "load"];
     ids.forEach(function (id) {
