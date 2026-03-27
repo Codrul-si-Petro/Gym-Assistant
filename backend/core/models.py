@@ -40,9 +40,10 @@ class Exercises(models.Model):
 
     exercise_id = models.AutoField(primary_key=True, db_index=True)
     exercise_name = models.TextField(max_length=256)
+    is_leaf = models.BooleanField()
     exercise_movement_type = models.TextField()
     ta_created_at = models.DateTimeField(auto_now_add=True)
-    ta_updated_at = models.DateTimeField(null=True)
+    last_built = models.DateTimeField(null=True)
 
     class Meta:
         managed = False
@@ -54,9 +55,10 @@ class Muscles(models.Model):
 
     muscle_id = models.AutoField(primary_key=True, db_index=True)
     muscle_name = models.TextField(max_length=256)
-    muscle_group = models.TextField(max_length=20)
+    muscle_parent_id = models.TextField(max_length=20)
+    is_leaf = models.BooleanField()
     ta_created_at = models.DateTimeField(auto_now_add=True)
-    ta_updated_at = models.DateTimeField(null=True)
+    last_built = models.DateTimeField(null=True)
 
     class Meta:
         managed = False
@@ -70,7 +72,8 @@ class Exercise_Muscle_Bridge(models.Model):
     muscle = models.ForeignKey(to="Muscles", on_delete=models.CASCADE, default="1")
     muscle_role = models.TextField(default=None)
     ta_created_at = models.DateTimeField(auto_now_add=True)
-    ta_updated_at = models.DateTimeField(null=True)
+    is_leaf = models.BooleanField()
+    last_built = models.DateTimeField(null=True)
 
     class Meta:
         managed = False
@@ -84,8 +87,9 @@ class Equipment(models.Model):
     equipment_name = models.TextField()
     equipment_description = models.TextField()
     equipment_category = models.TextField()
+    is_leaf = models.BooleanField()
     ta_created_at = models.DateTimeField(auto_now_add=True)
-    ta_updated_at = models.DateTimeField(null=True)
+    last_built = models.DateTimeField(null=True)
 
     class Meta:
         managed = False
@@ -98,8 +102,9 @@ class Attachments(models.Model):
     attachment_id = models.AutoField(primary_key=True, db_index=True)
     attachment_name = models.TextField()
     attachment_description = models.TextField()
+    is_leaf = models.BooleanField()
     ta_created_at = models.DateTimeField(auto_now_add=True)
-    ta_updated_at = models.DateTimeField(null=True)
+    last_built = models.DateTimeField(null=True)
 
     class Meta:
         managed = False
