@@ -1,12 +1,12 @@
-attachment_id,attachment_name,attachment_description,ta_created_at,ta_updated_at
--1,None,No attachment,2025-12-01 15:30:04.030 +0200,
-1,Rope,Triceps rope attachment for cable machines,2025-12-01 15:30:04.030 +0200,
-2,Short Bar,Straight bar attachment for cable machines,2025-12-01 15:30:04.030 +0200,
-3,Handle,Handle attachment for machines or pulleys,2025-12-01 15:30:04.030 +0200,
-4,Long Bar,Wide grip bar for lat pulldown exercises,2025-12-01 15:30:04.030 +0200,
-5,Close Grip Bar,Close grip attachment for pulldowns and rows,2025-12-01 15:30:04.030 +0200,
-6,V-Bar,V-shaped bar for triceps pushdowns,2025-12-01 15:30:04.030 +0200,
-7,Ankle Strap,Ankle strap for cable leg exercises,2025-12-01 15:30:04.030 +0200,
-8,Resistance Band,Elastic resistance band for various exercises,2025-12-01 15:30:04.030 +0200,
-9,Weighted Belt,Weighted belt for adding resistance to otherwise bodyweight movements,2025-12-01 15:30:04.030 +0200,
-10,Neutral Grip Bar,Bar that lets you grip with a neutral wrist position,2026-03-23 02:00:00:04.030 +0200,
+attachment_id,attachment_name,attachment_description,ta_created_at
+-1,None,No attachment,2025-12-01 15:30:04.030 +0200
+1,Rope,Triceps rope attachment for cable machines,2025-12-01 15:30:04.030 +0200
+2,Short Bar,Straight bar attachment for cable machines,2025-12-01 15:30:04.030 +0200
+3,Handle,Handle attachment for machines or pulleys,2025-12-01 15:30:04.030 +0200
+4,Long Bar,Wide grip bar for lat pulldown exercises,2025-12-01 15:30:04.030 +0200
+5,Close Grip Bar,Close grip attachment for pulldowns and rows,2025-12-01 15:30:04.030 +0200
+6,V-Bar,V-shaped bar for triceps pushdowns,2025-12-01 15:30:04.030 +0200
+7,Ankle Strap,Ankle strap for cable leg exercises,2025-12-01 15:30:04.030 +0200
+8,Resistance Band,Elastic resistance band for various exercises,2025-12-01 15:30:04.030 +0200
+9,Weighted Belt,Weighted belt for adding resistance to otherwise bodyweight movements,2025-12-01 15:30:04.030 +0200
+10,Neutral Grip Bar,Bar that lets you grip with a neutral wrist position,2026-03-23 02:00:00:04.030 +0200

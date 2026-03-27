@@ -1,16 +1,17 @@
-equipment_id,equipment_name,equipment_description,equipment_category,ta_created_at,ta_updated_at
--1,None,N/A,N/A,2025-12-01 15:39:54.599 +0200,
-1,Olympic Barbell,N/A,Free weight,2025-12-01 15:39:54.599 +0200,
-2,Pulley,N/A,Consistent resistance,2025-12-01 15:39:54.599 +0200,
-4,Elastic band,N/A,Variable resistance,2025-12-01 15:39:54.599 +0200,
-5,Weighted belt,N/A,Free weight,2025-12-01 15:39:54.599 +0200,
-7,Machine,N/A,Depends on the machine,2025-12-01 15:39:54.599 +0200,
-8,Kettlebell,N/A,Free weight,2025-12-01 15:39:54.599 +0200,
-9,Dumbbell,N/A,Free weight,2025-12-01 15:39:54.599 +0200,
-10,Bodyweight,N/A,Free weight,2025-12-01 15:39:54.599 +0200,
-11,Hexbar,N/A,Free weight,2025-12-01 15:39:54.599 +0200,
-12,T bar,N/A,Free weight,2025-12-01 15:39:54.599 +0200,
-13,Hack squat, N/A, Machines,2026-01-27 23:59:54.599 +0200,
-14,Ab Wheel,N/A,Free weight,2026-01-27 23:59:54.599 +0200,
-15,Smith machine,N/A,Machines,2026-01-30 20:12:31.522 +0200,
-16,EZ Barbell,Barbell with curves designed for an easier time gripping during curls, Free weights,2026-01-30 20:12:31.522 +0200,
+equipment_id,equipment_name,equipment_description,equipment_parent_id,equipment_category,ta_created_at
+-1,None,N/A,,N/A,2025-12-01 15:39:54.599 +0200
+1,Olympic Barbell,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
+2,Pulley,N/A,,Consistent resistance,2025-12-01 15:39:54.599 +0200
+4,Elastic band,N/A,,Variable resistance,2025-12-01 15:39:54.599 +0200
+5,Weighted belt,N/A,,Free weight,2025-12-01 15:39:54.599 +0200
+7,Machine,N/A,,Depends on the machine,2025-12-01 15:39:54.599 +0200
+8,Kettlebell,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
+9,Dumbbell,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
+10,Bodyweight,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
+11,Hexbar,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
+12,T bar,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
+13,Hack squat,N/A,7,Machines,2026-01-27 23:59:54.599 +0200
+14,Ab Wheel,N/A,10,Free weight,2026-01-27 23:59:54.599 +0200
+15,Smith machine,N/A,7,Machines,2026-01-30 20:12:31.522 +0200
+16,EZ Barbell,Barbell with curves designed for an easier time gripping during curls,17,Free weights,2026-01-30 20:12:31.522 +0200
+17,Free weights,Resistances that require you to use your stabilizer muscles,,,2026-03-27 20:30:00.000 +0200

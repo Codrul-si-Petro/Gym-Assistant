@@ -1,1 +1,4 @@
-SELECT * FROM {{ ref('seed_exercises') }}
+SELECT 
+  *,
+  NOW() AS last_built
+FROM {{ ref('seed_exercises') }}

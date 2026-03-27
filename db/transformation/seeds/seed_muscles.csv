@@ -1,37 +1,44 @@
-"muscle_id","muscle_name","muscle_group","ta_created_at","ta_updated_at"
--1,None,N/A,2025-12-01 15:36:55.902 +0200,
-1,Internal obliques,Core,2025-12-01 15:36:55.902 +0200,
-2,Forearm extensors,Forearm extensors,2025-12-01 15:36:55.902 +0200,
-3,Latissimus dorsi,Back,2025-12-01 15:36:55.902 +0200,
-4,Erector spinae,Back,2025-12-01 15:36:55.902 +0200,
-5,Trapezius upper,Back,2025-12-01 15:36:55.902 +0200,
-6,Pectoralis major,Chest,2025-12-01 15:36:55.902 +0200,
-7,Rectus abdominis,Core,2025-12-01 15:36:55.902 +0200,
-8,Serratus anterior,Chest,2025-12-01 15:36:55.902 +0200,
-9,Subscapularis,Shoulder,2025-12-01 15:36:55.902 +0200,
-10,Brachialis,Arm,2025-12-01 15:36:55.902 +0200,
-11,External obliques,Core,2025-12-01 15:36:55.902 +0200,
-12,Hip abductors,Leg,2025-12-01 15:36:55.902 +0200,
-13,Trapezius lower,Back,2025-12-01 15:36:55.902 +0200,
-14,Trapezius middle,Back,2025-12-01 15:36:55.902 +0200,
-15,Triceps brachii,Arm,2025-12-01 15:36:55.902 +0200,
-16,Medial deltoid,Shoulder,2025-12-01 15:36:55.902 +0200,
-17,Posterior calves,Leg,2025-12-01 15:36:55.902 +0200,
-18,Posterior deltoid,Shoulder,2025-12-01 15:36:55.902 +0200,
-19,Brachioradialis,Arm,2025-12-01 15:36:55.902 +0200,
-20,Teres minor,Back,2025-12-01 15:36:55.902 +0200,
-21,Teres major,Back,2025-12-01 15:36:55.902 +0200,
-22,Hip adductors,Leg,2025-12-01 15:36:55.902 +0200,
-23,Pectoralis minor,Chest,2025-12-01 15:36:55.902 +0200,
-24,Quadriceps,Leg,2025-12-01 15:36:55.902 +0200,
-25,Quadratus lumborum,Core,2025-12-01 15:36:55.902 +0200,
-26,Tibialis anterior,Leg,2025-12-01 15:36:55.902 +0200,
-27,Supraspinatus,Shoulder,2025-12-01 15:36:55.902 +0200,
-28,Gluteal muscles,Leg,2025-12-01 15:36:55.902 +0200,
-29,Forearm flexors,Forearm extensors,2025-12-01 15:36:55.902 +0200,
-30,Hamstrings,Leg,2025-12-01 15:36:55.902 +0200,
-31,Rhomboids,Back,2025-12-01 15:36:55.902 +0200,
-32,Biceps brachii,Arm,2025-12-01 15:36:55.902 +0200,
-33,Infraspinatus,Shoulder,2025-12-01 15:36:55.902 +0200,
-34,Transverse abdominis,Core,2025-12-01 15:36:55.902 +0200,
-35,Anterior deltoid,Shoulder,2025-12-01 15:36:55.902 +0200,
+muscle_id,muscle_name,muscle_parent_id,ta_created_at
+-1,None,,2025-12-01 15:36:55.902 +0200
+1,Internal obliques,36,2025-12-01 15:36:55.902 +0200
+2,Forearm extensors,37,2025-12-01 15:36:55.902 +0200
+3,Latissimus dorsi,38,2025-12-01 15:36:55.902 +0200
+4,Erector spinae,38,2025-12-01 15:36:55.902 +0200
+5,Trapezius upper,38,2025-12-01 15:36:55.902 +0200
+6,Pectoralis major,39,2025-12-01 15:36:55.902 +0200
+7,Rectus abdominis,36,2025-12-01 15:36:55.902 +0200
+8,Serratus anterior,39,2025-12-01 15:36:55.902 +0200
+9,Subscapularis,40,2025-12-01 15:36:55.902 +0200
+10,Brachialis,41,2025-12-01 15:36:55.902 +0200
+11,External obliques,36,2025-12-01 15:36:55.902 +0200
+12,Hip abductors,42,2025-12-01 15:36:55.902 +0200
+13,Trapezius lower,38,2025-12-01 15:36:55.902 +0200
+14,Trapezius middle,38,2025-12-01 15:36:55.902 +0200
+15,Triceps brachii,41,2025-12-01 15:36:55.902 +0200
+16,Medial deltoid,40,2025-12-01 15:36:55.902 +0200
+17,Posterior calves,42,2025-12-01 15:36:55.902 +0200
+18,Posterior deltoid,40,2025-12-01 15:36:55.902 +0200
+19,Brachioradialis,41,2025-12-01 15:36:55.902 +0200
+20,Teres minor,38,2025-12-01 15:36:55.902 +0200
+21,Teres major,38,2025-12-01 15:36:55.902 +0200
+22,Hip adductors,42,2025-12-01 15:36:55.902 +0200
+23,Pectoralis minor,39,2025-12-01 15:36:55.902 +0200
+24,Quadriceps,42,2025-12-01 15:36:55.902 +0200
+25,Quadratus lumborum,36,2025-12-01 15:36:55.902 +0200
+26,Tibialis anterior,42,2025-12-01 15:36:55.902 +0200
+27,Supraspinatus,40,2025-12-01 15:36:55.902 +0200
+28,Gluteal muscles,42,2025-12-01 15:36:55.902 +0200
+29,Forearm flexors,37,2025-12-01 15:36:55.902 +0200
+30,Hamstrings,42,2025-12-01 15:36:55.902 +0200
+31,Rhomboids,38,2025-12-01 15:36:55.902 +0200
+32,Biceps brachii,41,2025-12-01 15:36:55.902 +0200
+33,Infraspinatus,40,2025-12-01 15:36:55.902 +0200
+34,Transverse abdominis,36,2025-12-01 15:36:55.902 +0200
+35,Anterior deltoid,40,2025-12-01 15:36:55.902 +0200
+36,Core,,2025-12-01 15:36:55.902 +0200
+37,Forearms,,2025-12-01 15:36:55.902 +0200
+38,Back,,2025-12-01 15:36:55.902 +0200
+39,Chest,,2025-12-01 15:36:55.902 +0200
+40,Shoulders,,2025-12-01 15:36:55.902 +0200
+41,Arms,,2025-12-01 15:36:55.902 +0200
+42,Legs,,2025-12-01 15:36:55.902 +0200

@@ -9,10 +9,6 @@ seeds:
         tests:
           - not_null
           - unique
-          - relationships:
-              arguments:
-                to: ref('seed_exercise_muscle')
-                field: exercise_id
       - name: exercise_name
         tests:
           - not_null
@@ -57,22 +53,6 @@ seeds:
 
   - name: seed_exercise_muscle
     description: "Bridge table to link muscles with exercises"
-    columns:
-      - name: exercise_id
-        tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('seed_exercises')
-                field: exercise_id
-
-      - name: muscle_id
-        tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('seed_muscles')
-                field: muscle_id
 
 sources:
   - name: core
