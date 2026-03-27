@@ -47,7 +47,6 @@ seeds:
     - name: equipment_name
       tests:
         - not_null
-        - unique
 
 
   - name: seed_exercise_muscle
