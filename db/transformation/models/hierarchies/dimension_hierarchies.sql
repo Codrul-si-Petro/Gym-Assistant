@@ -1,12 +1,11 @@
 {{ config(
     materialized='table',
-    schema='core',
-    post_hook=create_indexes('core.dimension_hierarchies', ['ancestor_id'])
+    post_hook=create_indexes('core.dimension_hierarchies', [['ancestor_id', 'dimension']])
 ) }}
 
 WITH RECURSIVE exercise_tree AS (
     SELECT
-        'exercise-' || e.exercise_id AS dimension,
+        'exercise' AS dimension,
         e.exercise_name AS ancestor_name,
         e.exercise_id AS ancestor_id,
         e.exercise_id AS current_id,
@@ -16,7 +15,7 @@ WITH RECURSIVE exercise_tree AS (
     UNION ALL
 
     SELECT
-        'exercise-' || c.ancestor_id AS dimension,
+        'exercise' AS dimension,
         c.ancestor_name,
         c.ancestor_id,
         e.exercise_id AS current_id,
@@ -28,7 +27,7 @@ WITH RECURSIVE exercise_tree AS (
 
 muscle_tree AS (
     SELECT
-        'muscle-' || m.muscle_id AS dimension,
+        'muscle' AS dimension,
         m.muscle_name AS ancestor_name,
         m.muscle_id AS ancestor_id,
         m.muscle_id AS current_id,
@@ -38,7 +37,7 @@ muscle_tree AS (
     UNION ALL
 
     SELECT
-        'muscle-' || c.ancestor_id AS dimension,
+        'muscle' AS dimension,
         c.ancestor_name,
         c.ancestor_id,
         m.muscle_id AS current_id,
@@ -50,7 +49,7 @@ muscle_tree AS (
 
 attachment_tree AS (
     SELECT
-        'attachment-' || a.attachment_id AS dimension,
+        'attachment' AS dimension,
         a.attachment_name AS ancestor_name,
         a.attachment_id AS ancestor_id,
         a.attachment_id AS current_id,
@@ -60,7 +59,7 @@ attachment_tree AS (
     UNION ALL
 
     SELECT
-        'attachment-' || c.ancestor_id AS dimension,
+        'attachment' AS dimension,
         c.ancestor_name,
         c.ancestor_id,
         a.attachment_id AS current_id,
@@ -72,7 +71,7 @@ attachment_tree AS (
 
 equipment_tree AS (
     SELECT
-        'equipment-' || eq.equipment_id AS dimension,
+        'equipment' AS dimension,
         eq.equipment_name AS ancestor_name,
         eq.equipment_id AS ancestor_id,
         eq.equipment_id AS current_id,
@@ -82,7 +81,7 @@ equipment_tree AS (
     UNION ALL
 
     SELECT
-        'equipment-' || c.ancestor_id AS dimension,
+        'equipment' AS dimension,
         c.ancestor_name,
         c.ancestor_id,
         eq.equipment_id AS current_id,
