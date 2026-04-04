@@ -22,7 +22,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
     unit = serializers.ChoiceField(default="KG", choices=["KG", "LBS"])
     set_type = serializers.CharField(min_length=1, default="None")
     comments = serializers.CharField(min_length=1, required=False, default="None")
-    workout_split = serializers.CharField(max_length=50, min_length=1, default="None")
+    workout_split = serializers.CharField(max_length=50, min_length=1)
     date = serializers.DateField(write_only=True)
 
     class Meta:
@@ -70,8 +70,6 @@ class WorkoutSerializer(serializers.ModelSerializer):
         calendar_entry = Calendar.objects.get(date_id=date_input)
         validated_data["date"] = calendar_entry
 
-        if not validated_data.get("workout_split"):
-            validated_data["workout_split"] = "None"
         user = self.context["request"].user
         validated_data["user"] = user
 

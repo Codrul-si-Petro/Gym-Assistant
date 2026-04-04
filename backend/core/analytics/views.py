@@ -93,12 +93,20 @@ class TotalVolumeView(APIView):
                 format=openapi.FORMAT_DATE,
                 description="End date (YYYY-MM-DD)",
             ),
+            openapi.Parameter(
+                "parent_id",
+                openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                format=openapi.FORMAT_INT64,
+                description="ID of the exercise you want to drill down into.",
+            ),
         ],
     )
     def get(self, request):
         user_id = request.user.id
         start_date = request.query_params.get("start_date")
         end_date = request.query_params.get("end_date")
+        parent_id = request.query_params.get("parent_id")
 
         start_date_parsed = parse_date(start_date) if start_date else None
         end_date_parsed = parse_date(end_date) if end_date else None
@@ -114,6 +122,7 @@ class TotalVolumeView(APIView):
                 user_id,
                 start_date=start_date_parsed,
                 end_date=end_date_parsed,
+                parent_id=parent_id,
             )
             for i, row in enumerate(results, 1):
                 row["rank"] = i
