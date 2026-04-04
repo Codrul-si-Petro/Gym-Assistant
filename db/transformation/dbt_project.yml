@@ -31,18 +31,29 @@ seeds:
 
 models:
   transformation:
-    +tags: models
+    +tags: ['models']
     +schema: core
-    +materialized: table
-    dim_calendar:
-      +primary_key: date_id
-    dim_equipment:
-      +primary_key: equipment_id
-    dim_attachments:
-      +primary_key: attachment_id
-    exercise_muscle_bridge:
-      +primary_key: id
-    dim_exercises:
-      +primary_key: exercise_id
-    dim_muscles:
-      +primary_key: muscle_id
+
+    core:
+      +tags: ['dimensions']
+      +materialized: table
+
+      dim_calendar:
+        +primary_key: date_id
+      dim_equipment:
+        +primary_key: equipment_id
+      dim_attachments:
+        +primary_key: attachment_id
+      exercise_muscle_bridge:
+        +primary_key: id
+      dim_exercises:
+        +primary_key: exercise_id
+      dim_muscles:
+        +primary_key: muscle_id
+
+    hierarchies:
+      +tags: ['hierarchies']
+      +materialized: table
+
+      dimension_hierarchies:
+        +primary_key: dimension
