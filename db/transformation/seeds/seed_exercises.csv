@@ -5,7 +5,7 @@ exercise_id,exercise_name,exercise_movement_type,exercise_parent_id,ta_created_a
 3,Hip adduction,Isolated,,2025-12-01 15:30:04.030 +0200
 4,Shoulder press,Compound,45,2025-12-01 15:30:04.030 +0200
 5,Hip abduction,Isolated,,2025-12-01 15:30:04.030 +0200
-6,Biceps curl,Isolated,,2025-12-01 15:30:04.030 +0200
+6,Biceps curl,Isolated,52,2025-12-01 15:30:04.030 +0200
 7,Dip,Compound,,2025-12-01 15:30:04.030 +0200
 8,Bent knee calf press,Isolated,42,2025-12-01 15:30:04.030 +0200
 9,Bench press,Compound,46,2025-12-01 15:30:04.030 +0200
@@ -51,3 +51,7 @@ exercise_id,exercise_name,exercise_movement_type,exercise_parent_id,ta_created_a
 49,Pull up,Compound,,2025-12-01 15:30:04.030 +0200
 50,Row,Compound,,2025-12-01 15:30:04.030 +0200
 51,Lunge,Compound,,2025-12-01 15:30:04.030 +0200
+52,Biceps curl,Isolated,,2026-04-04 23:30:04.03 +0200
+53,Preacher curl,Isolated,52,2026-04-04 23:30:04.03 +0200
+54,Hammer curl,Isolated,52,2026-04-04 23:30:04.03 +0200
+55,Skullcrushers,Isolated,44,2026-04-04 23:30:04.03 +0200
