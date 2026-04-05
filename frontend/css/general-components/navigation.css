@@ -1,91 +1,119 @@
-/* ----- Navbar: Mobile first ----- */
+/* ----- Navbar: Mobile & Desktop ----- */
 .nav {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;      /* hamburger top-left */
+  justify-content: flex-start;  /* button on left */
   margin-bottom: 16px;
-  position: relative; /* needed for overlay positioning */
+  position: relative;           /* for dropdown positioning */
+  gap: 12px;
 }
 
-/* Hamburger button */
+/* Hamburger button (always styled independently) */
 .nav-toggle {
-  display: block;           
-  background: #16161a;      /* dark button bg */
+  display: block;
+  background: #16161a;
   border: 1px solid #2a2a2e;
-  color: #22d3ee;           /* cyan text */
+  color: #22d3ee;
   font-size: 24px;
   padding: 8px 12px;
   border-radius: 6px;
   cursor: pointer;
+  z-index: 1001;
 }
 .nav-toggle:hover {
   background: #27272a;
 }
 
-/* Nav links container overlay (mobile) */
+/* Nav links overlay: mobile - centered full screen */
 .nav-links {
-  display: none;            
+  display: none;
   flex-direction: column;
   gap: 12px;
-  position: absolute;        /* overlay instead of pushing content */
-  top: 56px;                 /* below the navbar / hamburger */
-  left: 0;
-  right: 0;
-  z-index: 1000;             /* on top of everything */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 320px;
+  max-height: 250px;
   background: #16161a;
   padding: 24px;
-  border-radius: 0 0 12px 12px;
+  border-radius: 12px;
   border: 1px solid #2a2a2e;
   box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-  text-align: center;        /* center text inside overlay */
+  text-align: center;
+  overflow-y: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* Show links when active */
+/* Show links with fade-in */
 .nav-links.active {
   display: flex;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
 }
 
-/* Hide hamburger when menu is active */
-.nav-toggle.hidden {
-  display: none;
-}
-
-/* Links inside overlay */
+/* Links styling */
 .nav-links a {
   display: block;
-  padding: 10px 0;
-  background: none;
-  border: none;
+  padding: 10px 16px;
+  background: #16161a;
+  border: 1px solid #2a2a2e;
+  border-radius: 6px;
   color: #22d3ee;
   font-size: 16px;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 .nav-links a:hover {
+  background: #27272a;
   color: #0ef;
 }
 
-/* ----- Desktop styles ----- */
+.nav-title {
+  font-size: 18px;
+  color: #22d3ee;
+  align-self: center;   /* vertically center next to hamburger */
+  margin-left: 8px;     /* space from button */
+  cursor: default;
+  user-select: none;
+}
+
+/*  hide title on mobile overlay menu */
+@media (max-width: 767px) {
+  .nav-title {
+    display: none;
+  }
+}
+
+/* Desktop: small dropdown under hamburger */
 @media (min-width: 768px) {
-  .nav-toggle {
-    display: none;          /* hide hamburger */
-  }
   .nav-links {
-    display: flex !important; 
-    position: static;       /* normal flow */
-    flex-direction: row;
+    position: absolute;
+    top: 100%;              /* below hamburger */
+    left: 0;                /* align left */
+    transform: none;
+    width: 200px;
+    max-height: none;
+    padding: 16px;
+    border-radius: 8px;
+    flex-direction: column;
     gap: 8px;
-    margin-top: 0;
-    width: auto;
-    background: none;
-    padding: 0;
-    border: none;
-    box-shadow: none;
     text-align: left;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translateY(-10px);
   }
-  .nav-links a {
-    background: #16161a;
-    border: 1px solid #2a2a2e;
-    padding: 10px 16px;
+
+  .nav-links.active {
+    transform: translateY(0);
+  }
+
+  /* Keep hamburger visible on desktop */
+  .nav-toggle.hidden {
+    display: block;
   }
 }
