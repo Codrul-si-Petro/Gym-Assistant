@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="../../css/core/dashboard.css">
     <!-- Per chart style -->
     <link rel="stylesheet" href="../../css/core/charts/total-volume-dashboard.css">
-    <!-- <link rel="stylesheet" href="../../css/core/dashboard.css"> -->
+    <link rel="stylesheet" href="../../css/core/charts/fav-exercises-dashboard.css">
+    <!-- nav bar -->
     <link rel="stylesheet" href="../../css/general-components/navigation.css">
 
     <link rel="icon" href="../../assets/favicon.ico" sizes="any">
@@ -31,12 +32,14 @@
     </div>
 
     <!-- Shared controls  -->
-    <div class="chart-controls">
+    <div class="chart-controls-wrap">
+      <div class="chart-controls">
         <label for="start_date" class="chart-date-label">From</label>
         <input type="date" id="start_date" class="chart-date" aria-label="From date" />
         <span class="chart-date-sep" aria-hidden="true">—</span>
         <label for="end_date" class="chart-date-label">To</label>
         <input type="date" id="end_date" class="chart-date" aria-label="To date" />
+      </div>
     </div>
 
     <!-- Shared message area (avoid duplicate IDs) -->
@@ -79,6 +82,12 @@
             <div class="total-volume-dashboard">
                 <h1>Total volume per exercises</h1>
 
+                <div class="volume-toolbar" id="volume-toolbar" hidden>
+                    <button type="button" class="volume-back-btn" id="volume-back-btn" aria-label="Back up one level">
+                        ← Back
+                    </button>
+                </div>
+
                 <div class="chart-scroll-wrap">
 
                     <div id="chart-skeleton-volume" class="chart-skeleton">
@@ -89,8 +98,21 @@
                         <div class="skeleton-bar" style="width: 45%"></div>
                     </div>
 
-                    <div class="chart-inner">
-                        <canvas id="volume-canvas"></canvas>
+                    <div class="chart-inner volume-table-inner" id="volume-table-inner" style="display: none;">
+                        <table class="volume-table">
+                          <thead>
+                            <tr>
+                              <th scope="col" class="volume-col-rank">#</th>
+                              <th scope="col" class="volume-col-exercise">Exercise</th>
+                              <th scope="col" class="volume-col-chart">
+                                <span class="sr-only">Open chart</span>
+                                <span class="volume-col-chart-label" aria-hidden="true">Chart</span>
+                              </th>
+                              <th scope="col" class="volume-col-vol">Total volume (kg)</th>
+                            </tr>
+                          </thead>
+                            <tbody id="volume-table-body"></tbody>
+                        </table>
                     </div>
 
                 </div>

@@ -1,6 +1,3 @@
-
-
-
 // Keep a single chart instance so we can destroy before redrawing
 
 let chartInstance = null;
@@ -147,3 +144,80 @@ export function renderFavExercisesChart(labels, values, fullNames, ranks){
       plugins: plugins,
     });
 }
+
+export function formatVolumeKg(n) {
+  if (n == null || Number.isNaN(Number(n))) return "—";
+  const v = Number(n);
+  const opts =
+    v >= 100
+      ? { maximumFractionDigits: 0, minimumFractionDigits: 0 }
+      : { maximumFractionDigits: 1, minimumFractionDigits: 1 };
+  return new Intl.NumberFormat("en-US", opts).format(v);
+}
+
+/**
+ * @param {Array} results - API rows: exercise_id, exercise_name, total_volume_kg, rank, is_leaf
+ * @param {{ onDrill?: (row: object) => void, onMinichart?: (row: object) => void }} handlers
+ */
+export function renderVolumeTable(results, handlers) {
+  const tbody = document.getElementById("volume-table-body");
+  if (!tbody) return;
+
+  const onDrill = handlers?.onDrill;
+  const onMinichart = handlers?.onMinichart;
+
+  tbody.replaceChildren();
+
+  for (const row of results) {
+    const tr = document.createElement("tr");
+
+    const rankTd = document.createElement("td");
+    rankTd.className = "volume-col-rank";
+    rankTd.textContent = String(row.rank ?? "");
+
+    const nameTd = document.createElement("td");
+    nameTd.className = "volume-col-exercise";
+    const canDrill = row.is_leaf === false;
+    if (canDrill && onDrill) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "volume-exercise-drill";
+      const label = document.createElement("span");
+      label.className = "volume-exercise-drill-label";
+      label.textContent = row.exercise_name || "";
+      const chev = document.createElement("span");
+      chev.className = "volume-exercise-drill-chevron";
+      chev.setAttribute("aria-hidden", "true");
+      chev.textContent = ">";
+      btn.append(label, chev);
+      btn.addEventListener("click", () => onDrill(row));
+      nameTd.appendChild(btn);
+    } else {
+      nameTd.textContent = row.exercise_name || "";
+    }
+
+    const sparkTd = document.createElement("td");
+    sparkTd.className = "volume-col-chart";
+    const sparkBtn = document.createElement("button");
+    sparkBtn.type = "button";
+    sparkBtn.className = "volume-minichart-placeholder";
+    sparkBtn.setAttribute(
+      "aria-label",
+      "Open volume chart for " + (row.exercise_name || "exercise")
+    );
+    sparkBtn.textContent = "◇";
+    sparkBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (onMinichart) onMinichart(row);
+    });
+    sparkTd.appendChild(sparkBtn);
+
+    const volTd = document.createElement("td");
+    volTd.className = "volume-col-vol";
+    volTd.textContent = formatVolumeKg(row.total_volume_kg);
+
+    tr.append(rankTd, nameTd, sparkTd, volTd);
+    tbody.appendChild(tr);
+  }
+}
+
