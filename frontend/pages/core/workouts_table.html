@@ -5,11 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workout History</title>
     <link rel="stylesheet" href="../../css/core/workouts_table.css">
+    <link rel="stylesheet" href="../../css/general-components/navigation.css">
     <link rel="icon" href="../../assets/favicon.ico" sizes="any">
 </head>
 <body>
-    <div class="nav-links">
-        <a href="../../index.html">Home</a>
+    <div class="nav">
+      <button class="nav-toggle" aria-label="Toggle Menu">&#9776;</button>
+      <span class="nav-title">Menu</span>
+      <div class="nav-links">
+          <a href="../../index.html">Home</a>
+          <a href="workouts_input.html">Log workouts</a>
+      </div>
     </div>
     <h1>Workout History</h1>
     <div id="auth-msg" class="auth-msg"></div>
@@ -38,5 +44,6 @@
     </div>
     <script src="../../js/auth/require-auth.js"></script>
     <script src="../../js/core/workouts_table.js"></script>
+    <script src="../../js/general-components/navigation.js"></script>
 </body>
 </html>

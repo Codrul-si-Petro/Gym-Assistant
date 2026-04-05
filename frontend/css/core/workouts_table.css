@@ -9,27 +9,6 @@ body {
     min-height: 100vh;
 }
 
-.nav-links {
-    margin-bottom: 16px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.nav-links a {
-    display: inline-block;
-    padding: 10px 16px;
-    background: #16161a;
-    color: #22d3ee;
-    text-decoration: none;
-    border-radius: 6px;
-    font-size: 14px;
-    border: 1px solid #2a2a2e;
-}
-
-.nav-links a:hover {
-    background: #27272a;
-}
 
 .auth-msg {
     margin-bottom: 12px;
@@ -88,5 +67,4 @@ tbody tr:last-child td { border-bottom: none; }
 
 @media (max-width: 412px) {
     th, td { padding: 10px 8px; font-size: 0.8rem; }
-    .nav-links a { padding: 8px 12px; font-size: 13px; }
 }

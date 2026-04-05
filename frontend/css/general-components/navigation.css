@@ -27,6 +27,7 @@
 /* Nav links overlay: mobile - centered full screen */
 .nav-links {
   display: none;
+  z-index: 2000; /* display over anything */
   flex-direction: column;
   gap: 12px;
   position: fixed;
