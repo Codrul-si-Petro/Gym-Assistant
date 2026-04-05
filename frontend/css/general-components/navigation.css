@@ -1,0 +1,120 @@
+/* ----- Navbar: Mobile & Desktop ----- */
+.nav {
+  display: flex;
+  align-items: flex-start;      /* hamburger top-left */
+  justify-content: flex-start;  /* button on left */
+  margin-bottom: 16px;
+  position: relative;           /* for dropdown positioning */
+  gap: 12px;
+}
+
+/* Hamburger button (always styled independently) */
+.nav-toggle {
+  display: block;
+  background: #16161a;
+  border: 1px solid #2a2a2e;
+  color: #22d3ee;
+  font-size: 24px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 1001;
+}
+.nav-toggle:hover {
+  background: #27272a;
+}
+
+/* Nav links overlay: mobile - centered full screen */
+.nav-links {
+  display: none;
+  z-index: 2000; /* display over anything */
+  flex-direction: column;
+  gap: 12px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 320px;
+  max-height: 250px;
+  background: #16161a;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #2a2a2e;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+  text-align: center;
+  overflow-y: auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Show links with fade-in */
+.nav-links.active {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Links styling */
+.nav-links a {
+  display: block;
+  padding: 10px 16px;
+  background: #16161a;
+  border: 1px solid #2a2a2e;
+  border-radius: 6px;
+  color: #22d3ee;
+  font-size: 16px;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.nav-links a:hover {
+  background: #27272a;
+  color: #0ef;
+}
+
+.nav-title {
+  font-size: 18px;
+  color: #22d3ee;
+  align-self: center;   /* vertically center next to hamburger */
+  margin-left: 8px;     /* space from button */
+  cursor: default;
+  user-select: none;
+}
+
+/*  hide title on mobile overlay menu */
+@media (max-width: 767px) {
+  .nav-title {
+    display: none;
+  }
+}
+
+/* Desktop: small dropdown under hamburger */
+@media (min-width: 768px) {
+  .nav-links {
+    position: absolute;
+    top: 100%;              /* below hamburger */
+    left: 0;                /* align left */
+    transform: none;
+    width: 200px;
+    max-height: none;
+    padding: 16px;
+    border-radius: 8px;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translateY(-10px);
+  }
+
+  .nav-links.active {
+    transform: translateY(0);
+  }
+
+  /* Keep hamburger visible on desktop */
+  .nav-toggle.hidden {
+    display: block;
+  }
+}

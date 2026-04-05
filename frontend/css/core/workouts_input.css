@@ -9,30 +9,6 @@ body {
     min-height: 100vh;
 }
 
-.nav-links {
-    margin-bottom: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.nav-links a {
-    display: inline-block;
-    padding: 10px 18px;
-    background: #16161a;
-    color: #22d3ee;
-    text-decoration: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    border: 1px solid #2a2a2e;
-    transition: background 0.2s, color 0.2s;
-}
-
-.nav-links a:hover {
-    background: #27272a;
-    color: #f4f4f5;
-}
 
 .workout-input {
     max-width: 520px;
@@ -195,8 +171,4 @@ body {
         padding: 16px;
     }
 
-    .nav-links a {
-        padding: 10px 14px;
-        font-size: 13px;
-    }
 }

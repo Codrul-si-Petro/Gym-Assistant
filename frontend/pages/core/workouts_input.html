@@ -5,12 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log Workout</title>
     <link rel="stylesheet" href="../../css/core/workouts_input.css">
+    <link rel="stylesheet" href="../../css/general-components/navigation.css">
+    <link rel="icon" href="../../assets/favicon.ico" sizes="any">
 </head>
 <body>
-    <nav class="nav-links">
-        <a href="../../index.html">Home</a>
-        <a href="workouts_table.html">View workouts</a>
-    </nav>
+    <div class="nav">
+      <button class="nav-toggle" aria-label="Toggle Menu">&#9776;</button>
+      <span class="nav-title">Menu</span>
+      <div class="nav-links">
+          <a href="../../index.html">Home</a>
+          <a href="workouts_table.html">View workouts</a>
+          <a href="dashboard.html">Your stats</a>
+      </div>
+    </div>
 
     <main class="workout-input">
         <h1>Log workout</h1>
@@ -91,5 +98,7 @@
 
     <script src="../../js/auth/require-auth.js"></script>
     <script src="../../js/core/workouts_input.js"></script>
+    <script src="../../js/general-components/navigation.js"></script>
+
 </body>
 </html>

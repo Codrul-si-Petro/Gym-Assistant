@@ -1,0 +1,87 @@
+/*  chart messages, usually errors :( */
+.chart-msg {
+  margin-bottom: 12px;
+  color: #a1a1aa; /* gray text for secondary messages */
+  font-size: 14px;
+}
+.chart-msg:empty { display: none; }
+
+/* chart scroll wrapper */
+.chart-scroll-wrap {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  padding: 16px;
+  background: #16161a;        /* chart container bg */
+  border-radius: 8px;
+  border: 1px solid #2a2a2e;  /* subtle border */
+  max-height: 70vh;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) #16161a;
+}
+
+.chart-scroll-wrap::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.chart-scroll-wrap::-webkit-scrollbar-track {
+  background: #16161a;
+  border-radius: 4px;
+}
+.chart-scroll-wrap::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+.chart-scroll-wrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/*  chart canvas wrapper  */
+.chart-inner {
+  min-width: min(100%, 800px);
+  width: 100%;
+  min-height: 320px; /* JS can override to fit number of bars */
+}
+
+
+/*  dashboard container */
+.fav-ex-dashboard-main {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+/* ----- skeleton loading effect ----- */
+.chart-skeleton {
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chart-skeleton.hidden {
+  display: none;
+}
+
+.skeleton-bar {
+  height: 36px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #1e1e24 25%, #2a2a32 50%, #1e1e24 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ----- responsive ----- */
+@media (max-width: 768px) {
+  .fav-ex-dashboard-main {
+    max-width: 100%;
+  }
+}
