@@ -4,52 +4,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Charts</title>
+    <!-- Base style -->
     <link rel="stylesheet" href="../../css/core/dashboard.css">
+    <!-- Per chart style -->
+    <link rel="stylesheet" href="../../css/core/charts/total-volume-dashboard.css">
+    <link rel="stylesheet" href="../../css/core/charts/fav-exercises-dashboard.css">
+    <!-- nav bar -->
+    <link rel="stylesheet" href="../../css/general-components/navigation.css">
+
+    <link rel="icon" href="../../assets/favicon.ico" sizes="any">
 </head>
 <body>
-    <!-- Top navigation: link back to home -->
-    <div class="nav-links">
-        <a href="../../index.html">Home</a>
+
+  <div class="nav">
+      <button class="nav-toggle" aria-label="Toggle Menu">&#9776;</button>
+      <span class="nav-title">Menu</span>
+        <div class="nav-links">
+            <a href="../../index.html">Home</a>
+            <a href="workouts_input.html">Log workouts</a>
+            <a href="workouts_table.html">View workouts</a>
+        </div>
+  </div> 
+    <!-- Tabs  -->
+    <div class="chart-tabs"> 
+        <button class="chart-tab active" data-tab="favourites">Favourite Exercises</button>
+        <button class="chart-tab" data-tab="volume">Total Volumes</button>
     </div>
 
-    <!-- Centered main content: title, message area, date filters, chart -->
-    <div class="dashboard-main">
-        <h1>These are your favourite exercises</h1>
-
-        <!-- Shown when there's no data, an error, or a backend message -->
-        <p id="chart-msg" class="chart-msg" aria-live="polite"></p>
-
-        <!-- Date range filter: no value attribute = empty until user picks a date (avoids default value) -->
-        <div class="chart-controls">
-            <label for="start_date" class="chart-date-label">From</label>
-            <input type="date" id="start_date" class="chart-date" aria-label="From date" />
-            <span class="chart-date-sep" aria-hidden="true">—</span>
-            <label for="end_date" class="chart-date-label">To</label>
-            <input type="date" id="end_date" class="chart-date" aria-label="To date" />
-          </div>
-
-        <!-- Scrollable container for the chart (scrollbar styled in CSS to be almost invisible) -->
-        <div class="chart-scroll-wrap">
-            <!-- Skeleton shown while chart data is loading -->
-            <div id="chart-skeleton" class="chart-skeleton">
-                <div class="skeleton-bar" style="width: 90%"></div>
-                <div class="skeleton-bar" style="width: 80%"></div>
-                <div class="skeleton-bar" style="width: 70%"></div>
-                <div class="skeleton-bar" style="width: 55%"></div>
-                <div class="skeleton-bar" style="width: 45%"></div>
-            </div>
-            <div class="chart-inner">
-                <canvas id="chart-canvas" aria-label="Bar chart of favourite exercises"></canvas>
-            </div>
-        </div>
-        </div>
+    <!-- Shared controls  -->
+    <div class="chart-controls-wrap">
+      <div class="chart-controls">
+        <label for="start_date" class="chart-date-label">From</label>
+        <input type="date" id="start_date" class="chart-date" aria-label="From date" />
+        <span class="chart-date-sep" aria-hidden="true">—</span>
+        <label for="end_date" class="chart-date-label">To</label>
+        <input type="date" id="end_date" class="chart-date" aria-label="To date" />
+      </div>
     </div>
 
+    <!-- Shared message area (avoid duplicate IDs) -->
+    <p id="chart-msg" class="chart-msg" aria-live="polite"></p>
+
+    <!-- Panels container -->
+    <div class="chart-panels">
+
+        <!-- ===================== -->
+        <!-- TAB 1: FAVOURITES -->
+        <!-- ===================== -->
+        <div class="chart-panel active" id="tab-favourites">
+
+            <div class="fav-ex-dashboard-main">
+                <h1>These are your favourite exercises</h1>
+
+                <div class="chart-scroll-wrap">
+
+                    <div id="chart-skeleton-favourites" class="chart-skeleton">
+                        <div class="skeleton-bar" style="width: 90%"></div>
+                        <div class="skeleton-bar" style="width: 80%"></div>
+                        <div class="skeleton-bar" style="width: 70%"></div>
+                        <div class="skeleton-bar" style="width: 55%"></div>
+                        <div class="skeleton-bar" style="width: 45%"></div>
+                    </div>
+
+                    <div class="chart-inner">
+                        <canvas id="fav-exercises-canvas"></canvas>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== -->
+        <!-- TAB 2: VOLUME -->
+        <!-- ===================== -->
+        <div class="chart-panel" id="tab-volume">
+
+            <div class="total-volume-dashboard">
+                <h1>Total volume per exercises</h1>
+
+                <div class="volume-toolbar" id="volume-toolbar" hidden>
+                    <button type="button" class="volume-back-btn" id="volume-back-btn" aria-label="Back up one level">
+                        ← Back
+                    </button>
+                </div>
+
+                <div class="chart-scroll-wrap">
+
+                    <div id="chart-skeleton-volume" class="chart-skeleton">
+                        <div class="skeleton-bar" style="width: 90%"></div>
+                        <div class="skeleton-bar" style="width: 80%"></div>
+                        <div class="skeleton-bar" style="width: 70%"></div>
+                        <div class="skeleton-bar" style="width: 55%"></div>
+                        <div class="skeleton-bar" style="width: 45%"></div>
+                    </div>
+
+                    <div class="chart-inner volume-table-inner" id="volume-table-inner" style="display: none;">
+                        <table class="volume-table">
+                          <thead>
+                            <tr>
+                              <th scope="col" class="volume-col-rank">#</th>
+                              <th scope="col" class="volume-col-exercise">Exercise</th>
+                              <th scope="col" class="volume-col-chart">
+                                <span class="sr-only">Open chart</span>
+                                <span class="volume-col-chart-label" aria-hidden="true">Chart</span>
+                              </th>
+                              <th scope="col" class="volume-col-vol">Total volume (kg)</th>
+                            </tr>
+                          </thead>
+                            <tbody id="volume-table-body"></tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+  <div
+    id="volume-chart-toast"
+    class="volume-chart-toast"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+    aria-hidden="true"
+    hidden
+  ></div>
+
+    <!-- Scripts -->
+    <script src="../../js/general-components/navigation.js"></script>
     <script src="../../js/auth/require-auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-    <script src="../../js/core/dashboard.js"></script>
+    <script type="module" src="../../js/core/charts/chart-controller.js"></script>
+
 </body>
 </html>

@@ -1,114 +1,75 @@
-/* ----- Reset ----- */
-* { box-sizing: border-box; }
+/* Reset */
+* { box-sizing: border-box}
 
-/* ----- Page ----- */
+/* Page */
 body {
   margin: 0;
   padding: 12px;
   font-family: system-ui, -apple-system, sans-serif;
-  background: #0c0c0e;
-  color: #f4f4f5;
+  background: #0c0c0e;  /* dark background for night mode */
+  color: #f4f4f5;        /* default text color */
   min-height: 100vh;
 }
 
-/* ----- Nav ----- */
-.nav-links {
-  margin-bottom: 16px;
+/* hide panels and let js activate them */
+.chart-panel {
+  display: none; /* hide all by default */
+}
+
+.chart-panel.active {
+  display: block; /* only show active panel */
+}
+
+/* ----- Tabs container ----- */
+.chart-tabs {
   display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
-  gap: 8px;
 }
 
-.nav-links a {
-  display: inline-block;
-  padding: 10px 16px;
-  background: #16161a;
-  color: #22d3ee;
-  text-decoration: none;
+/* ----- Tab buttons ----- */
+.chart-tab {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #2a2a2e;
   border-radius: 6px;
+  color: #22d3ee;
   font-size: 14px;
-  border: 1px solid #2a2a2e;
-}
-
-.nav-links a:hover {
-  background: #27272a;
-}
-
-/* ----- Chart message (errors / no data) ----- */
-.chart-msg {
-  margin-bottom: 12px;
-  color: #a1a1aa;
-  font-size: 14px;
-}
-.chart-msg:empty { display: none; }
-
-/* ----- Title ----- */
-h1 {
-  margin: 0 0 16px;
-  font-size: 1.5rem;
-}
-
-/* ----- Date inputs: calendar icon blue/cyan (Chrome/Safari/Edge) ----- */
-.chart-date::-webkit-calendar-picker-indicator {
-  filter: invert(1) sepia(1) saturate(5) hue-rotate(160deg);
+  font-weight: 500;
   cursor: pointer;
-  opacity: 0.9;
+  transition: background 0.2s, color 0.2s;
 }
 
-/* Optional: make native date placeholder less prominent when empty */
-.chart-date::-webkit-datetime-edit {
-  color: #71717a;
-}
-.chart-date:focus::-webkit-datetime-edit {
-  color: #f4f4f5;
+.chart-tab:hover {
+  background: #27272a;
+  color: #0ef;
 }
 
-/* ----- Chart scroll area: scrollbar almost invisible ----- */
-.chart-scroll-wrap {
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  max-width: 100%;
-  padding: 16px;
-  background: #16161a;
-  border-radius: 8px;
-  border: 1px solid #2a2a2e;
-  max-height: 70vh;
-  /* Firefox */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) #16161a;
+/* ----- Active tab ----- */
+.chart-tab.active {
+  background: #22d3ee;
+  color: #16161a;
+  font-weight: 600;
+  border-color: #22d3ee;
 }
 
-.chart-scroll-wrap::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-.chart-scroll-wrap::-webkit-scrollbar-track {
-  background: #16161a;
-  border-radius: 4px;
-}
-.chart-scroll-wrap::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-}
-.chart-scroll-wrap::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-/* Chart canvas wrapper: height set by JS for scroll; no fixed height so it can grow */
-.chart-inner {
-  min-width: min(100%, 800px);
+.chart-controls-wrap {
+  max-width: 900px;
   width: 100%;
-  min-height: 320px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 16px;
 }
 
-/* ----- Date filter row (one line, fits mobile) ----- */
 .chart-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 16px;
-  flex-wrap: nowrap;
+  gap: 12px;
+  width: 100%;
   min-width: 0;
+  flex-wrap: nowrap;
+  margin-bottom: 0;
 }
 
 .chart-date {
@@ -120,23 +81,23 @@ h1 {
   font-size: 14px;
   font-family: inherit;
   min-width: 0;
-  flex: 1 1 0;
+  flex: 1 1 auto;
 }
 
 .chart-date-label {
-    color: #a1a1aa;
-    font-size: 14px;
-    font-weight: 500;
-    white-space: nowrap;
-  }
+  color: #a1a1aa;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
 
 .chart-date:hover {
-  border-color: #3f3f46;
+  border-color: #3f3f46; /* darker on hover */
 }
 
 .chart-date:focus {
   outline: none;
-  border-color: #22d3ee;
+  border-color: #22d3ee; /* cyan outline */
   box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
 }
 
@@ -147,45 +108,15 @@ h1 {
   flex-shrink: 0;
 }
 
-/* ----- Centered content on large screens; full width on mobile ----- */
-.dashboard-main {
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
+/* make native calendar icon cyan (Chrome/Safari/Edge) */
+.fav-ex-chart-date::-webkit-calendar-picker-indicator {
+  filter: invert(1) sepia(1) saturate(5) hue-rotate(160deg);
+  cursor: pointer;
+  opacity: 0.9;
 }
 
-.chart-date::placeholder {
-    color: #71717a;
-    opacity: 1;
-  }
-
-/* ----- Skeleton loading effect ----- */
-.chart-skeleton {
-    padding: 16px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .chart-skeleton.hidden {
-    display: none;
-  }
-  
-  .skeleton-bar {
-    height: 36px;
-    border-radius: 6px;
-    background: linear-gradient(90deg, #1e1e24 25%, #2a2a32 50%, #1e1e24 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
-  }
-  
-  @keyframes shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-@media (max-width: 768px) {
-  .dashboard-main {
-    max-width: 100%;
-  }
+/* ----- Page Headings ----- */
+h1 {
+  margin: 0 0 16px;
+  font-size: 1.5rem;
 }

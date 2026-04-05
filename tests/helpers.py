@@ -134,3 +134,109 @@ def create_test_user(backend_url: str, username: str, password: str, email: str 
         return resp.json()["id"]
     # User might already exist — try to look up their ID
     return get_test_user_id(username)
+
+
+E2E_DASHBOARD_WORKOUT_SPLIT = "e2e-dashboard-synthetic"
+
+
+def get_first_attachment_id(conn=None) -> int | None:
+    own_conn = conn is None
+    if own_conn:
+        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+    cur = conn.cursor()
+    cur.execute("SELECT attachment_id FROM core.dim_attachments ORDER BY attachment_id LIMIT 1")
+    row = cur.fetchone()
+    cur.close()
+    if own_conn:
+        conn.close()
+    return int(row[0]) if row else None
+
+
+def cleanup_e2e_dashboard_synthetic_rows(username: str) -> None:
+    """Remove dashboard e2e seed rows (by workout_split tag)."""
+    if not os.getenv("DATABASE_URL"):
+        return
+    uid = get_test_user_id(username)
+    if uid is None:
+        return
+    conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM core.fact_workouts WHERE user_id = %s AND workout_split = %s",
+        (uid, E2E_DASHBOARD_WORKOUT_SPLIT),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def seed_e2e_dashboard_synthetic_rows(username: str) -> bool:
+    """
+    Insert fact_workouts for the UI tester so dashboard APIs return data.
+    Uses leaf exercise 16 (child of parent 47) so total-volume can show a drillable parent.
+    """
+    if not os.getenv("DATABASE_URL"):
+        return False
+    cleanup_e2e_dashboard_synthetic_rows(username)
+    uid = get_test_user_id(username)
+    if uid is None:
+        return False
+
+    conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+    cur = conn.cursor()
+
+    cur.execute("SELECT date_id FROM core.dim_calendar WHERE date_id = CURRENT_DATE LIMIT 1")
+    row = cur.fetchone()
+    if not row:
+        cur.execute("SELECT MAX(date_id) FROM core.dim_calendar")
+        row = cur.fetchone()
+    if not row or row[0] is None:
+        cur.close()
+        conn.close()
+        return False
+    date_id = row[0]
+
+    ex = get_first_exercise(conn)
+    eq = get_first_equipment(conn)
+    att_id = get_first_attachment_id(conn)
+    if not ex or not eq or att_id is None:
+        cur.close()
+        conn.close()
+        return False
+
+    leaf_for_drill = 16
+    cur.execute(
+        "SELECT 1 FROM core.dim_exercises WHERE exercise_id = %s AND exercise_parent_id IS NOT NULL",
+        (leaf_for_drill,),
+    )
+    if not cur.fetchone():
+        leaf_for_drill = ex["exercise_id"]
+
+    cur.execute(
+        "SELECT COALESCE(MAX(workout_number), 0) FROM core.fact_workouts WHERE user_id = %s",
+        (uid,),
+    )
+    wn = int(cur.fetchone()[0]) + 1
+
+    bench_id = 9
+    batch = [
+        (uid, wn, date_id, leaf_for_drill, 1, 10, 100, eq["equipment_id"], att_id),
+        (uid, wn, date_id, leaf_for_drill, 2, 8, 100, eq["equipment_id"], att_id),
+        (uid, wn, date_id, bench_id, 1, 5, 60, eq["equipment_id"], att_id),
+    ]
+
+    for r in batch:
+        cur.execute(
+            """
+            INSERT INTO core.fact_workouts (
+                user_id, workout_number, date_id, exercise_id, set_number, repetitions, load, unit,
+                equipment_id, attachment_id, set_type, comments, workout_split, laterality
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, 'KG', %s, %s, 'Working set', 'N/A', %s, 'Bilateral')
+            """,
+            (*r, E2E_DASHBOARD_WORKOUT_SPLIT),
+        )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    return True
