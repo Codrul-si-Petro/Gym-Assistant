@@ -28,6 +28,7 @@ def test_dashboard_tabs_switch_and_volume_table_and_drill(
     page: Page,
     test_credentials: tuple[str, str],
     frontend_url: str,
+    seeded_ui_tester_workouts,
 ):
     username, password = test_credentials
 
@@ -54,9 +55,6 @@ def test_dashboard_tabs_switch_and_volume_table_and_drill(
     expect(fav_panel).to_have_class(re.compile(r"\bactive\b"))
     expect(vol_panel).not_to_have_class(re.compile(r"\bactive\b"))
 
-    # --- 2) Both views load data: favourites chart canvas + volume table rows ---
-    page.get_by_role("button", name="Favourite Exercises").click()
-    page.wait_for_load_state("networkidle")
     expect(page.locator("#chart-skeleton-favourites")).to_have_class(re.compile(r"hidden"))
     expect(page.locator("#fav-exercises-canvas")).to_be_visible()
 
