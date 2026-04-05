@@ -264,6 +264,32 @@
   line-height: 1.45;
 }
 
+.volume-chart-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 1000;
+  max-width: min(90vw, 360px);
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  color: #f4f4f5;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%) translateY(120%);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.volume-chart-toast.volume-chart-toast--visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
 /* -----------------------------------------------------------------------------
    Narrow screens — tighter padding; hide “Chart” header label to save space.
    ----------------------------------------------------------------------------- */

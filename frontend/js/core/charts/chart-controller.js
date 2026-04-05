@@ -23,13 +23,33 @@ function updateVolumeToolbar() {
   toolbar.hidden = volumeParentId == null;
 }
 
-function navigateToVolumeChart(exerciseId, exerciseName) {
-  const u = new URL(window.location.href);
-  u.searchParams.set("volumeChart", String(exerciseId));
-  if (exerciseName) u.searchParams.set("volumeChartName", exerciseName);
-  if (dateFrom?.value) u.searchParams.set("start_date", dateFrom.value);
-  if (dateTo?.value) u.searchParams.set("end_date", dateTo.value);
-  window.location.href = u.toString();
+// function navigateToVolumeChart(exerciseId, exerciseName) {
+//   const u = new URL(window.location.href);
+//   u.searchParams.set("volumeChart", String(exerciseId));
+//   if (exerciseName) u.searchParams.set("volumeChartName", exerciseName);
+//   if (dateFrom?.value) u.searchParams.set("start_date", dateFrom.value);
+//   if (dateTo?.value) u.searchParams.set("end_date", dateTo.value);
+//   window.location.href = u.toString();
+//
+const VOLUME_CHART_TOAST_MS = 2000;
+const VOLUME_CHART_TOAST_TEXT = "This feature is not finished yet. Wait for it, it'll be cool.";
+
+let volumeChartToastTimer = null;
+
+function showVolumeChartComingSoonToast() {
+  const el = document.getElementById("volume-chart-toast");
+  if (!el) return;
+  el.textContent = VOLUME_CHART_TOAST_TEXT;
+  el.hidden = false;
+  el.setAttribute("aria-hidden", "false");
+  el.classList.add("volume-chart-toast--visible");
+  if (volumeChartToastTimer) clearTimeout(volumeChartToastTimer);
+  volumeChartToastTimer = setTimeout(() => {
+    el.classList.remove("volume-chart-toast--visible");
+    el.hidden = true;
+    el.setAttribute("aria-hidden", "true");
+    volumeChartToastTimer = null;
+  }, VOLUME_CHART_TOAST_MS);
 }
 
 function onDateChange() {
@@ -130,7 +150,8 @@ async function loadVolumeTable() {
         loadVolumeTable();
       },
       onMinichart: (row) => {
-        navigateToVolumeChart(row.exercise_id, row.exercise_name);
+        // navigateToVolumeChart(row.exercise_id, row.exercise_name);
+        showVolumeChartComingSoonToast();
       },
     });
 
