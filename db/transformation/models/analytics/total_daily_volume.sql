@@ -1,5 +1,5 @@
 {{ config(
-    post_hook=create_indexes('analytics.total_volume_daily', [['user_id', 'date_id', 'exercise_id']])
+    post_hook=create_indexes('analytics.total_daily_volume', [['user_id', 'date_id', 'exercise_id']])
 ) }}
 
 SELECT 
