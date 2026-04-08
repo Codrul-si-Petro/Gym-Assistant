@@ -98,7 +98,7 @@ class TotalVolumeView(APIView):
                 openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 format=openapi.FORMAT_INT64,
-                description="ID of the exercise you want to drill down into.",
+                description="ID of the exercise you want to drill down into. Leave null to get root level aggregation",
             ),
         ],
     )
@@ -106,7 +106,17 @@ class TotalVolumeView(APIView):
         user_id = request.user.id
         start_date = request.query_params.get("start_date")
         end_date = request.query_params.get("end_date")
-        parent_id = request.query_params.get("parent_id")
+
+        parent_id_raw = request.query_params.get("parent_id")
+        parent_id = None
+        if parent_id_raw is not None and str(parent_id_raw).strip() != "":
+            try:
+                parent_id = int(parent_id_raw)
+            except ValueError:
+                return Response(
+                    {"detail": "parent_id must be an integer."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         start_date_parsed = parse_date(start_date) if start_date else None
         end_date_parsed = parse_date(end_date) if end_date else None
