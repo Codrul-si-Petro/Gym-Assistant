@@ -12,8 +12,6 @@ from pathlib import Path
 import pytest
 import requests
 
-from tests.helpers import delete_test_user
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 print(BASE_DIR)
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
@@ -101,13 +99,6 @@ def test_credentials():
         pytest.skip("UI_TESTER_USERNAME and UI_TESTER_PASS must be set")
 
     return username, password
-
-
-@pytest.fixture
-def test_user_cleanup(test_credentials):
-    username, _ = test_credentials
-    yield username
-    delete_test_user(username)
 
 
 @pytest.fixture

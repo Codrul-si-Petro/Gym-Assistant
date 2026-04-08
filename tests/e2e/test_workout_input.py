@@ -5,7 +5,6 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from tests.helpers import (
-    create_test_user,
     delete_latest_workout_for_user,
     get_first_equipment,
     get_first_exercise,
@@ -15,20 +14,11 @@ from tests.helpers import (
 
 
 @pytest.mark.order(3)
-def test_workout_form_submit_then_delete(
-    page: Page,
-    test_credentials: tuple[str, str],
-    frontend_url: str,
-    backend_url: str,
-):
-    username, password = test_credentials
+def test_workout_form_submit_then_delete(page: Page, ui_tester_session: tuple[str, str, int], frontend_url: str):
+    username, password, user_id = ui_tester_session
 
     if not os.getenv("DATABASE_URL"):
         pytest.skip("DATABASE_URL must be set for workout form test")
-
-    user_id = create_test_user(backend_url, username, password)
-    if user_id is None:
-        pytest.skip(f"Could not create or find test user '{username}'")
 
     exercise = get_first_exercise()
     if exercise is None:

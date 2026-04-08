@@ -25,10 +25,7 @@ def _wide_date_range(page: Page) -> None:
 
 @pytest.mark.order(5)
 def test_dashboard_tabs_switch_and_volume_table_and_drill(
-    page: Page,
-    test_credentials: tuple[str, str],
-    frontend_url: str,
-    seeded_ui_tester_workouts,
+    page: Page, test_credentials: tuple[str, str], frontend_url: str, seeded_ui_tester_workouts
 ):
     username, password = test_credentials
 

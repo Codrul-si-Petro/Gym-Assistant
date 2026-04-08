@@ -147,6 +147,10 @@ exclude = [
 module = "*.migrations.*"
 ignore_errors = true
 
+tool.uv.dev-dependencies = [
+    "debugpy==1.8.20"
+]
+
 [tool.django-stubs]
 django_settings_module = "backend.settings"
 
@@ -160,3 +164,8 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "--reuse-db"
+
+[dependency-groups]
+dev = [
+    "debugpy>=1.8.20",
+]
