@@ -147,10 +147,6 @@ exclude = [
 module = "*.migrations.*"
 ignore_errors = true
 
-tool.uv.dev-dependencies = [
-    "debugpy==1.8.20"
-]
-
 [tool.django-stubs]
 django_settings_module = "backend.settings"
 

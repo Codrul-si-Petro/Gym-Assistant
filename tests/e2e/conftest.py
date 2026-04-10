@@ -1,36 +1,28 @@
-import os
-
 import pytest
+from django.contrib.auth import get_user_model
 
-from tests.helpers import (
-    cleanup_e2e_dashboard_synthetic_rows,
-    create_test_user,
-    seed_e2e_dashboard_synthetic_rows,
+from tests.constants import (
+    SHORTLIVED_E2E_TESTER_NAME,
 )
+from tests.helpers import bootstrap_e2e_test_user
+
+User = get_user_model()
 
 
 @pytest.fixture(scope="session", autouse=True)
-def ui_tester_session(test_credentials):
+def e2e_user_cleanup(django_db_setup, django_db_blocker):
     """
-    Long-lived UI tester: ensure user exists once per session; only remove synthetic
-    dashboard rows on teardown (not the user).
+    Deletes short-lived E2E user after full test session.
+    For this piece of shit we have to use the db unblocker because Django + Pytest have rules.
+    They seem to be good rules but it's still annoying.
     """
-    if not os.getenv("DATABASE_URL"):
-        pytest.skip("DATABASE_URL not set")
 
-    username, password = test_credentials
-    user_id = create_test_user(os.environ["BACKEND_URL"], username, password)
-    if user_id is None:
-        pytest.skip("Could not create or resolve UI tester user")
-
-    cleanup_e2e_dashboard_synthetic_rows(username)
-    yield username, password, user_id
-    cleanup_e2e_dashboard_synthetic_rows(username)
-
-
-@pytest.fixture
-def seeded_ui_tester_workouts(ui_tester_session):
-    """Seed tagged fact_workouts so dashboard APIs return predictable rows."""
-    username, _, _ = ui_tester_session
-    assert seed_e2e_dashboard_synthetic_rows(username), "Failed to seed dashboard synthetic workouts"
     yield
+
+    with django_db_blocker.unblock():
+        User.objects.filter(username=SHORTLIVED_E2E_TESTER_NAME).delete()
+
+
+@pytest.fixture(scope="session")
+def e2e_user_bootstrapped():
+    return bootstrap_e2e_test_user()

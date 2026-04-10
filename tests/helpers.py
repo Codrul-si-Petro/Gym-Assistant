@@ -10,7 +10,7 @@ from rest_framework.test import ImproperlyConfigured
 
 from backend.core.models import Attachments, Equipment, Exercises
 
-from .constants import E2E_DASHBOARD_WORKOUT_SPLIT
+from .constants import BACKEND_URL, E2E_TESTER_NAME, E2E_TESTER_PASS
 
 
 # will try to remember to use this ffs
@@ -93,128 +93,40 @@ def get_test_user_id(username: str) -> int | None:
         return row[0] if row else None
 
 
-def get_max_workout_number(user_id: int) -> int:
-    with db_cursor() as cur:
-        # use coalesce because if there is no workout logged we get 1 at least
-        cur.execute(
-            "SELECT COALESCE(MAX(workout_number), 0) FROM core.fact_workouts WHERE user_id = %s",
-            (user_id,),
-        )
-        row = cur.fetchone()
-    return row[0] if row else 0
+class E2EUserBootstrap:
+    def __init__(self):
+        self.session = requests.Session()
+        self.base = BACKEND_URL
+
+    def ensure_user(self):
+        """
+        Try signup. If already exists -> ignore and continue.
+        """
+
+        url = f"{self.base}/api/auth/signup/"
+
+        payload = {
+            "username": E2E_TESTER_NAME,
+            "email": "e2e@test.com",
+            "password1": E2E_TESTER_PASS,
+            "password2": E2E_TESTER_PASS,
+        }
+
+        res = self.session.post(url, json=payload)
+
+        # Accept both success and "already exists"
+        if res.status_code in (201, 200):
+            print(res.status_code)
+            return
+
+        if res.status_code == 400:
+            print(res.status_code)
+            # assume "user already exists"
+            return
+
+        raise RuntimeError(f"Signup failed: {res.status_code} - {res.text}")
 
 
-def get_latest_workout_for_user(user_id: int) -> dict | None:
-    with db_cursor() as cur:
-        cur.execute(
-            """
-            SELECT workout_id, user_id, workout_number, date_id, exercise_id,
-                   set_number, repetitions, load, unit, workout_split
-            FROM core.fact_workouts
-            WHERE user_id = %s
-            ORDER BY ta_created_at DESC NULLS LAST
-            LIMIT 1
-            """,
-            (user_id,),
-        )
-        row = cur.fetchone()
-        if not row:
-            return None
-    return {
-        "workout_id": row[0],
-        "user_id": row[1],
-        "workout_number": row[2],
-        "date_id": row[3],
-        "exercise_id": row[4],
-        "set_number": row[5],
-        "repetitions": row[6],
-        "load": float(row[7]) if row[7] is not None else None,
-        "unit": row[8],
-        "workout_split": row[9],
-    }
-
-
-def delete_latest_workout_for_user(user_id: int) -> None:
-    with db_cursor() as cur:
-        cur.execute(
-            """
-            DELETE FROM core.fact_workouts
-            WHERE workout_id = (
-                SELECT workout_id FROM core.fact_workouts
-                WHERE user_id = %s
-                ORDER BY ta_created_at DESC NULLS LAST
-                LIMIT 1
-            )
-            """,
-            (user_id,),
-        )
-
-
-def cleanup_e2e_dashboard_synthetic_rows(username: str) -> None:
-    """Remove dashboard e2e seed rows (by workout_split tag)."""
-    uid = get_test_user_id(username)
-    if uid is None:
-        logging.info("Could not get user ID. Skipping clean up.")
-        return
-
-    with db_cursor() as cur:
-        cur.execute(
-            "DELETE FROM core.fact_workouts WHERE user_id = %s",
-            (uid,),
-        )
-
-
-def seed_e2e_dashboard_synthetic_rows(username: str) -> bool:
-    """
-    Insert fact_workouts for the UI tester so dashboard APIs return data.
-    """
-    cleanup_e2e_dashboard_synthetic_rows(username)
-    uid = get_test_user_id(username)
-
-    with db_cursor() as cur:
-        cur.execute("SELECT date_id FROM core.dim_calendar WHERE date_id = CURRENT_DATE LIMIT 1")
-        row = cur.fetchone()
-        if not row:
-            cur.execute("SELECT MAX(date_id) FROM core.dim_calendar")
-            row = cur.fetchone()
-        if not row or row[0] is None:
-            return False
-        date_id = row[0]
-
-        exercise_id, exercise_name = CoreDimensions.first_exercise()
-        equipment_id, equipment_name = CoreDimensions.first_equipment()
-        attachment_id, attachment_name = CoreDimensions.first_attachment()
-
-        leaf_for_drill = 16
-        cur.execute(
-            "SELECT 1 FROM core.dim_exercises WHERE exercise_id = %s AND exercise_parent_id IS NOT NULL",
-            (leaf_for_drill,),
-        )
-        if not cur.fetchone():
-            leaf_for_drill = exercise_id
-
-        cur.execute(
-            "SELECT COALESCE(MAX(workout_number), 0) FROM core.fact_workouts WHERE user_id = %s",
-            (uid,),
-        )
-        wn = int(cur.fetchone()[0]) + 1
-
-        bench_id = 9
-        batch = [
-            (uid, wn, date_id, leaf_for_drill, 1, 10, 100, equipment_id, attachment_id),
-            (uid, wn, date_id, leaf_for_drill, 2, 8, 100, equipment_id, attachment_id),
-            (uid, wn, date_id, bench_id, 1, 5, 60, equipment_id, attachment_id),
-        ]
-
-        for r in batch:
-            cur.execute(
-                """
-                INSERT INTO core.fact_workouts (
-                    user_id, workout_number, date_id, exercise_id, set_number, repetitions, load, unit,
-                    equipment_id, attachment_id, set_type, comments, workout_split, laterality
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, 'KG', %s, %s, 'Working set', 'N/A', %s, 'Bilateral')
-                """,
-                (*r, E2E_DASHBOARD_WORKOUT_SPLIT),
-            )
-
-    return True
+def bootstrap_e2e_test_user():
+    b = E2EUserBootstrap()
+    b.ensure_user()
