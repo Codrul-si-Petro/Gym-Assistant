@@ -43,4 +43,6 @@ jobs:
           MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          UI_TESTER_USERNAME: ${{ secrets.UI_TESTER_USERNAME }}
+          UI_TESTER_PASS: ${{ secrets.UI_TESTER_PASS }}
 
