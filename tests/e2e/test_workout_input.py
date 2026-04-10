@@ -31,7 +31,7 @@ def test_workout_form_submit_then_delete(page: Page, frontend_url: str, e2e_user
 
     # Fill the form
     page.wait_for_selector("#exercises_list option", state="attached", timeout=1000)
-    page.fill("#exercise_name", "Romanian deadlift")
+    page.fill("#exercise_name", "Triceps extension")
     page.fill("#equipment_name", "Olympic Barbell")
     page.fill("#set_number", "1")
     page.fill("#repetitions", "10")
