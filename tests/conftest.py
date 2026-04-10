@@ -7,38 +7,16 @@ This conftest.py makes sure the frontend and the backend servers are ran. (thank
 
 import os
 import subprocess
-import time
 from pathlib import Path
 
 import pytest
-import requests
 
 from .constants import BACKEND_URL, FRONTEND_URL
+from .helpers import wait_server
 
 # not putting this into the constants file in case I need to move it to another directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
-
-
-def wait_server(url: str, timeout: int = 30):
-    """
-    Poll the server for some time to know when to start running tests
-    """
-    start = time.time()
-
-    print(f"Waiting for server at {url}...")
-    while True:
-        try:
-            r = requests.get(url)
-            if r.status_code < 500:
-                return
-        except requests.exceptions.ConnectionError:
-            pass
-
-        if time.time() - start > timeout:
-            raise RuntimeError(f"ERROR: The server at {url} timed out in {timeout}. Maybe increase the timeout limit?")
-
-        time.sleep(2)
 
 
 @pytest.hookimpl(tryfirst=True)
