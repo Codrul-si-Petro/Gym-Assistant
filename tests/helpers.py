@@ -10,7 +10,7 @@ from rest_framework.test import ImproperlyConfigured
 
 from backend.core.models import Attachments, Equipment, Exercises
 
-from .constants import BACKEND_URL, E2E_TESTER_NAME, E2E_TESTER_PASS
+from .constants import BACKEND_URL, E2E_DASHBOARD_WORKOUT_SPLIT, E2E_TESTER_NAME, E2E_TESTER_PASS
 
 
 # will try to remember to use this ffs
@@ -126,7 +126,66 @@ class E2EUserBootstrap:
 
         raise RuntimeError(f"Signup failed: {res.status_code} - {res.text}")
 
+    def get_bearer_tokens(self):
+        url = f"{self.base}/api/token/"
+
+        payload = {
+            "username": E2E_TESTER_NAME,
+            "password": E2E_TESTER_PASS,
+        }
+
+        tokens = self.session.post(url, json=payload).json()
+        tokens = {"access": tokens["access"], "refresh": tokens["refresh"]}
+        return tokens
+
+    def attach_auth(self, access_token: str):
+        self.session.headers.update({"Authorization": f"Bearer {access_token}"})
+
+    def check_workouts_exist(self):
+        url = f"{self.base}/api/workouts/"
+
+        res = self.session.get(url)
+
+        if res.status_code != 200:
+            raise RuntimeError(f"Failed to fetch workouts: {res.status_code} - {res.text}")
+
+        data = res.json()
+        if not data:
+            return False
+
+        return True
+
+    def fill_synthetic_workouts(self):
+        url = f"{self.base}/api/workouts/"
+
+        base_payload = {
+            "exercise": 1,
+            "equipment": 1,
+            "workout_split": E2E_DASHBOARD_WORKOUT_SPLIT,
+            "date": "2026-04-09",
+            "repetitions": 10,
+            "load": 20,
+            "unit": "KG",
+            "set_type": "Working set",
+            "comments": "e2e seed",
+        }
+
+        for set_number in range(1, 4):  # 3 workouts
+            payload = base_payload.copy()
+            payload["set_number"] = set_number  # or vary if needed
+
+            res = self.session.post(url, json=payload)
+
+            if res.status_code not in (200, 201):
+                raise RuntimeError(f"Workout seed failed: {res.status_code} - {res.text}")
+
 
 def bootstrap_e2e_test_user():
     b = E2EUserBootstrap()
     b.ensure_user()
+    tokens = b.get_bearer_tokens()
+    b.attach_auth(tokens["access"])
+
+    data_exists = b.check_workouts_exist()
+    if not data_exists:
+        b.fill_synthetic_workouts()
