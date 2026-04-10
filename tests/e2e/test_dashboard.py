@@ -17,9 +17,7 @@ def _login(page: Page, frontend_url: str, username: str, password: str) -> None:
 
 
 @pytest.mark.order(5)
-def test_dashboard_tabs_switch_and_volume_table_and_drill(
-    page: Page, test_credentials: tuple[str, str], frontend_url: str, e2e_user_bootstrapped
-):
+def test_dashboard_tabs_switch_and_volume_table_and_drill(page: Page, frontend_url: str, e2e_user_bootstrapped):
     username, password = E2E_TESTER_NAME, E2E_TESTER_PASS
 
     _login(page, frontend_url, username, password)  # type: ignore[arg-type]
