@@ -12,8 +12,7 @@ from backend.core.models import (
     Exercises,
     Muscles,
 )
-
-from .helpers import db_cursor
+from tests.helpers import db_cursor
 
 
 def parse_table_name(db_table: str):

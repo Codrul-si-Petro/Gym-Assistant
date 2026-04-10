@@ -6,11 +6,13 @@ on:
     paths:
         - 'backend/**'
         - 'tests/ui/**'
+        - 'tests/meta/**'
   push:
     branches: [main, dev]
     paths:
         - 'backend/**'
         - 'tests/ui/**'
+        - 'tests/meta/**'
 
 jobs: 
   auth-tests:
