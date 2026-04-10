@@ -5,9 +5,8 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from tests.helpers import (
+    CoreDimensions,
     delete_latest_workout_for_user,
-    get_first_equipment,
-    get_first_exercise,
     get_latest_workout_for_user,
     get_max_workout_number,
 )
@@ -20,13 +19,9 @@ def test_workout_form_submit_then_delete(page: Page, ui_tester_session: tuple[st
     if not os.getenv("DATABASE_URL"):
         pytest.skip("DATABASE_URL must be set for workout form test")
 
-    exercise = get_first_exercise()
-    if exercise is None:
-        pytest.skip("No exercises in core.dim_exercises")
+    exercise_id, exercise = CoreDimensions.first_exercise()
 
-    equipment = get_first_equipment()
-    if equipment is None:
-        pytest.skip("No equipments in core.dim_equipment")
+    equipment_id, equipment = CoreDimensions.first_equipment()
 
     next_workout_number = get_max_workout_number(user_id) + 1
     today = date.today().isoformat()
@@ -46,8 +41,8 @@ def test_workout_form_submit_then_delete(page: Page, ui_tester_session: tuple[st
 
     # Fill the form
     page.wait_for_selector("#exercises_list option", state="attached", timeout=1000)
-    page.fill("#exercise_name", exercise["exercise_name"])
-    page.fill("#equipment_name", equipment["equipment_name"])
+    page.fill("#exercise_name", exercise)
+    page.fill("#equipment_name", equipment)
     page.fill("#set_number", "1")
     page.fill("#repetitions", "10")
     page.fill("#load", "50")
@@ -69,7 +64,7 @@ def test_workout_form_submit_then_delete(page: Page, ui_tester_session: tuple[st
     assert latest["user_id"] == user_id
     assert latest["workout_number"] == next_workout_number
     assert latest["date_id"].isoformat() == today
-    assert latest["exercise_id"] == exercise["exercise_id"]
+    assert latest["exercise_id"] == exercise
     assert latest["set_number"] == 1
     assert latest["repetitions"] == 10
     assert latest["load"] == 50.0

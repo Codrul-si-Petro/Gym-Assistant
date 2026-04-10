@@ -1,9 +1,40 @@
 import logging
 import os
+import time
 from contextlib import contextmanager
 
 import psycopg2
 import requests
+from django.contrib.auth import get_user_model
+from rest_framework.test import ImproperlyConfigured
+
+from backend.core.models import Attachments, Equipment, Exercises
+
+from .constants import E2E_DASHBOARD_WORKOUT_SPLIT
+
+
+# will try to remember to use this ffs
+class CoreDimensions:
+    @staticmethod
+    def first_exercise() -> tuple[int, str]:
+        obj = Exercises.objects.first()
+        if obj is None:
+            raise ImproperlyConfigured("No exercises found in this model.")
+        return obj.exercise_id, obj.exercise_name
+
+    @staticmethod
+    def first_equipment() -> tuple[int, str]:
+        obj = Equipment.objects.first()
+        if obj is None:
+            raise ImproperlyConfigured("No equipment found in this model.")
+        return obj.equipment_id, obj.equipment_name
+
+    @staticmethod
+    def first_attachment() -> tuple[int, str]:
+        obj = Attachments.objects.first()
+        if obj is None:
+            raise ImproperlyConfigured("No attachments found in this model.")
+        return obj.attachment_id, obj.attachment_name
 
 
 @contextmanager
@@ -18,6 +49,40 @@ def db_cursor():
         conn.close()  # close it regardless of what happens
 
 
+def wait_server(url: str, timeout: int = 30):
+    """
+    Poll the server for some time to know when to start running tests
+    """
+    start = time.time()
+
+    print(f"Waiting for server at {url}...")
+    while True:
+        try:
+            r = requests.get(url)
+            if r.status_code < 500:
+                return
+        except requests.exceptions.ConnectionError:
+            pass
+
+        if time.time() - start > timeout:
+            raise RuntimeError(f"ERROR: The server at {url} timed out in {timeout}. Maybe increase the timeout limit?")
+
+        time.sleep(2)
+
+
+# user factory relying on Django internals
+def create_test_user(
+    username: str = "GigelRekinu", password: str = "GigelRekinas29#", email: str = "gigel_rekinu@yahoo.com"
+):
+    User = get_user_model()
+    test_user = User.objects.create_user(
+        username=username,
+        email=email,
+        password=password,
+    )
+    return test_user
+
+
 def get_test_user_id(username: str) -> int | None:
     with db_cursor() as cur:
         cur.execute(
@@ -26,24 +91,6 @@ def get_test_user_id(username: str) -> int | None:
         )
         row = cur.fetchone()
         return row[0] if row else None
-
-
-def get_first_exercise() -> dict | None:
-    with db_cursor() as cur:
-        cur.execute("SELECT exercise_id, exercise_name FROM core.dim_exercises ORDER BY exercise_name LIMIT 1")
-        row = cur.fetchone()
-        if not row:
-            return None
-    return {"exercise_id": row[0], "exercise_name": row[1]}
-
-
-def get_first_equipment() -> dict | None:
-    with db_cursor() as cur:
-        cur.execute("SELECT equipment_id, equipment_name FROM core.dim_equipment ORDER BY equipment_name LIMIT 1")
-        row = cur.fetchone()
-        if not row:
-            return None
-    return {"equipment_id": row[0], "equipment_name": row[1]}
 
 
 def get_max_workout_number(user_id: int) -> int:
@@ -103,35 +150,6 @@ def delete_latest_workout_for_user(user_id: int) -> None:
         )
 
 
-E2E_DASHBOARD_WORKOUT_SPLIT = "e2e-dashboard-synthetic"
-
-
-def create_test_user(backend_url: str, username: str, password: str, email: str = "e2e-gigel-rekinu@yahoo.com"):
-    """Create a test user via the signup API. Silently succeeds if user already exists."""
-    resp = requests.post(
-        f"{backend_url}/api/auth/signup/",
-        json={
-            "username": username,
-            "email": email,
-            "password1": password,
-            "password2": password,
-        },
-    )
-    if resp.status_code == 201:
-        return resp.json()["id"]
-    # User might already exist — try to look up their ID
-    return get_test_user_id(username)
-
-
-def get_first_attachment_id() -> int | None:
-    with db_cursor() as cur:
-        cur.execute(
-            "SELECT attachment_id FROM core.dim_attachments ORDER BY attachment_id LIMIT 1"
-        )  # honestly I should get rid of this or parameterise it
-        row = cur.fetchone()
-    return int(row[0]) if row else None
-
-
 def cleanup_e2e_dashboard_synthetic_rows(username: str) -> None:
     """Remove dashboard e2e seed rows (by workout_split tag)."""
     uid = get_test_user_id(username)
@@ -163,11 +181,9 @@ def seed_e2e_dashboard_synthetic_rows(username: str) -> bool:
             return False
         date_id = row[0]
 
-        ex = get_first_exercise()
-        eq = get_first_equipment()
-        att_id = get_first_attachment_id()
-        if not ex or not eq or att_id is None:
-            return False
+        exercise_id, exercise_name = CoreDimensions.first_exercise()
+        equipment_id, equipment_name = CoreDimensions.first_equipment()
+        attachment_id, attachment_name = CoreDimensions.first_attachment()
 
         leaf_for_drill = 16
         cur.execute(
@@ -175,7 +191,7 @@ def seed_e2e_dashboard_synthetic_rows(username: str) -> bool:
             (leaf_for_drill,),
         )
         if not cur.fetchone():
-            leaf_for_drill = ex["exercise_id"]
+            leaf_for_drill = exercise_id
 
         cur.execute(
             "SELECT COALESCE(MAX(workout_number), 0) FROM core.fact_workouts WHERE user_id = %s",
@@ -185,9 +201,9 @@ def seed_e2e_dashboard_synthetic_rows(username: str) -> bool:
 
         bench_id = 9
         batch = [
-            (uid, wn, date_id, leaf_for_drill, 1, 10, 100, eq["equipment_id"], att_id),
-            (uid, wn, date_id, leaf_for_drill, 2, 8, 100, eq["equipment_id"], att_id),
-            (uid, wn, date_id, bench_id, 1, 5, 60, eq["equipment_id"], att_id),
+            (uid, wn, date_id, leaf_for_drill, 1, 10, 100, equipment_id, attachment_id),
+            (uid, wn, date_id, leaf_for_drill, 2, 8, 100, equipment_id, attachment_id),
+            (uid, wn, date_id, bench_id, 1, 5, 60, equipment_id, attachment_id),
         ]
 
         for r in batch:

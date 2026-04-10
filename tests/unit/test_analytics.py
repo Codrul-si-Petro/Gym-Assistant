@@ -1,14 +1,9 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.db import connection
-from django.test import TestCase
 from rest_framework import status
-from rest_framework.test import APIClient
 
 User = get_user_model()
-
-# TODO: deprecate Django style testcase classes and just do conventional
-# pytest fixture + conftest to avoid writing so much boilerplate
 
 
 @pytest.mark.django_db
@@ -50,21 +45,11 @@ def test_favourite_exercises_invalid_date_range_returns_400(authenticated_client
 
 
 @pytest.mark.django_db
-class TestFavouriteExercisesEndpoint(TestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(
-            username="analytics_test_user",
-            email="analytics@example.com",
-            password="gigelmarcel33",
-        )
-
-    def test_favourite_exercise_returns_200(self):
-        url = "/api/v1/favourite-exercises"
-        self.client.force_authenticate(user=self.user)
-        response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("results", response.data)
+def test_favourite_exercise_returns_200(authenticated_client):
+    response = authenticated_client.get("/api/v1/favourite-exercises", format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert "results" in response.data
+    assert isinstance(response.data["results"], list)
 
 
 @pytest.mark.django_db
@@ -90,6 +75,7 @@ def test_total_volume_authenticated_shape(authenticated_client):
         }
 
 
+# TODO: do not forget to fix this test to get parent_id returning results
 @pytest.mark.django_db
 def test_total_volume_with_parent_id_returns_results(authenticated_client):
     user_id = User.objects.get(username="MarcelSoare").pk

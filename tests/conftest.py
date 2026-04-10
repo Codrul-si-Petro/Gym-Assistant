@@ -2,6 +2,7 @@
 Pytest configuration for Django tests.
 pytest-django will automatically configure Django settings.
 Tests use the actual database instead of creating a test database.
+This conftest.py makes sure the frontend and the backend servers are ran. (thanks pytest for not making me use Docker for this)
 """
 
 import os
@@ -12,16 +13,11 @@ from pathlib import Path
 import pytest
 import requests
 
+from .constants import BACKEND_URL, FRONTEND_URL
+
+# not putting this into the constants file in case I need to move it to another directory
 BASE_DIR = Path(__file__).resolve().parent.parent
-print(BASE_DIR)
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
-print(FRONTEND_DIR)
-
-
-FRONTEND_URL: str | None = os.getenv("FRONTEND_URL")
-BACKEND_URL: str | None = os.getenv("BACKEND_URL")
-if not BACKEND_URL or not FRONTEND_URL:
-    raise RuntimeError("URL variables have not been correctly loaded")
 
 
 def wait_server(url: str, timeout: int = 30):
