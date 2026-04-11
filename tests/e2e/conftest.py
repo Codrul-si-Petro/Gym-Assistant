@@ -1,46 +1,28 @@
-import os
-
 import pytest
+from django.contrib.auth import get_user_model
 
-from tests.helpers import (
-    cleanup_e2e_dashboard_synthetic_rows,
-    delete_test_user,
-    get_test_user_id,
-    seed_e2e_dashboard_synthetic_rows,
+from tests.constants import (
+    SHORTLIVED_E2E_TESTER_NAME,
 )
+from tests.helpers import bootstrap_e2e_test_user
 
-
-@pytest.fixture
-def seeded_ui_tester_workouts(test_credentials):
-    """
-    Run after signup/login tests: UI_TESTER exists, then we insert synthetic fact rows.
-    """
-    if not os.getenv("DATABASE_URL"):
-        pytest.skip("DATABASE_URL not set")
-
-    username, _ = test_credentials
-    if get_test_user_id(username) is None:
-        pytest.skip("UI tester user missing — run signup test first (order)")
-
-    cleanup_e2e_dashboard_synthetic_rows(username)
-    assert seed_e2e_dashboard_synthetic_rows(username), "Failed to seed dashboard synthetic workouts"
-    yield
-    # Optional: cleanup_e2e_dashboard_synthetic_rows(username)
+User = get_user_model()
 
 
 @pytest.fixture(scope="session", autouse=True)
-def e2e_ui_tester_lifecycle():
+def e2e_user_cleanup(django_db_setup, django_db_blocker):
     """
-    Before e2e: drop stale UI tester + synthetic rows so signup always sees a clean slate.
-    After e2e: same cleanup so the next run / CI job does not inherit this user.
+    Deletes short-lived E2E user after full test session.
+    For this piece of shit we have to use the db unblocker because Django + Pytest have rules.
+    They seem to be good rules but it's still annoying.
     """
-    username = os.getenv("UI_TESTER_USERNAME")
-    db_url = os.getenv("DATABASE_URL")
-    if not username or not db_url:
-        yield
-        return
-    cleanup_e2e_dashboard_synthetic_rows(username)
-    delete_test_user(username)
+
     yield
-    cleanup_e2e_dashboard_synthetic_rows(username)
-    delete_test_user(username)  # Usually skip row cleanup here if session teardown deletes the user (CASCADE).
+
+    with django_db_blocker.unblock():
+        User.objects.filter(username=SHORTLIVED_E2E_TESTER_NAME).delete()
+
+
+@pytest.fixture(scope="session")
+def e2e_user_bootstrapped():
+    return bootstrap_e2e_test_user()
