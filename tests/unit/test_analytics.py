@@ -1,49 +1,46 @@
-import pytest
-from django.contrib.auth import get_user_model
-from django.test import TestCase
 from rest_framework import status
-from rest_framework.test import APIClient
-
-User = get_user_model()
 
 
-@pytest.mark.django_db
-class TestRestDaysEndpoint(TestCase):
-    def setUp(self):  # must be named like Pascalcase otherwise this will fail on force_authenticate
-        self.client = APIClient()
-        self.user = User.objects.create_user(
-            username="analytics_test_user",
-            email="analytics@example.com",
-            password="testpass123",
-        )
-
-    def test_rest_days_authenticated_returns_200(self):
-        url = "/api/v1/rest-days"
-        self.client.force_authenticate(user=self.user)
-        response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("count", response.data)
-        self.assertIn("results", response.data)
-
-    def test_rest_days_unauthenticated_returns_401(self):
-        url = "/api/v1/rest-days"
-        response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+def test_rest_days_unauthenticated_returns_401(api_client):
+    response = api_client.get("/api/v1/rest-days", format="json")
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-@pytest.mark.django_db
-class TestFavouriteExercisesEndpoint(TestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(
-            username="analytics_test_user",
-            email="analytics@example.com",
-            password="gigelmarcel33",
-        )
+def test_favourite_exercises_invalid_date_range_returns_400(authenticated_client):
+    response = authenticated_client.get(
+        "/api/v1/favourite-exercises",
+        {"start_date": "2025-12-01", "end_date": "2025-01-01"},
+        format="json",
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_favourite_exercise_returns_200(self):
-        url = "/api/v1/favourite-exercises"
-        self.client.force_authenticate(user=self.user)
-        response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("results", response.data)
+
+def test_favourite_exercise_returns_200(authenticated_client):
+    response = authenticated_client.get("/api/v1/favourite-exercises", format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert "results" in response.data
+    assert isinstance(response.data["results"], list)
+
+
+def test_total_volume_authenticated_returns_200(authenticated_client):
+    response = authenticated_client.get("/api/v1/total-volume", format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert "results" in response.data
+
+
+def test_total_volume_with_parent_id_returns_results(authenticated_client):
+    response = authenticated_client.get(
+        "/api/v1/total-volume",
+        {"parent_id": 48},  # hardcoded because this uses the long-lived E2E test user with bootstrapped
+        format="json",  # seeded data which should not change. if this fails, check seeded data
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert "results" in response.data
+    for row in response.data["results"]:
+        assert set(row.keys()) == {
+            "exercise_id",
+            "exercise_name",
+            "is_leaf",
+            "total_volume_kg",
+            "rank",
+        }

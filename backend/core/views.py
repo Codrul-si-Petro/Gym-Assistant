@@ -1,10 +1,12 @@
-from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser
+from rest_framework.response import Response
+
+from backend.core.workout_validations import get_next_workout
 
 from .api_throttle import EndpointThrottle
 from .models import Attachments, Equipment, Exercises, Muscles, Workouts
@@ -41,20 +43,37 @@ class WorkoutsViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.G
 
     @swagger_auto_schema(tags=["Core"])
     def list(self, request, *args, **kwargs):
-        accept = request.META.get("HTTP_ACCEPT", "")
-        if "text/html" in accept:
-            queryset = (
-                self.get_queryset()
-                .select_related("exercise", "attachment", "equipment", "date")
-                .order_by("-ta_created_at")
-            )
-            content = render_to_string(
-                "core/workout_table.html",
-                {"rows": queryset},
-                request=request,
-            )
-            return HttpResponse(content, content_type="text/html; charset=utf-8")
         return super().list(request, *args, **kwargs)
+
+    @action(detail=False, methods=["get"], url_path="next-workout-info")
+    def next_workout_info(self, request):
+        return Response(get_next_workout(request.user))
+
+    @swagger_auto_schema(
+        tags=["Core"],
+        operation_description="Delete the most recently created workout row for the current user (by timestamp).",
+        responses={204: "No content", 404: "No workouts to delete"},
+    )
+    @action(detail=False, methods=["delete"], url_path="last")
+    def delete_last(self, request):
+        qs = Workouts.objects.filter(user=request.user).order_by("-ta_created_at", "-workout_id")
+        row = qs.first()
+        if row is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        exercise_name = row.exercise.exercise_name
+        date_str = row.date_id.isoformat() if row.date_id else ""
+        message = (
+            f"Deleted: {exercise_name}, {date_str}, "
+            f"set {row.set_number}, {row.load} {row.unit} × {row.repetitions} reps"
+        )
+        row.delete()
+
+        return Response(
+            {
+                "message": message,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -63,7 +82,7 @@ class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Exercises.objects.all()
+        return Exercises.objects.filter(is_leaf=True)
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
@@ -77,7 +96,7 @@ class MusclesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Muscles.objects.all()
+        return Muscles.objects.filter(is_leaf=True)
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
@@ -91,7 +110,7 @@ class EquipmentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Equipment.objects.all()
+        return Equipment.objects.filter(is_leaf=True)
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
@@ -105,7 +124,7 @@ class AttachmentsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Attachments.objects.all()
+        return Attachments.objects.filter(is_leaf=True)
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs

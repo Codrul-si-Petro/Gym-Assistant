@@ -7,6 +7,5 @@ SELECT
     exercise_id,
     muscle_id,
     muscle_role,
-    ta_created_at,
-    ta_updated_at
+    NOW() AS last_built
 FROM {{ ref('seed_exercise_muscle') }}
