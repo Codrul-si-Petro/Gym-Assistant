@@ -1,4 +1,3 @@
-import pytest
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
@@ -11,7 +10,6 @@ BASE_URL = "/api/auth"
 User = get_user_model()
 
 
-@pytest.mark.django_db
 class AuthenticationAPITestCase(TestCase):
     """
     Test cases for authentication API endpoints.
@@ -48,7 +46,7 @@ class AuthenticationAPITestCase(TestCase):
         url = f"{BASE_URL}/signup/"
 
         data = {
-            "username": "MircelGagiul360",
+            "username": "MircelGagiul3590",
             "email": "MircelRekinu360@yahoo.com",
             "password1": "testpass123femei",
             "password2": "testpass123femei",
@@ -59,11 +57,11 @@ class AuthenticationAPITestCase(TestCase):
         self.assertIn("email", response.data)
         self.assertIn("id", response.data)
         self.assertIn("message", response.data)
-        self.assertEqual(response.data["username"], "MircelGagiul360")
+        self.assertEqual(response.data["username"], "MircelGagiul3590")
         # Verify user was created
-        self.assertTrue(User.objects.filter(username="MircelGagiul360").exists())
+        self.assertTrue(User.objects.filter(username="MircelGagiul3590").exists())
         # Track for cleanup
-        new_user = User.objects.get(username="MircelGagiul360")
+        new_user = User.objects.get(username="MircelGagiul3590")
         self.created_users.append(new_user)
 
     def test_logout_success_returns_200(self):
