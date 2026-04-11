@@ -21,7 +21,7 @@ class AuthenticationAPITestCase(TestCase):
     def setUp(self):
         """Set up test client and test user."""
         self.client = APIClient()
-        self.test_user = create_test_user()
+        self.test_user = create_test_user("MircelGagiul360", "testpass123femei")
         # Track users created during tests for cleanup
         self.created_users = [self.test_user]
 
@@ -35,7 +35,7 @@ class AuthenticationAPITestCase(TestCase):
         """Test that successful login returns 200 status code."""
         url = f"{BASE_URL}/login/"
         # this password has to be hardcoded. MUST match what the user created in the helper is
-        data = {"username": "GigelRekinu", "password": "GigelRekinas29#"}
+        data = {"username": "MircelGagiul360", "password": "testpass123femei"}
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("username", response.data)
