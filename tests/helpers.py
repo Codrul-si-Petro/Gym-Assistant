@@ -159,8 +159,8 @@ class E2EUserBootstrap:
         url = f"{self.base}/api/workouts/"
 
         base_payload = {
-            "exercise": 1,
             "equipment": 1,
+            "exercise": 1,
             "workout_split": E2E_DASHBOARD_WORKOUT_SPLIT,
             "date": "2026-04-09",
             "repetitions": 10,
@@ -170,9 +170,21 @@ class E2EUserBootstrap:
             "comments": "e2e seed",
         }
 
-        for set_number in range(1, 4):  # 3 workouts
+        for set_number in range(1, 4):
             payload = base_payload.copy()
             payload["set_number"] = set_number  # or vary if needed
+
+            res = self.session.post(url, json=payload)
+
+            if res.status_code not in (200, 201):
+                raise RuntimeError(f"Workout seed failed: {res.status_code} - {res.text}")
+
+        # another loop... lazy, I know. I'm tired of this
+        # refactor later? hopefully not
+        for set_number in range(1, 4):
+            payload = base_payload.copy()
+            payload["set_number"] = set_number  # or vary if needed
+            payload["exercise"] = 3  # 2 is already taken by the workout_input e2e test
 
             res = self.session.post(url, json=payload)
 
