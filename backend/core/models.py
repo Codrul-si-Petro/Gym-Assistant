@@ -55,7 +55,7 @@ class Muscles(models.Model):
 
     muscle_id = models.AutoField(primary_key=True, db_index=True)
     muscle_name = models.TextField(max_length=256)
-    muscle_parent_id = models.TextField(max_length=20)
+    muscle_parent_id = models.IntegerField(null=True)
     is_leaf = models.BooleanField()
     ta_created_at = models.DateTimeField(auto_now_add=True)
     last_built = models.DateTimeField(null=True)
@@ -71,8 +71,6 @@ class Exercise_Muscle_Bridge(models.Model):
     exercise = models.ForeignKey(to="Exercises", on_delete=models.CASCADE, default="1")
     muscle = models.ForeignKey(to="Muscles", on_delete=models.CASCADE, default="1")
     muscle_role = models.TextField(default=None)
-    ta_created_at = models.DateTimeField(auto_now_add=True)
-    is_leaf = models.BooleanField()
     last_built = models.DateTimeField(null=True)
 
     class Meta:
@@ -117,7 +115,7 @@ class Calendar(models.Model):
     date_id = models.DateField(primary_key=True, db_index=True, default="1900-01-01")
     week_day = models.SmallIntegerField()
     day_number_in_month = models.SmallIntegerField()
-    day_name_in_week = models.TextField()
+    day_number_in_week = models.SmallIntegerField()
     calendar_month_number = models.SmallIntegerField()
     calendar_month_name = models.TextField()
     calendar_year = models.SmallIntegerField()
