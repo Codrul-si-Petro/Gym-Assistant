@@ -1,5 +1,9 @@
 SELECT 
-  e.*,
+  attachment_id,
+  attachment_name,
+  attachment_parent_id,
+  attachment_description,
+  ta_created_at::timestamptz,
   NOT EXISTS (
     SELECT 1
     FROM {{ ref('seed_attachments') }} c

@@ -1,42 +1,28 @@
 import re
-from datetime import date
 
 import pytest
 from playwright.sync_api import Page, expect
+
+from tests.constants import E2E_TESTER_NAME, E2E_TESTER_PASS
 
 
 def _login(page: Page, frontend_url: str, username: str, password: str) -> None:
     page.goto(f"{frontend_url}/pages/auth/login.html")
     page.wait_for_load_state("networkidle")
-    page.fill("#username", username)
-    page.fill("#password", password)
+    page.fill("#username", E2E_TESTER_NAME)  # type: ignore[arg-type]
+    page.fill("#password", E2E_TESTER_PASS)  # type: ignore[arg-type]
     page.click('button[type="submit"]')
     page.wait_for_load_state("networkidle")
     expect(page).to_have_url(f"{frontend_url}/index.html", timeout=10000)
 
 
-def _wide_date_range(page: Page) -> None:
-    """Widen range so API is more likely to return rows (triggers change handlers)."""
-    today = date.today().isoformat()
-    page.locator("#start_date").fill("2020-01-01")
-    page.locator("#end_date").fill(today)
-    page.locator("#end_date").dispatch_event("change")
-
-
 @pytest.mark.order(5)
-def test_dashboard_tabs_switch_and_volume_table_and_drill(
-    page: Page,
-    test_credentials: tuple[str, str],
-    frontend_url: str,
-    seeded_ui_tester_workouts,
-):
-    username, password = test_credentials
+def test_dashboard_tabs_switch_and_volume_table_and_drill(page: Page, frontend_url: str, e2e_user_bootstrapped):
+    username, password = E2E_TESTER_NAME, E2E_TESTER_PASS
 
-    _login(page, frontend_url, username, password)
+    _login(page, frontend_url, username, password)  # type: ignore[arg-type]
 
     page.goto(f"{frontend_url}/pages/core/dashboard.html")
-    page.wait_for_load_state("networkidle")
-    _wide_date_range(page)
     page.wait_for_load_state("networkidle")
 
     # --- 1) Tabs: default favourites active, then switch to volume and back ---

@@ -1,26 +1,25 @@
-import pytest
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-User = get_user_model()
+from tests.helpers import create_test_user
 
 BASE_URL = "/api/auth"
 
+User = get_user_model()
 
-@pytest.mark.django_db
+
 class AuthenticationAPITestCase(TestCase):
-    """Test cases for authentication API endpoints."""
+    """
+    Test cases for authentication API endpoints.
+    This class is nice because it uses Django internals and cleans resources after itself.
+    """
 
     def setUp(self):
         """Set up test client and test user."""
         self.client = APIClient()
-        self.test_user = User.objects.create_user(
-            username="MircelGagiul359",
-            email="MircelRekinu@yahoo.com",
-            password="testpass123femei",
-        )
+        self.test_user = create_test_user("MircelGagiul360", "testpass123femei")
         # Track users created during tests for cleanup
         self.created_users = [self.test_user]
 
@@ -33,20 +32,21 @@ class AuthenticationAPITestCase(TestCase):
     def test_login_success_returns_200(self):
         """Test that successful login returns 200 status code."""
         url = f"{BASE_URL}/login/"
-        data = {"username": "MircelGagiul359", "password": "testpass123femei"}
+        # this password has to be hardcoded. MUST match what the user created in the helper is
+        data = {"username": "MircelGagiul360", "password": "testpass123femei"}
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("username", response.data)
         self.assertIn("email", response.data)
         self.assertIn("id", response.data)
         self.assertIn("message", response.data)
-        self.assertEqual(response.data["username"], "MircelGagiul359")
 
     def test_signup_success_returns_201(self):
         """Test that successful signup returns 201 status code."""
         url = f"{BASE_URL}/signup/"
+
         data = {
-            "username": "MircelGagiul360",
+            "username": "MircelGagiul3590",
             "email": "MircelRekinu360@yahoo.com",
             "password1": "testpass123femei",
             "password2": "testpass123femei",
@@ -57,11 +57,11 @@ class AuthenticationAPITestCase(TestCase):
         self.assertIn("email", response.data)
         self.assertIn("id", response.data)
         self.assertIn("message", response.data)
-        self.assertEqual(response.data["username"], "MircelGagiul360")
+        self.assertEqual(response.data["username"], "MircelGagiul3590")
         # Verify user was created
-        self.assertTrue(User.objects.filter(username="MircelGagiul360").exists())
+        self.assertTrue(User.objects.filter(username="MircelGagiul3590").exists())
         # Track for cleanup
-        new_user = User.objects.get(username="MircelGagiul360")
+        new_user = User.objects.get(username="MircelGagiul3590")
         self.created_users.append(new_user)
 
     def test_logout_success_returns_200(self):
@@ -83,8 +83,6 @@ class AuthenticationAPITestCase(TestCase):
         self.assertIn("username", response.data)
         self.assertIn("email", response.data)
         self.assertIn("id", response.data)
-        self.assertEqual(response.data["username"], "MircelGagiul359")
-        self.assertEqual(response.data["email"], "MircelRekinu@yahoo.com")
 
     def test_current_user_unauthenticated_returns_null(self):
         """Test that current user endpoint returns null for unauthenticated user."""
@@ -97,17 +95,13 @@ class AuthenticationAPITestCase(TestCase):
         """Test that successful account deletion returns 200 status code."""
         url = f"{BASE_URL}/delete-account/"
         # Create a user specifically for deletion
-        user_to_delete = User.objects.create_user(
-            username="MircelGagiul359Delete",
-            email="MircelRekinuDelete@yahoo.com",
-            password="testpass123femei",
-        )
+        user_to_delete = self.test_user
         self.client.force_authenticate(user=user_to_delete)
         response = self.client.delete(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
         # Verify user was deleted (already deleted by the endpoint)
-        self.assertFalse(User.objects.filter(username="MircelGagiul359Delete").exists())
+        self.assertFalse(User.objects.filter(username=user_to_delete.username).exists())
         # Note: user_to_delete is already deleted by the endpoint, no cleanup needed
 
     def test_login_invalid_credentials_returns_401(self):

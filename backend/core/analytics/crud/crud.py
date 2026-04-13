@@ -37,7 +37,7 @@ def get_favourite_exercises(user_id, start_date, end_date):
 
 
 def get_total_volume(user_id: int, start_date: date, end_date: date, parent_id: int | None):
-    query_file = SQL_DIR / "get_total_volume.sql"  # yeah
+    query_file = SQL_DIR / "get_total_volume.sql"
     query = query_file.read_text()
 
     volume_rows = execute_sql(

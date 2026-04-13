@@ -6,7 +6,7 @@ SELECT
     d::date AS date_id,
     EXTRACT(ISODOW FROM d)::smallint AS week_day,                 -- 1=Monday .. 7=Sunday
     EXTRACT(DAY FROM d)::smallint AS day_number_in_month,
-    EXTRACT(DOW FROM d)::smallint AS day_name_in_week,            -- 0=Sunday .. 6=Saturday
+    EXTRACT(DOW FROM d)::smallint AS day_number_in_week,            -- 0=Sunday .. 6=Saturday
     EXTRACT(MONTH FROM d)::smallint AS calendar_month_number,
     TO_CHAR(d, 'Month') AS calendar_month_name,
     EXTRACT(YEAR FROM d)::smallint AS calendar_year,
