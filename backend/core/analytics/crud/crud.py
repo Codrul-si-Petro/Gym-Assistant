@@ -54,3 +54,24 @@ def get_total_volume(user_id: int, start_date: date, end_date: date, parent_id: 
     volume_by_exercise_id = {row["exercise_id"]: row["total_volume_kg"] or 0 for row in volume_rows}
 
     return rollup_exercise_total_volume(hierarchy_rows, volume_by_exercise_id, parent_id)
+
+
+def get_total_volume_per_day(
+        user_id: int, 
+        start_date: date, 
+        end_date: date, 
+        parent_id: int | None): 
+    query_file = SQL_DIR / "get_total_volume_daily.sql"
+    query = query_file.read_text()
+
+    rows = execute_sql(
+        query,
+        {
+            "user_id": user_id,
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+
+    exercise_hierarchy = get_dimension_hierarchies("exercise")
+    volume_by_exercise_id = {row["exercise_id"]: row["total_volume_kg"] or 0 for row in rows}
+    )
