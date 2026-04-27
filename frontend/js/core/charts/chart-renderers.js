@@ -221,3 +221,47 @@ export function renderVolumeTable(results, handlers) {
   }
 }
 
+const VOL_LINE = "rgb(34, 211, 238)";
+
+export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type) {
+  destroyChart();
+  const canvas = document.getElementById("volume-daily-canvas");
+  if (!canvas) return;
+  const box = document.getElementById("volume-daily-chart-inner");
+  if (box) {
+    box.style.display = "";
+    box.style.height = "280px";
+  }
+  const t = type || "line";
+  const plugins = typeof ChartDataLabels !== "undefined" ? [ChartDataLabels] : [];
+  chartInstance = new Chart(canvas.getContext("2d"), {
+    type: t,
+    data: {
+      labels,
+      datasets: [{
+        label: exerciseName ? "Volume (kg) — " + exerciseName : "Volume (kg)",
+        data: values,
+        borderColor: VOL_LINE,
+        backgroundColor: t === "bar" ? "rgba(34, 211, 238, 0.45)" : "rgba(34, 211, 238, 0.15)",
+        fill: t === "line",
+        tension: 0.25,
+        borderWidth: t === "line" ? 2 : 1,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { labels: { color: "#e4e4e7" } },
+        tooltip: { callbacks: { label: (c) => formatVolumeKg(c.raw) + " kg" } },
+        datalabels: { display: false },
+      },
+      scales: {
+        x: { ticks: { color: "#a1a1aa" }, grid: { color: "rgba(255,255,255,0.06)" } },
+        y: { beginAtZero: true, ticks: { color: "#a1a1aa" }, grid: { color: "rgba(255,255,255,0.06)" } },
+      },
+    },
+    plugins,
+  });
+}

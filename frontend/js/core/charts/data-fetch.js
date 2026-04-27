@@ -27,3 +27,16 @@ export async function fetchTotalVolume(startDate, endDate, parentID) {
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
+
+export async function fetchTotalVolumeDaily(exerciseId, startDate, endDate) {
+  const url = new URL(API_BASE + "/api/v1/total-volume-daily");
+  url.searchParams.set("exercise_id", String(exerciseId));
+  if (startDate) url.searchParams.set("start_date", startDate);
+  if (endDate) url.searchParams.set("end_date", endDate);
+
+  const headers = getAuthHeaders();
+  const res = await fetch(url.toString(), { headers });
+
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}

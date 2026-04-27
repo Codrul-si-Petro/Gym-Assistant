@@ -114,6 +114,46 @@
                             <tbody id="volume-table-body"></tbody>
                         </table>
                     </div>
+                    <div
+                        id="volume-daily-chart-block"
+                        class="volume-daily-chart-block"
+                        hidden
+                    >
+                        <div class="volume-daily-header">
+                            <h2 class="volume-daily-title" id="volume-daily-title">Volume by day</h2>
+                            <button
+                                type="button"
+                                class="volume-daily-close"
+                                id="volume-daily-close"
+                                aria-label="Close daily volume chart"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <p
+                            id="volume-daily-chart-msg"
+                            class="volume-daily-chart-msg"
+                            aria-live="polite"
+                        ></p>
+                        <div
+                            id="chart-skeleton-volume-daily"
+                            class="chart-skeleton"
+                            hidden
+                        >
+                            <div class="skeleton-bar" style="width: 92%"></div>
+                            <div class="skeleton-bar" style="width: 88%"></div>
+                            <div class="skeleton-bar" style="width: 85%"></div>
+                            <div class="skeleton-bar" style="width: 78%"></div>
+                            <div class="skeleton-bar" style="width: 70%"></div>
+                        </div>
+                        <div
+                            class="chart-inner volume-daily-chart-inner"
+                            id="volume-daily-chart-inner"
+                            style="display: none"
+                        >
+                            <canvas id="volume-daily-canvas"></canvas>
+                        </div>
+                    </div>
 
                 </div>
             </div>
