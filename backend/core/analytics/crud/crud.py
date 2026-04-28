@@ -2,10 +2,17 @@
 Some stuff I will need to update at some point
 """
 
+from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
-from .common import execute_sql, get_dimension_hierarchies, rollup_exercise_total_volume
+from .common import (
+    _build_children,
+    _subtree_terminal_exercise_ids,
+    execute_sql,
+    get_dimension_hierarchies,
+    rollup_exercise_total_volume,
+)
 
 SQL_DIR = Path(__file__).resolve().parent.parent / "sql"
 
@@ -54,3 +61,56 @@ def get_total_volume(user_id: int, start_date: date, end_date: date, parent_id: 
     volume_by_exercise_id = {row["exercise_id"]: row["total_volume_kg"] or 0 for row in volume_rows}
 
     return rollup_exercise_total_volume(hierarchy_rows, volume_by_exercise_id, parent_id)
+
+
+def get_total_volume_per_day(
+    user_id: int,
+    start_date: date,
+    end_date: date,
+    exercise_id: int,
+):
+    query_file = SQL_DIR / "get_total_volumes_daily.sql"
+    query = query_file.read_text()
+
+    rows = execute_sql(
+        query,
+        {
+            "user_id": user_id,
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+    )
+
+    hierarchy_rows = get_dimension_hierarchies("exercise")
+
+    children, _ = _build_children(hierarchy_rows)
+    cache: dict[int, frozenset[int]] = {}
+
+    terminals = _subtree_terminal_exercise_ids(
+        exercise_id,
+        children,
+        cache,
+    )
+
+    volume_by_date: defaultdict[date, dict[int, float]] = defaultdict(dict)
+    for row in rows:
+        d = row["date_id"]
+        eid = row["exercise_id"]
+        volume_by_date[d][eid] = row["total_volume_kg"] or 0
+
+    results = []
+    for d, volume_by_exercise_id in volume_by_date.items():
+        total = sum(volume_by_exercise_id.get(eid, 0) for eid in terminals)
+        if total <= 0:
+            continue
+
+        results.append(
+            {
+                "date": d,
+                "total_volume_kg": total,
+            }
+        )
+
+    results.sort(key=lambda x: x["date"])
+
+    return results
