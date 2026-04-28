@@ -13,9 +13,71 @@ import { fetchFavExercises, fetchTotalVolume, fetchTotalVolumeDaily } from "./da
 let volumeParentId = null;
 const volumeParentStack = [];
 
+/** While the daily chart panel is open, refetch daily volume on date change. */
+let volumeDailySelection = null; // { exerciseId: number, exerciseName: string } | null
+let volumeDailyChartType = "line"; // "line" | "bar"
+
+async function reloadVolumeDailyChart() {
+  if (!volumeDailySelection) return;
+  const skel = document.getElementById("chart-skeleton-volume-daily");
+  const inner = document.getElementById("volume-daily-chart-inner");
+  const vmsg = document.getElementById("volume-daily-chart-msg");
+  skel?.classList.remove("hidden");
+  if (inner) inner.style.display = "none";
+  destroyChart();
+  if (vmsg) vmsg.textContent = "";
+  try {
+    const { results: daily = [] } = await fetchTotalVolumeDaily(
+      volumeDailySelection.exerciseId,
+      dateFrom?.value,
+      dateTo?.value
+    );
+    skel?.classList.add("hidden");
+    if (!daily.length) {
+      if (vmsg) vmsg.textContent = "No day-by-day volume in this range.";
+      if (inner) inner.style.display = "none";
+      return;
+    }
+    renderVolumeDailyTimeSeries(
+      daily.map((r) => String(r.date)),
+      daily.map((r) => Number(r.total_volume_kg) || 0),
+      volumeDailySelection.exerciseName,
+      volumeDailyChartType
+    );
+  } catch (e) {
+    skel?.classList.add("hidden");
+    if (vmsg) vmsg.textContent = "Failed to load daily volume.";
+    destroyChart();
+    if (inner) inner.style.display = "none";
+    if (String(e.message || "").includes("401")) {
+      window.location.replace(BASE + "/pages/auth/login.html");
+    }
+  }
+}
+
 function setVolumeTableVisible(visible) {
   const inner = document.getElementById("volume-table-inner");
   if (inner) inner.style.display = visible ? "" : "none";
+}
+
+/**
+ * Swaps the main volume view between the ranking table and the daily chart panel.
+ * - "table": show table (when data loaded), hide daily chart block.
+ * - "chart": hide table, show daily chart block (loading/render happens in onMinichart).
+ */
+function setVolumeMainView(mode) {
+  const scrollWrap = document.querySelector("#tab-volume .chart-scroll-wrap");
+  const chartBlock = document.getElementById("volume-daily-chart-block");
+  if (!scrollWrap || !chartBlock) return;
+
+  if (mode === "chart") {
+    scrollWrap.classList.add("volume-mode-chart");
+    chartBlock.hidden = false;
+    setVolumeTableVisible(false); // hide table by JS so swap works without relying on CSS alone
+  } else {
+    scrollWrap.classList.remove("volume-mode-chart");
+    chartBlock.hidden = true;
+  }
 }
 
 function updateVolumeToolbar() {
@@ -57,7 +119,12 @@ function onDateChange() {
   syncDateFilters();
   const active = document.querySelector(".chart-tab.active")?.dataset.tab;
   if (active === "favourites") loadFavExercisesChart();
-  if (active === "volume") loadVolumeTable();
+  if (active === "volume") {
+    void (async () => {
+      await loadVolumeTable();
+      if (volumeDailySelection) await reloadVolumeDailyChart();
+    })();
+  }
 }
 
 const tabs = document.querySelectorAll(".chart-tab");
@@ -84,6 +151,7 @@ async function loadFavExercisesChart() {
   const chartInner = document.querySelector("#tab-favourites .chart-inner");
 
   if (msg) msg.textContent = "";
+  setVolumeMainView("table");
   if (skeleton) skeleton.classList.remove("hidden");
   if (chartInner) chartInner.style.display = "none";
 
@@ -122,6 +190,7 @@ async function loadVolumeTable() {
   const skeleton = document.getElementById("chart-skeleton-volume");
 
   if (msg) msg.textContent = "";
+  if (!volumeDailySelection) setVolumeMainView("table");
   if (skeleton) skeleton.classList.remove("hidden");
   setVolumeTableVisible(false);
 
@@ -151,47 +220,73 @@ async function loadVolumeTable() {
         loadVolumeTable();
       },
       onMinichart: async (row) => {
+        // DOM for daily chart panel, loading skeleton, canvas wrapper, messages, title
         const block = document.getElementById("volume-daily-chart-block");
         const skel = document.getElementById("chart-skeleton-volume-daily");
         const inner = document.getElementById("volume-daily-chart-inner");
         const vmsg = document.getElementById("volume-daily-chart-msg");
         const vtitle = document.getElementById("volume-daily-title");
+
+        // Show chart panel and swap layout: table hidden, chart block visible (CSS .volume-mode-chart)
         if (block) {
           block.hidden = false;
-          block.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          setVolumeMainView("chart");
         }
-        vtitle && (vtitle.textContent = row.exercise_name ? "Volume by day: " + row.exercise_name : "Volume by day");
-        vmsg && (vmsg.textContent = "");
+
+        if (vtitle) {
+          vtitle.textContent = row.exercise_name
+            ? "Volume by day: " + row.exercise_name
+            : "Volume by day";
+        }
+        if (vmsg) vmsg.textContent = "";
+
+        // Daily skeleton while API loads; hide canvas until we have data
         skel?.classList.remove("hidden");
-        inner && (inner.style.display = "none");
+        if (inner) inner.style.display = "none";
         destroyChart();
+
         try {
           const { results: daily = [] } = await fetchTotalVolumeDaily(
-            row.exercise_id, dateFrom?.value, dateTo?.value
+            row.exercise_id,
+            dateFrom?.value,
+            dateTo?.value
           );
           skel?.classList.add("hidden");
+
           if (!daily.length) {
-            vmsg && (vmsg.textContent = "No day-by-day volume in this range.");
-            inner && (inner.style.display = "none");
+            if (vmsg) {
+              vmsg.textContent = "No day-by-day volume in this range.";
+            }
+            if (inner) inner.style.display = "none";
+              volumeDailySelection = null;
             return;
           }
+
+          volumeDailySelection = {
+            exerciseId: row.exercise_id,
+            exerciseName: row.exercise_name || "",
+          };
+
           renderVolumeDailyTimeSeries(
             daily.map((r) => String(r.date)),
             daily.map((r) => Number(r.total_volume_kg) || 0),
             row.exercise_name,
-            "line"
+            volumeDailyChartType
           );
         } catch (e) {
           skel?.classList.add("hidden");
-          vmsg && (vmsg.textContent = "Failed to load daily volume.");
+          if (vmsg) vmsg.textContent = "Failed to load daily volume.";
           destroyChart();
-          inner && (inner.style.display = "none");
-          if (String(e.message || "").includes("401")) window.location.replace(BASE + "/pages/auth/login.html");
+          volumeDailySelection = null;
+          if (inner) inner.style.display = "none";
+          if (String(e.message || "").includes("401")) {
+            window.location.replace(BASE + "/pages/auth/login.html");
+          }
         }
       },
     });
 
-    setVolumeTableVisible(true);
+    setVolumeTableVisible(!volumeDailySelection);
   } catch (err) {
     if (msg) msg.textContent = "Failed to load volume data.";
     if (skeleton) skeleton.classList.add("hidden");
@@ -227,9 +322,27 @@ document.getElementById("volume-daily-close")?.addEventListener("click", () => {
   const b = document.getElementById("volume-daily-chart-block");
   if (b) b.hidden = true;
   document.getElementById("chart-skeleton-volume-daily")?.classList.add("hidden");
-  document.getElementById("volume-daily-chart-inner") && (document.getElementById("volume-daily-chart-inner").style.display = "none");
-  document.getElementById("volume-daily-chart-msg") && (document.getElementById("volume-daily-chart-msg").textContent = "");
+  const inner = document.getElementById("volume-daily-chart-inner");
+  if (inner) inner.style.display = "none";
+  document.getElementById("volume-daily-chart-msg") &&
+    (document.getElementById("volume-daily-chart-msg").textContent = "");
   destroyChart();
+  volumeDailySelection = null;
+  setVolumeMainView("table");
+  const tableInner = document.getElementById("volume-table-inner");
+  if (tableInner) tableInner.style.display = "";
+});
+document.getElementById("volume-daily-type-line")?.addEventListener("click", () => {
+  volumeDailyChartType = "line";
+  document.getElementById("volume-daily-type-line")?.classList.add("is-active");
+  document.getElementById("volume-daily-type-bar")?.classList.remove("is-active");
+  void reloadVolumeDailyChart();
+});
+document.getElementById("volume-daily-type-bar")?.addEventListener("click", () => {
+  volumeDailyChartType = "bar";
+  document.getElementById("volume-daily-type-bar")?.classList.add("is-active");
+  document.getElementById("volume-daily-type-line")?.classList.remove("is-active");
+  void reloadVolumeDailyChart();
 });
 
 const params = new URLSearchParams(window.location.search);

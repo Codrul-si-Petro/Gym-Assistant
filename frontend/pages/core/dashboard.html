@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="../../css/core/dashboard.css">
     <!-- Per chart style -->
     <link rel="stylesheet" href="../../css/core/charts/total-volume-dashboard.css">
+    <!-- Modular: table ↔ daily chart swap + daily chart chrome -->
+    <link rel="stylesheet" href="../../css/core/charts/total-volume-chart.css">
     <link rel="stylesheet" href="../../css/core/charts/fav-exercises-dashboard.css">
     <!-- nav bar -->
     <link rel="stylesheet" href="../../css/general-components/navigation.css">
@@ -24,9 +26,9 @@
             <a href="workouts_input.html">Log workouts</a>
             <a href="workouts_table.html">View workouts</a>
         </div>
-  </div> 
+  </div>
     <!-- Tabs  -->
-    <div class="chart-tabs"> 
+    <div class="chart-tabs">
         <button class="chart-tab active" data-tab="favourites">Favourite Exercises</button>
         <button class="chart-tab" data-tab="volume">Total Volumes</button>
     </div>
@@ -88,6 +90,7 @@
                     </button>
                 </div>
 
+                <!-- JS toggles .volume-mode-chart on this wrapper when daily chart replaces the table -->
                 <div class="chart-scroll-wrap">
 
                     <div id="chart-skeleton-volume" class="chart-skeleton">
@@ -121,6 +124,10 @@
                     >
                         <div class="volume-daily-header">
                             <h2 class="volume-daily-title" id="volume-daily-title">Volume by day</h2>
+                            <div class="volume-daily-chart-type" role="group" aria-label="Chart type">
+                                <button type="button" class="volume-daily-type-btn is-active" id="volume-daily-type-line" data-chart-type="line">Line</button>
+                                <button type="button" class="volume-daily-type-btn" id="volume-daily-type-bar" data-chart-type="bar">Bars</button>
+                            </div>
                             <button
                                 type="button"
                                 class="volume-daily-close"
@@ -151,7 +158,11 @@
                             id="volume-daily-chart-inner"
                             style="display: none"
                         >
-                            <canvas id="volume-daily-canvas"></canvas>
+                            <div class="volume-daily-chart-scroll" id="volume-daily-chart-scroll">
+                                <div class="volume-daily-chart-size" id="volume-daily-chart-size">
+                                    <canvas id="volume-daily-canvas"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
