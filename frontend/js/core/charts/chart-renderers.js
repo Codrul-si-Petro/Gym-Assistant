@@ -155,10 +155,6 @@ export function formatVolumeKg(n) {
   return new Intl.NumberFormat("en-US", opts).format(v);
 }
 
-/**
- * @param {Array} results - API rows: exercise_id, exercise_name, total_volume_kg, rank, is_leaf
- * @param {{ onDrill?: (row: object) => void, onMinichart?: (row: object) => void }} handlers
- */
 export function renderVolumeTable(results, handlers) {
   const tbody = document.getElementById("volume-table-body");
   if (!tbody) return;
@@ -221,3 +217,73 @@ export function renderVolumeTable(results, handlers) {
   }
 }
 
+const VOL_LINE = "rgb(34, 211, 238)";
+
+export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type) {
+  destroyChart();
+  const canvas = document.getElementById("volume-daily-canvas");
+  if (!canvas) return;
+
+  const box = document.getElementById("volume-daily-chart-inner");
+  const sizeEl = document.getElementById("volume-daily-chart-size");
+  const scrollEl = document.getElementById("volume-daily-chart-scroll");
+  const minPxPerPoint = 14;
+
+  if (box) {
+    box.style.display = "";
+    box.style.height = "280px";
+  }
+  if (sizeEl && scrollEl && labels.length) {
+    const minW = Math.max(scrollEl.clientWidth || 400, labels.length * minPxPerPoint);
+    sizeEl.style.width = minW + "px";
+    sizeEl.style.height = "280px";
+  }
+
+  const t = type || "line";
+  const plugins = typeof ChartDataLabels !== "undefined" ? [ChartDataLabels] : [];
+
+  chartInstance = new Chart(canvas.getContext("2d"), {
+    type: t,
+    data: {
+      labels,
+      datasets: [
+        {
+          label: exerciseName ? "Volume (kg) — " + exerciseName : "Volume (kg)",
+          data: values,
+          borderColor: VOL_LINE,
+          backgroundColor:
+            t === "bar" ? "rgba(34, 211, 238, 0.45)" : "rgba(34, 211, 238, 0.15)",
+          fill: t === "line",
+          tension: 0.25,
+          borderWidth: t === "line" ? 2 : 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { labels: { color: "#e4e4e7" } },
+        tooltip: {
+          callbacks: {
+            label: (c) => formatVolumeKg(c.raw) + " kg",
+          },
+        },
+        datalabels: { display: false },
+      },
+      scales: {
+        x: {
+          ticks: { display: false },
+          grid: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { display: false },
+          grid: { color: "rgba(255,255,255,0.06)" },
+        },
+      },
+    },
+    plugins,
+  });
+}
