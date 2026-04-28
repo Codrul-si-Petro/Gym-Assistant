@@ -101,6 +101,8 @@ def get_total_volume_per_day(
     results = []
     for d, volume_by_exercise_id in volume_by_date.items():
         total = sum(volume_by_exercise_id.get(eid, 0) for eid in terminals)
+        if total <= 0:
+            continue
 
         results.append(
             {
