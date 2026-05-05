@@ -55,3 +55,6 @@ exercise_id,exercise_name,exercise_movement_type,exercise_parent_id,ta_created_a
 53,Preacher curl,Isolated,52,2026-04-04 23:30:04.03 +0200
 54,Hammer curl,Isolated,52,2026-04-04 23:30:04.03 +0200
 55,Skullcrushers,Isolated,44,2026-04-04 23:30:04.03 +0200
+56,Box step ups,Compound,51,2026-05-05 20:00:04.03 +0200
+57,Leg raise,Compound,58,2026-05-05 20:00:04.03 +0200
+58,Crunch,Compound,,2026-05-05 20:00:04.03 +0200

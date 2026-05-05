@@ -42,3 +42,4 @@ muscle_id,muscle_name,muscle_parent_id,ta_created_at
 40,Shoulders,,2025-12-01 15:36:55.902 +0200
 41,Arms,,2025-12-01 15:36:55.902 +0200
 42,Legs,,2025-12-01 15:36:55.902 +0200
+43,Hip flexors,36,2026-05-05 15:36:55.902 +0200
