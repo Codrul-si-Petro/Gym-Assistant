@@ -1,14 +1,17 @@
 // Controls which content loads per tab and wires shared date controls.
 
-import { BASE, TODAY, syncDateFilters } from "../../utils.js";
+import { API_BASE, BASE, TODAY, getAuthHeaders, syncDateFilters } from "../../utils.js";
+import { convertKgToPreferred, getPreferredUnit, setPreferredUnit, unitSuffix } from "../../user-preferences.js";
 import {
   renderFavExercisesChart,
   shortLabel,
   destroyChart,
   renderVolumeTable,
   renderVolumeDailyTimeSeries,
+  renderWorkoutSplitsChart,
+  renderGymWeekdaysChart,
 } from "./chart-renderers.js";
-import { fetchFavExercises, fetchTotalVolume, fetchTotalVolumeDaily } from "./data-fetch.js";
+import { fetchFavExercises, fetchGymWeekdays, fetchHomeSummary, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSplits } from "./data-fetch.js";
 
 let volumeParentId = null;
 const volumeParentStack = [];
@@ -16,6 +19,31 @@ const volumeParentStack = [];
 /** While the daily chart panel is open, refetch daily volume on date change. */
 let volumeDailySelection = null; // { exerciseId: number, exerciseName: string } | null
 let volumeDailyChartType = "line"; // "line" | "bar"
+let preferredUnit = getPreferredUnit();
+
+function updateVolumeHeadingUnit() {
+  const heading = document.querySelector(".volume-col-vol");
+  if (!heading) return;
+  heading.textContent = `Total volume (${unitSuffix(preferredUnit)})`;
+}
+
+async function loadPreferredUnit() {
+  const headers = getAuthHeaders();
+  if (!headers) {
+    preferredUnit = getPreferredUnit();
+    updateVolumeHeadingUnit();
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/current-user/`, { headers });
+    if (!res.ok) throw new Error("not-authenticated");
+    const user = await res.json();
+    preferredUnit = setPreferredUnit(user?.preferred_unit || "KG");
+  } catch {
+    preferredUnit = getPreferredUnit();
+  }
+  updateVolumeHeadingUnit();
+}
 
 async function reloadVolumeDailyChart() {
   if (!volumeDailySelection) return;
@@ -42,7 +70,8 @@ async function reloadVolumeDailyChart() {
       daily.map((r) => String(r.date)),
       daily.map((r) => Number(r.total_volume_kg) || 0),
       volumeDailySelection.exerciseName,
-      volumeDailyChartType
+      volumeDailyChartType,
+      preferredUnit
     );
   } catch (e) {
     skel?.classList.add("hidden");
@@ -115,6 +144,35 @@ function showVolumeChartComingSoonToast() {
   }, VOLUME_CHART_TOAST_MS);
 }
 
+function formatSummaryNumber(value) {
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value);
+}
+
+async function loadMetricsSummary() {
+  const section = document.getElementById("metrics-summary");
+  const inactivityEl = document.getElementById("metrics-inactivity");
+  const liftedEl = document.getElementById("metrics-total-lifted");
+  if (!section || !inactivityEl || !liftedEl) return;
+
+  try {
+    const data = await fetchHomeSummary();
+    section.hidden = false;
+    if (data.days_since_last_workout == null) {
+      inactivityEl.textContent = "No workouts logged yet.";
+    } else if (data.days_since_last_workout === 0) {
+      inactivityEl.textContent = "You hit the gym today.";
+    } else if (data.days_since_last_workout === 1) {
+      inactivityEl.textContent = "You haven't been to the gym in 1 day.";
+    } else {
+      inactivityEl.textContent = `You haven't been to the gym in ${data.days_since_last_workout} days.`;
+    }
+    const converted = convertKgToPreferred(data.total_volume_kg, preferredUnit);
+    liftedEl.textContent = `${formatSummaryNumber(converted)} ${unitSuffix(preferredUnit)} lifted until now`;
+  } catch {
+    section.hidden = true;
+  }
+}
+
 function onDateChange() {
   syncDateFilters();
   const active = document.querySelector(".chart-tab.active")?.dataset.tab;
@@ -125,6 +183,8 @@ function onDateChange() {
       if (volumeDailySelection) await reloadVolumeDailyChart();
     })();
   }
+  if (active === "splits") loadWorkoutSplitsChart();
+  if (active === "weekdays") loadGymWeekdaysChart();
 }
 
 const tabs = document.querySelectorAll(".chart-tab");
@@ -142,6 +202,8 @@ tabs.forEach((tab) => {
 
     if (target === "favourites") loadFavExercisesChart();
     if (target === "volume") loadVolumeTable();
+    if (target === "splits") loadWorkoutSplitsChart();
+    if (target === "weekdays") loadGymWeekdaysChart();
   });
 });
 
@@ -213,7 +275,7 @@ async function loadVolumeTable() {
     if (msg) msg.textContent = "";
     if (skeleton) skeleton.classList.add("hidden");
 
-    renderVolumeTable(results, {
+    renderVolumeTable(results, preferredUnit, {
       onDrill: (row) => {
         volumeParentStack.push(volumeParentId);
         volumeParentId = row.exercise_id;
@@ -271,7 +333,8 @@ async function loadVolumeTable() {
             daily.map((r) => String(r.date)),
             daily.map((r) => Number(r.total_volume_kg) || 0),
             row.exercise_name,
-            volumeDailyChartType
+            volumeDailyChartType,
+            preferredUnit
           );
         } catch (e) {
           skel?.classList.add("hidden");
@@ -291,6 +354,72 @@ async function loadVolumeTable() {
     if (msg) msg.textContent = "Failed to load volume data.";
     if (skeleton) skeleton.classList.add("hidden");
 
+    if (String(err.message || "").includes("401")) {
+      window.location.replace(BASE + "/pages/auth/login.html");
+    }
+  }
+}
+
+async function loadWorkoutSplitsChart() {
+  const msg = document.getElementById("chart-msg");
+  const skeleton = document.getElementById("chart-skeleton-splits");
+  const chartInner = document.querySelector("#tab-splits .chart-inner");
+  if (msg) msg.textContent = "";
+  if (skeleton) skeleton.classList.remove("hidden");
+  if (chartInner) chartInner.style.display = "none";
+
+  try {
+    const data = await fetchWorkoutSplits(dateFrom.value, dateTo.value);
+    const results = data?.results || [];
+    if (!results.length) {
+      if (msg) msg.textContent = "No split data for this range.";
+      destroyChart();
+      if (skeleton) skeleton.classList.add("hidden");
+      return;
+    }
+    if (skeleton) skeleton.classList.add("hidden");
+    if (chartInner) chartInner.style.display = "";
+    renderWorkoutSplitsChart(
+      results.map((r) => r.workout_split),
+      results.map((r) => Number(r.set_count) || 0)
+    );
+  } catch (err) {
+    if (msg) msg.textContent = "Failed to load split data.";
+    destroyChart();
+    if (skeleton) skeleton.classList.add("hidden");
+    if (String(err.message || "").includes("401")) {
+      window.location.replace(BASE + "/pages/auth/login.html");
+    }
+  }
+}
+
+async function loadGymWeekdaysChart() {
+  const msg = document.getElementById("chart-msg");
+  const skeleton = document.getElementById("chart-skeleton-weekdays");
+  const chartInner = document.querySelector("#tab-weekdays .chart-inner");
+  if (msg) msg.textContent = "";
+  if (skeleton) skeleton.classList.remove("hidden");
+  if (chartInner) chartInner.style.display = "none";
+
+  try {
+    const data = await fetchGymWeekdays(dateFrom.value, dateTo.value);
+    const results = data?.results || [];
+    if (!results.length) {
+      if (msg) msg.textContent = "No weekday data for this range.";
+      destroyChart();
+      if (skeleton) skeleton.classList.add("hidden");
+      return;
+    }
+    if (skeleton) skeleton.classList.add("hidden");
+    if (chartInner) chartInner.style.display = "";
+    renderGymWeekdaysChart(
+      results.map((r) => r.day_name),
+      results.map((r) => Number(r.gym_days) || 0)
+    );
+  } catch (err) {
+    if (msg) msg.textContent = "Failed to load weekday data.";
+    destroyChart();
+    if (skeleton) skeleton.classList.add("hidden");
     if (String(err.message || "").includes("401")) {
       window.location.replace(BASE + "/pages/auth/login.html");
     }
@@ -359,5 +488,11 @@ if (chartExId && placeholder) {
 
 const defaultTab =
   document.querySelector(".chart-tab.active")?.dataset.tab || "favourites";
-if (defaultTab === "favourites") loadFavExercisesChart();
-if (defaultTab === "volume") loadVolumeTable();
+void (async () => {
+  await loadPreferredUnit();
+  await loadMetricsSummary();
+  if (defaultTab === "favourites") loadFavExercisesChart();
+  if (defaultTab === "volume") loadVolumeTable();
+  if (defaultTab === "splits") loadWorkoutSplitsChart();
+  if (defaultTab === "weekdays") loadGymWeekdaysChart();
+})();

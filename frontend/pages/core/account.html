@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings</title>
+    <link rel="stylesheet" href="../../css/general-components/theme.css">
+    <link rel="stylesheet" href="../../css/general-components/profile-menu.css">
+    <link rel="stylesheet" href="../../css/general-components/navigation.css">
+    <link rel="stylesheet" href="../../css/core/account.css">
+    <link rel="icon" href="../../assets/favicon.ico" sizes="any">
+</head>
+<body>
+    <div class="nav">
+        <button class="nav-toggle" aria-label="Toggle Menu">&#9776;</button>
+        <button type="button" class="theme-toggle nav-theme-toggle" aria-label="Switch theme">☀</button>
+        <span class="site-title">Gym Assistant</span>
+        <div class="nav-links">
+            <a href="../../index.html">Home</a>
+            <a href="workouts_input.html">Log workouts</a>
+            <a href="workouts_table.html">View workouts</a>
+            <a href="dashboard.html">Metrics</a>
+            <a href="explore.html">Explore</a>
+        </div>
+        <div id="nav-actions" class="nav-actions">
+        </div>
+    </div>
+
+    <main class="account-page">
+        <h1>Account settings</h1>
+        <p id="account-msg" class="account-msg" role="alert" aria-live="polite"></p>
+
+        <section class="account-card card">
+            <h2>Change username</h2>
+            <form id="username-form" class="account-form">
+                <label for="new-username">New username</label>
+                <input type="text" id="new-username" name="username" minlength="3" maxlength="150" required autocomplete="username">
+                <label for="username-current-password">Current password</label>
+                <input type="password" id="username-current-password" name="current_password" required autocomplete="current-password">
+                <button type="submit" class="cta-button">Update username</button>
+            </form>
+        </section>
+
+        <section class="account-card card">
+            <h2>Display units</h2>
+            <form id="preferences-form" class="account-form">
+                <label for="preferred-unit">Preferred unit for charts and summaries</label>
+                <select id="preferred-unit" name="preferred_unit">
+                    <option value="KG">KG</option>
+                    <option value="LBS">LBS</option>
+                </select>
+                <button type="submit" class="cta-button">Save preference</button>
+            </form>
+        </section>
+
+        <section class="account-card card">
+            <h2>Change password</h2>
+            <form id="password-form" class="account-form">
+                <label for="current-password">Current password</label>
+                <input type="password" id="current-password" name="current_password" required autocomplete="current-password">
+                <label for="new-password1">New password</label>
+                <input type="password" id="new-password1" name="new_password1" minlength="8" required autocomplete="new-password">
+                <label for="new-password2">Confirm new password</label>
+                <input type="password" id="new-password2" name="new_password2" minlength="8" required autocomplete="new-password">
+                <button type="submit" class="cta-button">Update password</button>
+            </form>
+        </section>
+    </main>
+
+    <script type="module" src="../../js/general-components/theme.js"></script>
+    <script type="module" src="../../js/general-components/profile-menu.js"></script>
+    <script src="../../js/auth/require-auth.js"></script>
+    <script src="../../js/general-components/navigation.js"></script>
+    <script type="module" src="../../js/core/account.js"></script>
+</body>
+</html>

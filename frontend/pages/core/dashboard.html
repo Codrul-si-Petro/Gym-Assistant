@@ -3,37 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Charts</title>
-    <!-- Base style -->
+    <title>Metrics</title>
     <link rel="stylesheet" href="../../css/core/dashboard.css">
-    <!-- Per chart style -->
     <link rel="stylesheet" href="../../css/core/charts/total-volume-dashboard.css">
-    <!-- Modular: table ↔ daily chart swap + daily chart chrome -->
     <link rel="stylesheet" href="../../css/core/charts/total-volume-chart.css">
     <link rel="stylesheet" href="../../css/core/charts/fav-exercises-dashboard.css">
-    <!-- nav bar -->
+    <link rel="stylesheet" href="../../css/core/charts/metrics-extra.css">
+    <link rel="stylesheet" href="../../css/general-components/theme.css">
+    <link rel="stylesheet" href="../../css/general-components/profile-menu.css">
     <link rel="stylesheet" href="../../css/general-components/navigation.css">
-
     <link rel="icon" href="../../assets/favicon.ico" sizes="any">
 </head>
 <body>
 
   <div class="nav">
       <button class="nav-toggle" aria-label="Toggle Menu">&#9776;</button>
-      <span class="nav-title">Menu</span>
-        <div class="nav-links">
-            <a href="../../index.html">Home</a>
-            <a href="workouts_input.html">Log workouts</a>
-            <a href="workouts_table.html">View workouts</a>
-        </div>
+      <button type="button" class="theme-toggle nav-theme-toggle" aria-label="Switch theme">☀</button>
+      <span class="site-title">Gym Assistant</span>
+      <div class="nav-links">
+          <a href="../../index.html">Home</a>
+          <a href="workouts_input.html">Log workouts</a>
+          <a href="workouts_table.html">View workouts</a>
+          <a href="dashboard.html">Metrics</a>
+          <a href="explore.html">Explore</a>
+      </div>
+      <div id="nav-actions" class="nav-actions">
+      </div>
   </div>
-    <!-- Tabs  -->
+
+    <section id="metrics-summary" class="metrics-summary card" hidden>
+      <p id="metrics-inactivity" class="metrics-summary-line"></p>
+      <p id="metrics-total-lifted" class="metrics-summary-line metrics-summary-accent"></p>
+    </section>
+
     <div class="chart-tabs">
         <button class="chart-tab active" data-tab="favourites">Favourite Exercises</button>
         <button class="chart-tab" data-tab="volume">Total Volumes</button>
+        <button class="chart-tab" data-tab="splits">Workout Splits</button>
+        <button class="chart-tab" data-tab="weekdays">Gym Days</button>
     </div>
 
-    <!-- Shared controls  -->
     <div class="chart-controls-wrap">
       <div class="chart-controls">
         <label for="start_date" class="chart-date-label">From</label>
@@ -44,22 +53,14 @@
       </div>
     </div>
 
-    <!-- Shared message area (avoid duplicate IDs) -->
     <p id="chart-msg" class="chart-msg" aria-live="polite"></p>
 
-    <!-- Panels container -->
     <div class="chart-panels">
 
-        <!-- ===================== -->
-        <!-- TAB 1: FAVOURITES -->
-        <!-- ===================== -->
         <div class="chart-panel active" id="tab-favourites">
-
             <div class="fav-ex-dashboard-main">
                 <h1>These are your favourite exercises</h1>
-
                 <div class="chart-scroll-wrap">
-
                     <div id="chart-skeleton-favourites" class="chart-skeleton">
                         <div class="skeleton-bar" style="width: 90%"></div>
                         <div class="skeleton-bar" style="width: 80%"></div>
@@ -67,32 +68,20 @@
                         <div class="skeleton-bar" style="width: 55%"></div>
                         <div class="skeleton-bar" style="width: 45%"></div>
                     </div>
-
                     <div class="chart-inner">
                         <canvas id="fav-exercises-canvas"></canvas>
                     </div>
-
                 </div>
             </div>
         </div>
 
-        <!-- ===================== -->
-        <!-- TAB 2: VOLUME -->
-        <!-- ===================== -->
         <div class="chart-panel" id="tab-volume">
-
             <div class="total-volume-dashboard">
                 <h1>Total volume per exercises</h1>
-
                 <div class="volume-toolbar" id="volume-toolbar" hidden>
-                    <button type="button" class="volume-back-btn" id="volume-back-btn" aria-label="Back up one level">
-                        ← Back
-                    </button>
+                    <button type="button" class="volume-back-btn" id="volume-back-btn" aria-label="Back up one level">← Back</button>
                 </div>
-
-                <!-- JS toggles .volume-mode-chart on this wrapper when daily chart replaces the table -->
                 <div class="chart-scroll-wrap">
-
                     <div id="chart-skeleton-volume" class="chart-skeleton">
                         <div class="skeleton-bar" style="width: 90%"></div>
                         <div class="skeleton-bar" style="width: 80%"></div>
@@ -100,7 +89,6 @@
                         <div class="skeleton-bar" style="width: 55%"></div>
                         <div class="skeleton-bar" style="width: 45%"></div>
                     </div>
-
                     <div class="chart-inner volume-table-inner" id="volume-table-inner" style="display: none;">
                         <table class="volume-table">
                           <thead>
@@ -117,47 +105,24 @@
                             <tbody id="volume-table-body"></tbody>
                         </table>
                     </div>
-                    <div
-                        id="volume-daily-chart-block"
-                        class="volume-daily-chart-block"
-                        hidden
-                    >
+                    <div id="volume-daily-chart-block" class="volume-daily-chart-block" hidden>
                         <div class="volume-daily-header">
                             <h2 class="volume-daily-title" id="volume-daily-title">Volume by day</h2>
                             <div class="volume-daily-chart-type" role="group" aria-label="Chart type">
                                 <button type="button" class="volume-daily-type-btn is-active" id="volume-daily-type-line" data-chart-type="line">Line</button>
                                 <button type="button" class="volume-daily-type-btn" id="volume-daily-type-bar" data-chart-type="bar">Bars</button>
                             </div>
-                            <button
-                                type="button"
-                                class="volume-daily-close"
-                                id="volume-daily-close"
-                                aria-label="Close daily volume chart"
-                            >
-                                ×
-                            </button>
+                            <button type="button" class="volume-daily-close" id="volume-daily-close" aria-label="Close daily volume chart">×</button>
                         </div>
-                        <p
-                            id="volume-daily-chart-msg"
-                            class="volume-daily-chart-msg"
-                            aria-live="polite"
-                        ></p>
-                        <div
-                            id="chart-skeleton-volume-daily"
-                            class="chart-skeleton"
-                            hidden
-                        >
+                        <p id="volume-daily-chart-msg" class="volume-daily-chart-msg" aria-live="polite"></p>
+                        <div id="chart-skeleton-volume-daily" class="chart-skeleton" hidden>
                             <div class="skeleton-bar" style="width: 92%"></div>
                             <div class="skeleton-bar" style="width: 88%"></div>
                             <div class="skeleton-bar" style="width: 85%"></div>
                             <div class="skeleton-bar" style="width: 78%"></div>
                             <div class="skeleton-bar" style="width: 70%"></div>
                         </div>
-                        <div
-                            class="chart-inner volume-daily-chart-inner"
-                            id="volume-daily-chart-inner"
-                            style="display: none"
-                        >
+                        <div class="chart-inner volume-daily-chart-inner" id="volume-daily-chart-inner" style="display: none">
                             <div class="volume-daily-chart-scroll" id="volume-daily-chart-scroll">
                                 <div class="volume-daily-chart-size" id="volume-daily-chart-size">
                                     <canvas id="volume-daily-canvas"></canvas>
@@ -165,23 +130,45 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
+        <div class="chart-panel" id="tab-splits">
+            <div class="metrics-extra-panel">
+                <h1>Workout split distribution</h1>
+                <div class="chart-scroll-wrap">
+                    <div id="chart-skeleton-splits" class="chart-skeleton">
+                        <div class="skeleton-bar" style="width: 70%"></div>
+                        <div class="skeleton-bar" style="width: 55%"></div>
+                    </div>
+                    <div class="chart-inner metrics-pie-inner">
+                        <canvas id="workout-splits-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-panel" id="tab-weekdays">
+            <div class="metrics-extra-panel">
+                <h1>Days you're most likely to go</h1>
+                <div class="chart-scroll-wrap">
+                    <div id="chart-skeleton-weekdays" class="chart-skeleton">
+                        <div class="skeleton-bar" style="width: 85%"></div>
+                        <div class="skeleton-bar" style="width: 65%"></div>
+                    </div>
+                    <div class="chart-inner">
+                        <canvas id="gym-weekdays-canvas"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
 
     </div>
-  <div
-    id="volume-chart-toast"
-    class="volume-chart-toast"
-    role="status"
-    aria-live="polite"
-    aria-atomic="true"
-    aria-hidden="true"
-    hidden
-  ></div>
+  <div id="volume-chart-toast" class="volume-chart-toast" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true" hidden></div>
 
-    <!-- Scripts -->
+    <script type="module" src="../../js/general-components/theme.js"></script>
+    <script type="module" src="../../js/general-components/profile-menu.js"></script>
     <script src="../../js/general-components/navigation.js"></script>
     <script src="../../js/auth/require-auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

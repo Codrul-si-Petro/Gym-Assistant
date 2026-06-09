@@ -1,25 +1,22 @@
 /*  chart messages, usually errors :( */
 .chart-msg {
   margin-bottom: 12px;
-  color: #a1a1aa; /* gray text for secondary messages */
+  color: var(--text-secondary);
   font-size: 14px;
 }
 .chart-msg:empty { display: none; }
 
-/* chart scroll wrapper */
 .chart-scroll-wrap {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
   padding: 16px;
-  background: #16161a;        /* chart container bg */
-  border-radius: 8px;
-  border: 1px solid #2a2a2e;  /* subtle border */
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
   max-height: 70vh;
-
-  /* Firefox */
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) #16161a;
+  scrollbar-color: var(--border-subtle) var(--bg-elevated);
 }
 
 .chart-scroll-wrap::-webkit-scrollbar {

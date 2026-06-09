@@ -8,6 +8,10 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(required=True, write_only=True)
 
 
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
 class SignupSerializer(serializers.ModelSerializer):
     password1 = serializers.CharField(write_only=True, required=True)
     password2 = serializers.CharField(write_only=True, required=True)
@@ -32,3 +36,35 @@ class SignupSerializer(serializers.ModelSerializer):
             password=validated_data["password1"],
         )
         return user
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
+    new_password1 = serializers.CharField(required=True, write_only=True, min_length=8)
+    new_password2 = serializers.CharField(required=True, write_only=True, min_length=8)
+
+    def validate(self, attrs):
+        if attrs["new_password1"] != attrs["new_password2"]:
+            raise serializers.ValidationError({"new_password2": "Passwords do not match."})
+        return attrs
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True, write_only=True)
+    new_password1 = serializers.CharField(required=True, write_only=True, min_length=8)
+    new_password2 = serializers.CharField(required=True, write_only=True, min_length=8)
+
+    def validate(self, attrs):
+        if attrs["new_password1"] != attrs["new_password2"]:
+            raise serializers.ValidationError({"new_password2": "Passwords do not match."})
+        return attrs
+
+
+class UpdateUsernameSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True, min_length=3, max_length=150)
+    current_password = serializers.CharField(required=True, write_only=True)
+
+
+class UpdatePreferencesSerializer(serializers.Serializer):
+    preferred_unit = serializers.ChoiceField(choices=["KG", "LBS"], required=True)

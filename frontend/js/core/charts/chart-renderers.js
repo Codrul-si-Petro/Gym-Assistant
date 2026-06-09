@@ -2,6 +2,24 @@
 
 let chartInstance = null;
 
+function getCssVar(name, fallback) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+function getChartPalette() {
+  return [
+    "rgba(34, 211, 238, 0.75)",
+    "rgba(168, 85, 247, 0.75)",
+    "rgba(251, 146, 60, 0.75)",
+    "rgba(52, 211, 153, 0.75)",
+    "rgba(251, 113, 133, 0.75)",
+    "rgba(96, 165, 250, 0.75)",
+    "rgba(250, 204, 21, 0.75)",
+    "rgba(244, 114, 182, 0.75)",
+  ];
+}
+
 export function destroyChart() {
   if (chartInstance) {
     chartInstance.destroy();
@@ -12,6 +30,15 @@ export function destroyChart() {
 export function shortLabel(name, maxLen = 14) {
   if (!name || name.length <= maxLen) return name;
   return name.slice(0, maxLen) + "\u2026";
+}
+
+function unitSuffix(unit) {
+  return unit === "LBS" ? "lbs" : "kg";
+}
+
+function toDisplayUnit(kgValue, unit) {
+  const kg = Number(kgValue) || 0;
+  return unit === "LBS" ? kg * 2.2046226218 : kg;
 }
 
 
@@ -28,7 +55,7 @@ export function renderFavExercisesChart(labels, values, fullNames, ranks){
       chartInner.style.height = Math.max(320, n * barHeight) + "px";
     }
   
-    var isNarrow = window.innerWidth < 600;
+    var isNarrow = window.innerWidth < 414;
     var rankFontSize = isNarrow ? 10 : 14;
     var labelFontSize = isNarrow ? 11 : 12;
   
@@ -53,18 +80,7 @@ export function renderFavExercisesChart(labels, values, fullNames, ranks){
     }
   
     // Colour palette: one colour per bar
-    var palette = [
-      "rgba(34, 211, 238, 0.7)",
-      "rgba(168, 85, 247, 0.7)",
-      "rgba(251, 146, 60, 0.7)",
-      "rgba(52, 211, 153, 0.7)",
-      "rgba(251, 113, 133, 0.7)",
-      "rgba(96, 165, 250, 0.7)",
-      "rgba(250, 204, 21, 0.7)",
-      "rgba(244, 114, 182, 0.7)",
-      "rgba(129, 140, 248, 0.7)",
-      "rgba(45, 212, 191, 0.7)",
-    ];
+    var palette = getChartPalette();
     var barColors = [];
     var borderColors = [];
     for (var i = 0; i < n; i++) {
@@ -87,6 +103,9 @@ export function renderFavExercisesChart(labels, values, fullNames, ranks){
           backgroundColor: barColors,
           borderColor: borderColors,
           borderWidth: 1,
+          borderRadius: 10,
+          borderSkipped: false,
+          barThickness: 26,
         }],
       },
       options: {
@@ -126,12 +145,12 @@ export function renderFavExercisesChart(labels, values, fullNames, ranks){
           },
         },
         scales: {
-          x: { beginAtZero: true, display: false },
+          x: { beginAtZero: true, display: false, grid: { color: "rgba(255,255,255,0.04)" } },
           y: {
             display: true,
             grid: { display: false },
             ticks: {
-              color: "#f4f4f5",
+              color: getCssVar("--text-primary", "#f4f4f5"),
               font: { size: rankFontSize, weight: "600" },
               autoSkip: false,
               callback: function(value) {
@@ -145,9 +164,9 @@ export function renderFavExercisesChart(labels, values, fullNames, ranks){
     });
 }
 
-export function formatVolumeKg(n) {
+export function formatVolume(n, unit = "KG") {
   if (n == null || Number.isNaN(Number(n))) return "—";
-  const v = Number(n);
+  const v = toDisplayUnit(n, unit);
   const opts =
     v >= 100
       ? { maximumFractionDigits: 0, minimumFractionDigits: 0 }
@@ -155,7 +174,7 @@ export function formatVolumeKg(n) {
   return new Intl.NumberFormat("en-US", opts).format(v);
 }
 
-export function renderVolumeTable(results, handlers) {
+export function renderVolumeTable(results, unit, handlers) {
   const tbody = document.getElementById("volume-table-body");
   if (!tbody) return;
 
@@ -210,16 +229,14 @@ export function renderVolumeTable(results, handlers) {
 
     const volTd = document.createElement("td");
     volTd.className = "volume-col-vol";
-    volTd.textContent = formatVolumeKg(row.total_volume_kg);
+    volTd.textContent = formatVolume(row.total_volume_kg, unit);
 
     tr.append(rankTd, nameTd, sparkTd, volTd);
     tbody.appendChild(tr);
   }
 }
 
-const VOL_LINE = "rgb(34, 211, 238)";
-
-export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type) {
+export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, unit = "KG") {
   destroyChart();
   const canvas = document.getElementById("volume-daily-canvas");
   if (!canvas) return;
@@ -241,6 +258,8 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type) 
 
   const t = type || "line";
   const plugins = typeof ChartDataLabels !== "undefined" ? [ChartDataLabels] : [];
+  const accent = getCssVar("--accent-secondary", "#22d3ee");
+  const accentSoft = "rgba(34, 211, 238, 0.2)";
 
   chartInstance = new Chart(canvas.getContext("2d"), {
     type: t,
@@ -248,14 +267,17 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type) 
       labels,
       datasets: [
         {
-          label: exerciseName ? "Volume (kg) — " + exerciseName : "Volume (kg)",
-          data: values,
-          borderColor: VOL_LINE,
+          label: exerciseName ? `Volume (${unitSuffix(unit)}) — ${exerciseName}` : `Volume (${unitSuffix(unit)})`,
+          data: values.map((v) => toDisplayUnit(v, unit)),
+          borderColor: accent,
           backgroundColor:
-            t === "bar" ? "rgba(34, 211, 238, 0.45)" : "rgba(34, 211, 238, 0.15)",
+            t === "bar" ? accent : accentSoft,
           fill: t === "line",
           tension: 0.25,
-          borderWidth: t === "line" ? 2 : 1,
+          borderWidth: t === "line" ? 3 : 1,
+          borderRadius: t === "bar" ? 10 : 0,
+          maxBarThickness: t === "bar" ? 28 : undefined,
+          pointRadius: t === "line" ? 2.5 : 0,
         },
       ],
     },
@@ -264,10 +286,10 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type) 
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { labels: { color: "#e4e4e7" } },
+        legend: { labels: { color: getCssVar("--text-primary", "#e4e4e7") } },
         tooltip: {
           callbacks: {
-            label: (c) => formatVolumeKg(c.raw) + " kg",
+            label: (c) => `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(c.raw)} ${unitSuffix(unit)}`,
           },
         },
         datalabels: { display: false },
@@ -279,11 +301,86 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type) 
         },
         y: {
           beginAtZero: true,
-          ticks: { display: false },
+          ticks: { color: getCssVar("--text-secondary", "#a1a1aa") },
           grid: { color: "rgba(255,255,255,0.06)" },
         },
       },
     },
     plugins,
+  });
+}
+
+export function renderWorkoutSplitsChart(labels, values) {
+  destroyChart();
+  const canvas = document.getElementById("workout-splits-canvas");
+  if (!canvas) return;
+  const palette = getChartPalette();
+  chartInstance = new Chart(canvas.getContext("2d"), {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: labels.map((_, i) => palette[i % palette.length]),
+        borderColor: getCssVar("--bg-primary", "#000"),
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "52%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { color: getCssVar("--text-primary", "#f4f4f5") },
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.label}: ${ctx.raw} sets`,
+          },
+        },
+      },
+    },
+  });
+}
+
+export function renderGymWeekdaysChart(labels, values) {
+  destroyChart();
+  const canvas = document.getElementById("gym-weekdays-canvas");
+  if (!canvas) return;
+  const accent = getCssVar("--accent-secondary", "#22d3ee");
+  chartInstance = new Chart(canvas.getContext("2d"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Gym days",
+        data: values,
+        backgroundColor: "rgba(34, 211, 238, 0.75)",
+        borderColor: accent,
+        borderWidth: 1,
+        borderRadius: 10,
+        maxBarThickness: 36,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        x: {
+          ticks: { color: getCssVar("--text-secondary", "#a1a1aa") },
+          grid: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: getCssVar("--text-secondary", "#a1a1aa"), precision: 0 },
+          grid: { color: getCssVar("--border-subtle", "rgba(255,255,255,0.06)") },
+        },
+      },
+    },
   });
 }

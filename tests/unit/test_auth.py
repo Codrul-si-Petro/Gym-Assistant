@@ -1,5 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.test import TestCase
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -135,3 +138,37 @@ class AuthenticationAPITestCase(TestCase):
         url = f"{BASE_URL}/delete-account/"
         response = self.client.delete(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_password_reset_request_returns_200(self):
+        url = f"{BASE_URL}/password-reset/"
+        data = {"email": self.test_user.email}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("message", response.data)
+
+    def test_password_reset_confirm_success(self):
+        uid = urlsafe_base64_encode(force_bytes(self.test_user.pk))
+        token = default_token_generator.make_token(self.test_user)
+        url = f"{BASE_URL}/password-reset/confirm/"
+        data = {
+            "uid": uid,
+            "token": token,
+            "new_password1": "newpass123femei",
+            "new_password2": "newpass123femei",
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.test_user.refresh_from_db()
+        self.assertTrue(self.test_user.check_password("newpass123femei"))
+
+    def test_password_reset_confirm_invalid_token_returns_400(self):
+        uid = urlsafe_base64_encode(force_bytes(self.test_user.pk))
+        url = f"{BASE_URL}/password-reset/confirm/"
+        data = {
+            "uid": uid,
+            "token": "invalid-token",
+            "new_password1": "newpass123femei",
+            "new_password2": "newpass123femei",
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -1,3 +1,10 @@
+"""
+Core ORM models mirror tables in the `core` schema.
+
+These models are unmanaged (`managed = False`). Schema changes belong in Alembic
+(`db/alembic/versions/`), not Django migrations. Django only manages auth tables.
+"""
+
 from django.conf import settings
 from django.db import models
 
@@ -63,6 +70,31 @@ class Muscles(models.Model):
     class Meta:
         managed = False
         db_table = 'core"."dim_muscles'
+
+
+class ExerciseMedia(models.Model):
+    """Optional media metadata for exercises (YouTube demos, notes).
+
+    Schema: Alembic migration `006_exercise_media` in `db/alembic/versions/`.
+    exercise_id references dim_exercises logically (no DB FK; dbt rebuilds dims).
+    """
+
+    media_id = models.AutoField(primary_key=True, db_index=True)
+    exercise = models.OneToOneField(
+        to="Exercises",
+        on_delete=models.CASCADE,
+        db_column="exercise_id",
+        related_name="media",
+    )
+    youtube_url = models.TextField()
+    display_title = models.TextField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    ta_created_at = models.DateTimeField(auto_now_add=True)
+    ta_updated_at = models.DateTimeField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'core"."exercise_media'
 
 
 class Exercise_Muscle_Bridge(models.Model):

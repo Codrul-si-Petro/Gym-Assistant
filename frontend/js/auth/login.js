@@ -53,18 +53,4 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Handle JWTs from URL query string ---
-  const params = new URLSearchParams(window.location.search);
-  const access = params.get("access");
-  const refresh = params.get("refresh");
-
-  if (access && refresh) {
-    localStorage.setItem("access_token", access);
-    localStorage.setItem("refresh_token", refresh);
-
-    // Remove tokens from URL without redirect
-    const cleanPath = window.location.pathname;
-    window.history.replaceState({}, document.title, cleanPath);
-  }
-
 });

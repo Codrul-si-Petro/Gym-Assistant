@@ -52,6 +52,27 @@ def test_get_attachments(authenticated_client):
     assert isinstance(item["attachment_name"], str)
 
 
+def test_get_exercises_glossary(authenticated_client):
+    response = authenticated_client.get("/api/exercises/glossary/", format="json")
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+    assert isinstance(data, list)
+    if not data:
+        return
+
+    item = data[0]
+    assert set(item.keys()) >= {
+        "exercise_id",
+        "exercise_name",
+        "exercise_movement_type",
+        "muscles",
+        "youtube_url",
+        "youtube_embed_url",
+    }
+    assert isinstance(item["muscles"], list)
+
+
 def test_get_equipment(authenticated_client):
     response = authenticated_client.get("/api/equipment/", format="json")
     assert response.status_code == status.HTTP_200_OK

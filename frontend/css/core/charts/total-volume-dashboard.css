@@ -10,7 +10,7 @@
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0 0 12px;
-  color: #f4f4f5;
+  color: var(--text-primary);
 }
 
 /* .sr-only — visually hidden text kept for screen readers (e.g. “Open chart”). */
@@ -37,10 +37,10 @@
 /* Primary control to go up one level in the hierarchy. */
 .volume-back-btn {
   padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid #2a2a2e;
-  background: #16161a;
-  color: #e4e4e7;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
   font-size: 14px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
@@ -116,20 +116,31 @@
   font-size: 0.9rem;
   font-weight: 600;
   white-space: nowrap;
-  color: #a1a1aa;
-  background: #1a1a1e;
+  color: var(--text-secondary);
+  background: var(--bg-card);
   position: sticky;
   top: 0;
   z-index: 2;
-  box-shadow: 0 1px 0 0 #2a2a2e;
-  /* drop text-transform: uppercase if you want literal match to workout table */
+  box-shadow: 0 1px 0 0 var(--border-subtle);
+}
+
+.volume-table thead th.volume-col-rank {
+  text-align: right;
+}
+
+.volume-table thead th.volume-col-chart {
+  text-align: center;
+}
+
+.volume-table thead th.volume-col-vol {
+  text-align: right;
 }
 
 .volume-table tbody td {
   padding: 12px;
   vertical-align: middle;
-  border-bottom: 1px solid #27272a;
-  color: #f4f4f5;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
 }
 
 /* Remove double border after last row. */

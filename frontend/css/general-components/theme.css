@@ -1,0 +1,201 @@
+/* Design tokens – dark default, light optional */
+:root,
+[data-theme="dark"] {
+  --bg-primary: #000000;
+  --bg-secondary: #0c0c0e;
+  --bg-elevated: #16161a;
+  --bg-card: #1a1a1f;
+  --bg-hover: #27272a;
+  --border-subtle: #2a2a2e;
+  --border-strong: #3f3f46;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --accent: #8b5cf6;
+  --accent-secondary: #22d3ee;
+  --accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #22d3ee 100%);
+  --accent-glow: rgba(139, 92, 246, 0.35);
+  --danger: #f87171;
+  --success: #4ade80;
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Georgia", "Times New Roman", serif;
+  --touch-target: 44px;
+  --page-gutter: 16px;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #e2e8f0;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --accent: #7c3aed;
+  --accent-secondary: #0891b2;
+  --accent-gradient: linear-gradient(135deg, #7c3aed 0%, #2563eb 50%, #0891b2 100%);
+  --accent-glow: rgba(124, 58, 237, 0.2);
+  --danger: #dc2626;
+  --success: #16a34a;
+  --shadow-lg: 0 8px 32px rgba(15, 23, 42, 0.12);
+  --shadow-md: 0 4px 24px rgba(15, 23, 42, 0.08);
+}
+
+html {
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 55%, var(--bg-primary) 100%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.theme-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+.cta-button {
+  display: block;
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: 0 4px 20px var(--accent-glow);
+  transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+}
+
+@media (min-width: 600px) {
+  .cta-button {
+    display: inline-block;
+    width: auto;
+    padding: 14px 28px;
+  }
+}
+
+.cta-button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 8px 28px var(--accent-glow);
+}
+
+.cta-button--ghost {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
+}
+
+.cta-button--ghost:hover {
+  background: var(--bg-hover);
+  filter: none;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.site-footer {
+  margin-top: auto;
+  padding: 24px var(--page-gutter) 32px;
+  text-align: center;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+@media (min-width: 768px) {
+  .site-footer {
+    padding: 32px 24px 40px;
+    font-size: 0.9rem;
+  }
+}
+
+.site-footer a {
+  color: var(--accent-secondary);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Scroll-reveal animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+@keyframes heroFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-animate {
+  animation: heroFadeIn 0.8s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .hero-animate {
+    opacity: 1;
+    transform: none;
+    animation: none;
+    transition: none;
+  }
+}

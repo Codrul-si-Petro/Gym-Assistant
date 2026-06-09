@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log Workout</title>
+    <link rel="stylesheet" href="../../css/general-components/theme.css">
+    <link rel="stylesheet" href="../../css/general-components/profile-menu.css">
     <link rel="stylesheet" href="../../css/core/workouts_input.css">
     <link rel="stylesheet" href="../../css/general-components/navigation.css">
     <link rel="icon" href="../../assets/favicon.ico" sizes="any">
@@ -11,11 +13,16 @@
 <body>
     <div class="nav">
       <button class="nav-toggle" aria-label="Toggle Menu">&#9776;</button>
-      <span class="nav-title">Menu</span>
+      <button type="button" class="theme-toggle nav-theme-toggle" aria-label="Switch theme">☀</button>
+      <span class="site-title">Gym Assistant</span>
       <div class="nav-links">
           <a href="../../index.html">Home</a>
+          <a href="workouts_input.html">Log workouts</a>
           <a href="workouts_table.html">View workouts</a>
-          <a href="dashboard.html">Your stats</a>
+          <a href="dashboard.html">Metrics</a>
+          <a href="explore.html">Explore</a>
+      </div>
+      <div id="nav-actions" class="nav-actions">
       </div>
     </div>
 
@@ -30,8 +37,17 @@
                     <input type="number" id="workout_number" name="workout_number" min="1" max="10000" value="1" required>
                 </div>
                 <div class="field">
-                    <label for="workout_split">Split</label>
-                    <input type="text" id="workout_split" name="workout_split" maxlength="50" placeholder="e.g. Push">
+                    <label for="workout_split">Split *</label>
+                    <select id="workout_split" name="workout_split" required>
+                        <option value="" selected disabled>Select split</option>
+                        <option value="Push">Push</option>
+                        <option value="Pull">Pull</option>
+                        <option value="Legs">Legs</option>
+                        <option value="Upper">Upper</option>
+                        <option value="Lower">Lower</option>
+                        <option value="Full Body">Full Body</option>
+                        <option value="Other">Other</option>
+                    </select>
                 </div>
                 <div class="field">
                     <label for="date">Date</label>
@@ -96,6 +112,8 @@
         </div>
     </main>
 
+    <script type="module" src="../../js/general-components/theme.js"></script>
+    <script type="module" src="../../js/general-components/profile-menu.js"></script>
     <script src="../../js/auth/require-auth.js"></script>
     <script src="../../js/core/workouts_input.js"></script>
     <script src="../../js/general-components/navigation.js"></script>

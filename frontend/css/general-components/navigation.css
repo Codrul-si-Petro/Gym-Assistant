@@ -1,27 +1,46 @@
-/* ----- Navbar: Mobile & Desktop ----- */
+/* ----- Navbar: mobile-first ----- */
 .nav {
   display: flex;
-  align-items: flex-start;      /* hamburger top-left */
-  justify-content: flex-start;  /* button on left */
-  margin-bottom: 16px;
-  position: relative;           /* for dropdown positioning */
-  gap: 12px;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+  position: relative;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Hamburger button (always styled independently) */
 .nav-toggle {
   display: block;
-  background: #16161a;
-  border: 1px solid #2a2a2e;
-  color: #22d3ee;
-  font-size: 24px;
-  padding: 8px 12px;
-  border-radius: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-secondary);
+  font-size: 22px;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   z-index: 1001;
+  flex-shrink: 0;
 }
 .nav-toggle:hover {
-  background: #27272a;
+  background: var(--bg-hover);
+}
+
+.nav-theme-toggle {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 
 /* Nav links overlay: mobile - centered full screen */
@@ -36,11 +55,11 @@
   transform: translate(-50%, -50%);
   width: 90%;
   max-width: 320px;
-  max-height: 250px;
-  background: #16161a;
+  max-height: min(70vh, 420px);
+  background: var(--bg-elevated);
   padding: 24px;
-  border-radius: 12px;
-  border: 1px solid #2a2a2e;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
   box-shadow: 0 8px 16px rgba(0,0,0,0.3);
   text-align: center;
   overflow-y: auto;
@@ -61,37 +80,62 @@
 .nav-links a {
   display: block;
   padding: 10px 16px;
-  background: #16161a;
-  border: 1px solid #2a2a2e;
-  border-radius: 6px;
-  color: #22d3ee;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--accent-secondary);
   font-size: 16px;
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
 }
 .nav-links a:hover {
-  background: #27272a;
-  color: #0ef;
+  background: var(--bg-hover);
+  color: var(--accent);
 }
 
+.site-title,
 .nav-title {
-  font-size: 18px;
-  color: #22d3ee;
-  align-self: center;   /* vertically center next to hamburger */
-  margin-left: 8px;     /* space from button */
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  align-self: center;
+  margin-left: 4px;
   cursor: default;
   user-select: none;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/*  hide title on mobile overlay menu */
-@media (max-width: 767px) {
+/* Hide title on small screens to preserve tap targets */
+.site-title,
+.nav-title {
+  display: none;
+}
+
+.nav-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+@media (min-width: 480px) {
+  .site-title,
   .nav-title {
-    display: none;
+    display: block;
+    font-size: 1rem;
   }
 }
 
 /* Desktop: small dropdown under hamburger */
 @media (min-width: 768px) {
+  .nav {
+    gap: 12px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+  }
+
   .nav-links {
     position: absolute;
     top: 100%;              /* below hamburger */

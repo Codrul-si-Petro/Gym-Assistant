@@ -3,7 +3,14 @@ import datetime
 from django.db.models import Max
 from rest_framework import serializers
 
-from .models import Attachments, Calendar, Equipment, Exercises, Muscles, Workouts
+from .models import (
+    Attachments,
+    Calendar,
+    Equipment,
+    Exercises,
+    Muscles,
+    Workouts,
+)
 from .workout_validations import validate_workout_number
 
 
@@ -108,6 +115,23 @@ class ExercisesSerializer(serializers.ModelSerializer):
         model = Exercises
         fields = ["exercise_id", "exercise_name", "exercise_movement_type"]
         read_only_fields = ["exercise_id", "ta_created_at"]
+
+
+class ExerciseMuscleLinkSerializer(serializers.Serializer):
+    muscle_id = serializers.IntegerField()
+    muscle_name = serializers.CharField()
+    muscle_role = serializers.CharField(allow_null=True)
+
+
+class ExerciseGlossarySerializer(serializers.Serializer):
+    exercise_id = serializers.IntegerField()
+    exercise_name = serializers.CharField()
+    exercise_movement_type = serializers.CharField()
+    muscles = ExerciseMuscleLinkSerializer(many=True)
+    youtube_url = serializers.CharField(allow_null=True)
+    display_title = serializers.CharField(allow_null=True)
+    notes = serializers.CharField(allow_null=True)
+    youtube_embed_url = serializers.CharField(allow_null=True)
 
 
 class MusclesSerializer(serializers.ModelSerializer):

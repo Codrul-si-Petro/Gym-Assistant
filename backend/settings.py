@@ -187,14 +187,14 @@ ACCOUNT_EMAIL_VERIFICATION = "none"  # Require email verification before login
 ACCOUNT_ADAPTER = "backend.authentication.adapters.JWTAccountAdapter"  # Use MailerSend for emails
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Confirm email on GET request (clicking the link)
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Email confirmation link expires in 3 days
-ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = "/accounts/login/"  # Redirect after confirmation
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = f"{FRONTEND_URL}/pages/auth/login.html"
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True  # Auto-login after email confirmation
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Skip signup form for social login
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Auto-link if email matches existing account
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Automatically connect social to existing account
-SOCIAL_ACCOUNT_LOGIN_ON_GET = True  # skip You are about to sign in bullshit. Ill advised but it is for frontend for now
+SOCIALACCOUNT_LOGIN_ON_GET = True  # Skip allauth confirmation page; GET goes straight to Google OAuth
 
 ACCOUNT_SIGNUP_REDIRECT_URL = None
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = True
@@ -202,6 +202,12 @@ LOGIN_REDIRECT_URL = f"{FRONTEND_URL}/index.html"
 LOGOUT_REDIRECT_URL = "/"
 
 SOCIALACCOUNT_ADAPTER = "backend.authentication.adapters.JWTRedirectAdapter"
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -250,7 +256,11 @@ SWAGGER_SETTINGS = {
     "USE_COMPAT_RENDERERS": False,  # Suppress deprecation warning about format prefix
 }
 
-# Ignore migrations used by Django (now using alembic)
+# Database migration ownership:
+# - Django migrations: authentication app only (public schema / User + allauth FK fixes)
+# - Alembic migrations: core schema tables (fact_workouts, exercise_media, etc.)
+# - dbt + seeds: dimension tables (dim_exercises, dim_muscles, bridges, ...)
+# Never run `makemigrations` for core; add core schema changes under db/alembic/versions/.
 MIGRATION_MODULES = {
     "core": None,
 }
