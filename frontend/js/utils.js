@@ -10,7 +10,7 @@ export const API_BASE = IS_LOCAL
   : "https://api.gym-assistant.app";
 
 export const BASE = IS_LOCAL
-  ? "http://localhost:5500"
+  ? window.location.origin
   : "https://gym-assistant.app";
 
 export const TODAY = new Date().toISOString().slice(0, 10);

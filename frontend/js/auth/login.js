@@ -1,14 +1,3 @@
-let FRONTEND_URL;
-// URLS for local development and production
-if (
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1" ||
-  window.location.hostname === "::1"
-) {
-  FRONTEND_URL = "http://localhost:5500"; // local frontend
-} else {
-  FRONTEND_URL = 'https://gym-assistant.app';
-}
 // Use localhost/127/::1 if running locally, otherwise use current host
 if (
   window.location.hostname === "localhost" ||
@@ -42,7 +31,7 @@ window.addEventListener("DOMContentLoaded", () => {
         if (res.ok && data.access && data.refresh) {
           localStorage.setItem("access_token", data.access);
           localStorage.setItem("refresh_token", data.refresh);
-          window.location.href = `${FRONTEND_URL}/index.html`;
+          window.location.href = `${window.location.origin}/index.html`;
         } else {
           errorDiv.textContent = data.detail || "Login failed";
         }

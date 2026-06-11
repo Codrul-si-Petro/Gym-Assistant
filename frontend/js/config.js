@@ -10,7 +10,7 @@ export const API_BASE = IS_LOCAL
   : "https://api.gym-assistant.app";
 
 export const FRONTEND_URL = IS_LOCAL
-  ? "http://localhost:5500"
+  ? window.location.origin
   : "https://gym-assistant.app";
 
 export const API_PREFIX = "/api/";
