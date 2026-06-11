@@ -24,19 +24,6 @@ function getCssVar(name, fallback) {
   return value || fallback;
 }
 
-function getChartPalette() {
-  return [
-    "rgba(139, 92, 246, 0.75)",
-    "rgba(217, 70, 239, 0.75)",
-    "rgba(99, 102, 241, 0.75)",
-    "rgba(192, 132, 252, 0.75)",
-    "rgba(236, 72, 153, 0.75)",
-    "rgba(124, 58, 237, 0.75)",
-    "rgba(167, 139, 250, 0.75)",
-    "rgba(244, 114, 182, 0.75)",
-  ];
-}
-
 export function shortLabel(name, maxLen = 14) {
   if (!name || name.length <= maxLen) return name;
   return name.slice(0, maxLen) + "\u2026";
@@ -52,126 +39,69 @@ function toDisplayUnit(kgValue, unit) {
 }
 
 
-export function renderFavExercisesChart(labels, values, fullNames, ranks){
-  const canvas = document.getElementById("fav-exercises-canvas");
-  if (!canvas) return;
-  destroyChart(getCanvasId(canvas));
-    var n = values.length;
-  
-    // Make the chart container tall enough so the scroll wrapper can scroll vertically
-    var barHeight = 48;
-    var chartInner = canvas.closest(".chart-inner");
-    if (chartInner && n) {
-      chartInner.style.height = Math.max(320, n * barHeight) + "px";
+/**
+ * Renders a modern ranked list with gradient progress bars.
+ * items: [{ rank, label, valueText, percent }]
+ */
+function renderStatList(listId, items) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  list.replaceChildren();
+
+  const fills = [];
+  for (const item of items) {
+    const li = document.createElement("li");
+    li.className = item.rank ? "stat-row" : "stat-row stat-row--no-rank";
+
+    let rank = null;
+    if (item.rank) {
+      rank = document.createElement("span");
+      rank.className = "stat-rank";
+      rank.textContent = item.rank;
     }
-  
-    var isNarrow = window.innerWidth < 414;
-    var rankFontSize = isNarrow ? 10 : 14;
-    var labelFontSize = isNarrow ? 11 : 12;
-  
-    // Pre-compute which labels fit inside the bar vs. outside
-    var maxValue = Math.max.apply(null, values) || 1;
-    var yAxisWidth = 50;
-    var chartWidth = canvas.parentElement.clientWidth - yAxisWidth - 16;
-  
-    var alignPerBar = [];
-    var colorPerBar = [];
-    for (var i = 0; i < n; i++) {
-      var barPixelWidth = (values[i] / maxValue) * chartWidth;
-      var text = fullNames[i] + " - " + values[i] + " sets";
-      var approxTextWidth = text.length * 7;
-      if (barPixelWidth > approxTextWidth) {
-        alignPerBar.push("start");
-        colorPerBar.push("#0c0c0e");
-      } else {
-        alignPerBar.push("end");
-        colorPerBar.push("#ffffff");
-      }
-    }
-  
-    // Colour palette: one colour per bar
-    var palette = getChartPalette();
-    var barColors = [];
-    var borderColors = [];
-    for (var i = 0; i < n; i++) {
-      var c = palette[i % palette.length];
-      barColors.push(c);
-      borderColors.push(c.replace("0.7)", "1)"));
-    }
-  
-    var ctx = canvas.getContext("2d");
-    var plugins = [];
-    if (typeof ChartDataLabels !== "undefined") plugins.push(ChartDataLabels);
-  
-    chartInstances.set(getCanvasId(canvas), new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: ranks,
-        datasets: [{
-          label: "Workouts",
-          data: values,
-          backgroundColor: barColors,
-          borderColor: borderColors,
-          borderWidth: 1,
-          borderRadius: 10,
-          borderSkipped: false,
-          barThickness: 26,
-        }],
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
-        // Bars grow from left to right
-        animation: {
-          duration: 1000,
-          easing: "easeOutQuart",
-        },
-        layout: { padding: { left: 8, right: 8 } },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function(ctx) {
-                var name = fullNames[ctx.dataIndex] || ctx.chart.data.labels[ctx.dataIndex] || "";
-                return name + " - " + (ctx.raw || 0) + " sets";
-              },
-            },
-          },
-          datalabels: {
-            anchor: "end",
-            offset: 6,
-            font: { size: labelFontSize, weight: "bold" },
-            formatter: function(value, ctx) {
-              var name = fullNames[ctx.dataIndex] || ctx.chart.data.labels[ctx.dataIndex] || "";
-              return name + " - " + (value || 0) + " sets";
-            },
-            align: function(ctx) {
-              return alignPerBar[ctx.dataIndex] || "end";
-            },
-            color: function(ctx) {
-              return colorPerBar[ctx.dataIndex] || "#ffffff";
-            },
-          },
-        },
-        scales: {
-          x: { beginAtZero: true, display: false, grid: { color: "rgba(255,255,255,0.04)" } },
-          y: {
-            display: true,
-            grid: { display: false },
-            ticks: {
-              color: getCssVar("--text-primary", "#f4f4f5"),
-              font: { size: rankFontSize, weight: "600" },
-              autoSkip: false,
-              callback: function(value) {
-                return "#" + (value + 1);
-              },
-            },
-          },
-        },
-      },
-      plugins: plugins,
-    }));
+
+    const name = document.createElement("span");
+    name.className = "stat-name";
+    name.textContent = item.label;
+    name.title = item.label;
+
+    const value = document.createElement("span");
+    value.className = "stat-value";
+    value.textContent = item.valueText;
+
+    const track = document.createElement("div");
+    track.className = "stat-bar-track";
+    const fill = document.createElement("div");
+    fill.className = "stat-bar-fill";
+    track.appendChild(fill);
+    fills.push([fill, Math.max(0, Math.min(100, item.percent))]);
+
+    if (rank) li.append(rank);
+    li.append(name, value, track);
+    list.appendChild(li);
+  }
+
+  // Two frames so the 0-width state paints first and the bars animate in.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      fills.forEach(([fill, pct]) => {
+        fill.style.width = pct + "%";
+      });
+    });
+  });
+}
+
+export function renderFavExercisesChart(labels, values, fullNames, ranks) {
+  const max = Math.max(...values, 1);
+  renderStatList(
+    "fav-exercises-list",
+    values.map((v, i) => ({
+      rank: "#" + (ranks?.[i] || i + 1),
+      label: fullNames?.[i] || labels[i] || "",
+      valueText: `${v} sets`,
+      percent: (v / max) * 100,
+    }))
+  );
 }
 
 export function formatVolume(n, unit = "KG") {
@@ -320,11 +250,25 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, 
   }));
 }
 
+function getChartPalette() {
+  return [
+    "rgba(139, 92, 246, 0.75)",
+    "rgba(217, 70, 239, 0.75)",
+    "rgba(99, 102, 241, 0.75)",
+    "rgba(192, 132, 252, 0.75)",
+    "rgba(236, 72, 153, 0.75)",
+    "rgba(124, 58, 237, 0.75)",
+    "rgba(167, 139, 250, 0.75)",
+    "rgba(244, 114, 182, 0.75)",
+  ];
+}
+
 export function renderWorkoutSplitsChart(labels, values) {
   const canvas = document.getElementById("workout-splits-canvas");
   if (!canvas) return;
   destroyChart(getCanvasId(canvas));
   const palette = getChartPalette();
+  const total = values.reduce((sum, v) => sum + v, 0) || 1;
   chartInstances.set(getCanvasId(canvas), new Chart(canvas.getContext("2d"), {
     type: "doughnut",
     data: {
@@ -347,50 +291,32 @@ export function renderWorkoutSplitsChart(labels, values) {
         },
         tooltip: {
           callbacks: {
-            label: (ctx) => `${ctx.label}: ${ctx.raw} sets`,
+            label: (ctx) => `${ctx.label}: ${ctx.raw} sets · ${((ctx.raw / total) * 100).toFixed(0)}%`,
           },
         },
+        datalabels: { display: false },
       },
     },
   }));
 }
 
+const WEEKDAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
 export function renderGymWeekdaysChart(labels, values) {
-  const canvas = document.getElementById("gym-weekdays-canvas");
-  if (!canvas) return;
-  destroyChart(getCanvasId(canvas));
-  const accent = getCssVar("--accent-secondary", "#a78bfa");
-  chartInstances.set(getCanvasId(canvas), new Chart(canvas.getContext("2d"), {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "Gym days",
-        data: values,
-        backgroundColor: "rgba(139, 92, 246, 0.75)",
-        borderColor: accent,
-        borderWidth: 1,
-        borderRadius: 10,
-        maxBarThickness: 36,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-      },
-      scales: {
-        x: {
-          ticks: { color: getCssVar("--text-secondary", "#a1a1aa") },
-          grid: { display: false },
-        },
-        y: {
-          beginAtZero: true,
-          ticks: { color: getCssVar("--text-secondary", "#a1a1aa"), precision: 0 },
-          grid: { color: getCssVar("--border-subtle", "rgba(255,255,255,0.06)") },
-        },
-      },
-    },
-  }));
+  const rows = labels.map((label, i) => ({ label, value: values[i] }));
+  rows.sort((a, b) => {
+    const ai = WEEKDAY_ORDER.findIndex((d) => d.toLowerCase().startsWith(String(a.label).slice(0, 3).toLowerCase()));
+    const bi = WEEKDAY_ORDER.findIndex((d) => d.toLowerCase().startsWith(String(b.label).slice(0, 3).toLowerCase()));
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+  const max = Math.max(...values, 1);
+  renderStatList(
+    "gym-weekdays-list",
+    rows.map((r) => ({
+      rank: "",
+      label: r.label,
+      valueText: `${r.value} ${r.value === 1 ? "day" : "days"}`,
+      percent: (r.value / max) * 100,
+    }))
+  );
 }
