@@ -26,8 +26,10 @@ uv run pytest tests/e2e/ -v --tb=short
 Required env vars (from `.env.dev` via `load django dev`):
 
 - `DATABASE_URL`
-- `FRONTEND_URL` (e.g. `http://127.0.0.1:5500`)
-- `BACKEND_URL` (e.g. `http://127.0.0.1:8000`)
+- `FRONTEND_URL` (e.g. `http://127.0.0.1:5500`) — must match the port started by `tests/conftest.py`
+- `BACKEND_URL` (e.g. `http://127.0.0.1:8000`) — same; CI overrides secrets with these local URLs
+
+Optional: `E2E_SERVER_TIMEOUT` (default `30`, CI uses `90`) while waiting for Django/static servers to boot.
 - `UI_TESTER_USERNAME` / `UI_TESTER_PASS` — long-lived user; bootstrap only inserts seed workouts when the `e2e-test-data` split is missing (existing data is not deleted or recreated)
 
 Dashboard metrics read dbt materialized tables. After the first seed (or schema changes), refresh analytics once:

@@ -7,7 +7,10 @@ This conftest.py makes sure the frontend and the backend servers are ran. (thank
 
 import os
 import subprocess
+import sys
+import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -18,40 +21,93 @@ from .helpers import wait_server
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
+E2E_SERVER_TIMEOUT = int(os.getenv("E2E_SERVER_TIMEOUT", "30"))
+
+
+def _host_port(url: str, default_port: int) -> str:
+    parsed = urlparse(url)
+    host = parsed.hostname or "127.0.0.1"
+    port = parsed.port or default_port
+    return f"{host}:{port}"
+
+
+def _frontend_port(url: str) -> int:
+    return urlparse(url).port or 5500
+
+
+def _log_process_output(label: str, process: subprocess.Popen) -> None:
+    stdout, stderr = process.communicate(timeout=2)
+    if stdout and stdout.strip():
+        print(f"--- {label} stdout ---\n{stdout}")
+    if stderr and stderr.strip():
+        print(f"--- {label} stderr ---\n{stderr}")
+
+
+def _start_or_raise(cmd: list[str], cwd: Path, label: str) -> subprocess.Popen:
+    process = subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    time.sleep(1)
+    if process.poll() is not None:
+        _log_process_output(label, process)
+        raise RuntimeError(f"{label} exited immediately with code {process.returncode}")
+    return process
+
 
 @pytest.hookimpl(tryfirst=True)
 @pytest.fixture(scope="session", autouse=True)
-def start_servers():
+def start_servers(request):
     """
-    Start the local frontend http server along with the Django server
+    Start the local frontend http server along with the Django server.
+    Only runs for E2E tests (Playwright); unit/meta tests skip server boot.
     """
+    if not request.session.items:
+        yield
+        return
 
-    django_process = subprocess.Popen(
-        ["python", "manage.py", "runserver", "--noreload"],  # noreload so django doesnt spawn two processes
-        cwd=BASE_DIR,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+    # pytest-playwright adds the browser fixture to E2E tests only.
+    if not any("browser" in item.fixturenames for item in request.session.items):
+        yield
+        return
+
+    django_addr = _host_port(BACKEND_URL, 8000)
+    frontend_port = _frontend_port(FRONTEND_URL)
+
+    django_process = _start_or_raise(
+        [sys.executable, "manage.py", "runserver", "--noreload", django_addr],
+        BASE_DIR,
+        "Django",
     )
 
-    frontend_process = subprocess.Popen(
-        ["python", "-m", "http.server", "5500"],
-        cwd=FRONTEND_DIR,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+    frontend_process = _start_or_raise(
+        [sys.executable, "-m", "http.server", str(frontend_port), "--bind", "127.0.0.1"],
+        FRONTEND_DIR,
+        "Frontend",
     )
+
     print("Waiting for local servers...")
-
-    wait_server(BACKEND_URL, timeout=30)
-    wait_server(FRONTEND_URL, timeout=30)
+    try:
+        wait_server(BACKEND_URL, timeout=E2E_SERVER_TIMEOUT)
+        wait_server(FRONTEND_URL, timeout=E2E_SERVER_TIMEOUT)
+    except RuntimeError:
+        _log_process_output("Django", django_process)
+        _log_process_output("Frontend", frontend_process)
+        django_process.terminate()
+        frontend_process.terminate()
+        django_process.wait(timeout=5)
+        frontend_process.wait(timeout=5)
+        raise
 
     yield
 
-    # clean up
     django_process.terminate()
     frontend_process.terminate()
-
-    django_process.wait()
-    frontend_process.wait()
+    django_process.wait(timeout=5)
+    frontend_process.wait(timeout=5)
 
 
 @pytest.fixture
