@@ -51,16 +51,22 @@ python manage.py runserver
 ```
 
 
-## Database Migrations ( only used for Auth tables which are managed by Django )
+## Database Migrations
+
+**Django** manages auth tables only. **Alembic** manages core schema tables (`fact_workouts`, `exercise_media`, etc.). **dbt** manages dimensions. See [db/README.md](db/README.md) for the full split.
+
+Auth (Django):
 
 ```bash
-python manage.py makemigrations
+python manage.py makemigrations authentication
 python manage.py migrate
 ```
+
+Core (Alembic):
+
 ```bash
-# from project root
 cd db/
-alembic revision --autogenerate -m "your message here"
+alembic revision -m "your message here"   # edit the generated file, then:
 alembic upgrade head
 ```
 

@@ -1,9 +1,17 @@
 import datetime
 
 from django.db.models import Max
+from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Attachments, Calendar, Equipment, Exercises, Muscles, Workouts
+from .models import (
+    Attachments,
+    Calendar,
+    Equipment,
+    Exercises,
+    Muscles,
+    Workouts,
+)
 from .workout_validations import validate_workout_number
 
 
@@ -24,6 +32,8 @@ class WorkoutSerializer(serializers.ModelSerializer):
     comments = serializers.CharField(min_length=1, required=False, default="None")
     workout_split = serializers.CharField(max_length=50, min_length=1)
     date = serializers.DateField(write_only=True)
+    # expose the workout date on reads (the `date` field above is write-only)
+    date_id = serializers.DateField(read_only=True)
 
     class Meta:
         model = Workouts
@@ -42,11 +52,13 @@ class WorkoutSerializer(serializers.ModelSerializer):
             "comments",
             "workout_split",
             "date",
+            "date_id",
             "ta_created_at",
             "ta_updated_at",
         ]
         read_only_fields = [
             "workout_id",
+            "date_id",
             "ta_created_at",
             "user",
             "ta_updated_at",
@@ -55,11 +67,32 @@ class WorkoutSerializer(serializers.ModelSerializer):
     def validate_workout_number(self, value):
         """
         DRF calls this automatically for field-level validation.
-        This should enforce no workout skipping or goiung backwards, must increment
-        after a set period of time ( check the workout_validations.py file)
+        On create: enforce no workout skipping or going backwards, must increment
+        after a set period of time (check the workout_validations.py file).
+        On update: corrections to historical rows are allowed, so only require the
+        number to stay within the user's existing sessions.
         """
+        if self.instance is not None:
+            if value == self.instance.workout_number:
+                return value
+            agg = Workouts.objects.filter(user=self.instance.user).aggregate(Max("workout_number"))
+            max_num = agg["workout_number__max"] or 1
+            if value > max_num:
+                raise serializers.ValidationError(f"Workout number can't exceed your current max ({max_num}).")
+            return value
         user = self.context["request"].user
         return validate_workout_number(user, value)
+
+    def validate_date(self, value):
+        if value > datetime.date.today():
+            raise serializers.ValidationError("Workout date cannot be in the future.")
+        return value
+
+    def _resolve_calendar_entry(self, date_input):
+        try:
+            return Calendar.objects.get(date_id=date_input)
+        except Calendar.DoesNotExist:
+            raise serializers.ValidationError({"date": f"Date {date_input} is outside the supported calendar range."})
 
     def create(self, validated_data):
         """
@@ -67,8 +100,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
         """
 
         date_input = validated_data.pop("date", datetime.date.today())
-        calendar_entry = Calendar.objects.get(date_id=date_input)
-        validated_data["date"] = calendar_entry
+        validated_data["date"] = self._resolve_calendar_entry(date_input)
 
         user = self.context["request"].user
         validated_data["user"] = user
@@ -102,12 +134,61 @@ class WorkoutSerializer(serializers.ModelSerializer):
 
         return super().create(validated_data)
 
+    def update(self, instance, validated_data):
+        """
+        Partial update of an existing set row (used by Workout History in-place editing).
+        Enforces that the edited row doesn't collide with an existing
+        (user, exercise, workout_number, set_number) combination.
+        """
+        date_input = validated_data.pop("date", None)
+        if date_input is not None:
+            validated_data["date"] = self._resolve_calendar_entry(date_input)
+
+        exercise = validated_data.get("exercise", instance.exercise)
+        workout_number = validated_data.get("workout_number", instance.workout_number)
+        set_number = validated_data.get("set_number", instance.set_number)
+
+        duplicate = (
+            Workouts.objects.filter(
+                user=instance.user,
+                exercise=exercise,
+                workout_number=workout_number,
+                set_number=set_number,
+            )
+            .exclude(pk=instance.pk)
+            .exists()
+        )
+        if duplicate:
+            raise serializers.ValidationError(
+                "This set number already exists for this exercise in this workout. Pick a different set number."
+            )
+
+        validated_data["ta_updated_at"] = timezone.now()
+        return super().update(instance, validated_data)
+
 
 class ExercisesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exercises
         fields = ["exercise_id", "exercise_name", "exercise_movement_type"]
         read_only_fields = ["exercise_id", "ta_created_at"]
+
+
+class ExerciseMuscleLinkSerializer(serializers.Serializer):
+    muscle_id = serializers.IntegerField()
+    muscle_name = serializers.CharField()
+    muscle_role = serializers.CharField(allow_null=True)
+
+
+class ExerciseGlossarySerializer(serializers.Serializer):
+    exercise_id = serializers.IntegerField()
+    exercise_name = serializers.CharField()
+    exercise_movement_type = serializers.CharField()
+    muscles = ExerciseMuscleLinkSerializer(many=True)
+    youtube_url = serializers.CharField(allow_null=True)
+    display_title = serializers.CharField(allow_null=True)
+    notes = serializers.CharField(allow_null=True)
+    youtube_embed_url = serializers.CharField(allow_null=True)
 
 
 class MusclesSerializer(serializers.ModelSerializer):

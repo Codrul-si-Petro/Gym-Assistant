@@ -1,100 +1,78 @@
+import { API_BASE, API_PREFIX, SUPPORT_EMAIL } from "./config.js";
+import { convertKgToPreferred, setPreferredUnit, unitSuffix } from "./user-preferences.js";
+
 const words = ["inspiration.", "passion.", "motivation."];
 let i = 0;
 
 setInterval(() => {
+  const el = document.getElementById("word");
+  if (!el) return;
   i = (i + 1) % words.length;
-  document.getElementById("word").textContent = words[i];
+  el.textContent = words[i];
 }, 1500);
 
-// Default API base
-let API_BASE;
-
-// Use localhost/127 if running locally, otherwise use current host
-if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-  API_BASE = "http://127.0.0.1:8000"; // local backend
-} else {
-  API_BASE = 'https://api.gym-assistant.app';
+function formatNumber(value) {
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value);
 }
 
-const API_PREFIX = "/api/";
+async function loadHomeSummary() {
+  const token = localStorage.getItem("access_token");
+  const statsEl = document.getElementById("home-stats");
+  const inactivityEl = document.getElementById("home-inactivity");
+  const liftedEl = document.getElementById("home-total-lifted");
+  if (!token || !statsEl || !inactivityEl || !liftedEl) return;
 
-let FRONTEND_URL;
-if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-  FRONTEND_URL = "http://localhost:5500"; // local frontend
-} else {
-  FRONTEND_URL = 'https://gym-assistant.app';
+  try {
+    const [summaryRes, userRes] = await Promise.all([
+      fetch(`${API_BASE}${API_PREFIX}v1/home-summary`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      }),
+      fetch(`${API_BASE}${API_PREFIX}auth/current-user/`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      }),
+    ]);
+    if (!summaryRes.ok || !userRes.ok) return;
+    const data = await summaryRes.json();
+    const user = await userRes.json();
+    const unit = setPreferredUnit(user?.preferred_unit || "KG");
+    const username = user?.username || "athlete";
+    statsEl.hidden = false;
+
+    const days = data.days_since_last_workout;
+    if (days == null) {
+      inactivityEl.textContent = `Welcome back ${username}! Log your first workout today.`;
+    } else if (days <= 0) {
+      inactivityEl.textContent = `Welcome back ${username}! Your last workout was today.`;
+    } else if (days < 5) {
+      inactivityEl.textContent = `Welcome back ${username}! Your last workout was ${days} day${days === 1 ? "" : "s"} ago, enjoy your rest days.`;
+    } else {
+      inactivityEl.textContent = `Welcome back ${username}! Your last workout was ${days} days ago, it's time to get back in the gym.`;
+    }
+
+    const converted = convertKgToPreferred(data.total_volume_kg, unit);
+    liftedEl.textContent = `${formatNumber(converted)} ${unitSuffix(unit)} lifted until now`;
+  } catch {
+    /* ignore summary errors on homepage */
+  }
 }
 
-function updateAuthLinks() {
+function updateHomeAuthState() {
   const loggedIn = !!localStorage.getItem("access_token");
-  const loginLink = document.getElementById("login-link");
-  const signupLink = document.getElementById("signup-link");
-  const logoutLink = document.getElementById("logout-link");
-  const authContainer = document.getElementById("auth-links");
+  const authenticatedLinks = document.getElementById("authenticated-links");
+  const statsEl = document.getElementById("home-stats");
 
-  if (!authContainer) return;
-  if (loggedIn) {
-    if (loginLink) loginLink.style.display = "none";
-    if (signupLink) signupLink.style.display = "none";
-    if (logoutLink) {
-      logoutLink.style.display = "inline-block";
-      logoutLink.replaceWith(logoutLink.cloneNode(true));
-      document.getElementById("logout-link").addEventListener("click", (e) => {
-        e.preventDefault();
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        window.location.href = FRONTEND_URL + "/index.html";
-      });
-    }
-    authContainer.setAttribute("data-auth", "logged-in");
-  } else {
-    if (loginLink) loginLink.style.display = "inline-block";
-    if (signupLink) signupLink.style.display = "inline-block";
-    if (logoutLink) logoutLink.style.display = "none";
-    authContainer.setAttribute("data-auth", "logged-out");
+  if (authenticatedLinks) authenticatedLinks.style.display = loggedIn ? "flex" : "none";
+  if (statsEl) statsEl.hidden = !loggedIn;
 
-  }
-    const authenticatedLinks = document.getElementById("authenticated-links");
-    if (authenticatedLinks) {
-      authenticatedLinks.style.display = loggedIn ? "flex" : "none";
-    }
+  if (loggedIn) loadHomeSummary();
 }
 
-window.addEventListener("DOMContentLoaded", updateAuthLinks);
+const supportLink = document.getElementById("support-link");
+if (supportLink) {
+  supportLink.href = `mailto:${SUPPORT_EMAIL}?subject=Gym%20Assistant%20Feedback`;
+}
 
-window.addEventListener("DOMContentLoaded", () => {
-  const loginForm = document.getElementById("loginForm");
-  if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-      const errorDiv = document.getElementById("error");
-      try {
-        const res = await fetch(`${API_BASE}${API_PREFIX}token/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        if (res.ok && data.access && data.refresh) {
-          localStorage.setItem("access_token", data.access);
-          localStorage.setItem("refresh_token", data.refresh);
-          window.location.href = `${FRONTEND_URL}/index.html`;
-        } else {
-          errorDiv.textContent = data.detail || "Login failed";
-        }
-      } catch (err) {
-        errorDiv.textContent = "Network error";
-      }
-    });
-  }
+window.addEventListener("DOMContentLoaded", updateHomeAuthState);
+window.addEventListener("jwt-stored", updateHomeAuthState);
 
-  const googleLogin = document.getElementById("googleLogin");
-  if (googleLogin) {
-    googleLogin.addEventListener("click", (e) => {
-      e.preventDefault();
-      window.location.href = `${API_BASE}/social/google/login/`;
-    });
-  }
-});
+export { loadHomeSummary };

@@ -1,14 +1,12 @@
 from allauth.account.models import EmailAddress
-from allauth.account.views import LoginView, PasswordChangeView, SignupView
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.views import (
-    PasswordResetCompleteView,
-    PasswordResetConfirmView,
-    PasswordResetDoneView,
-    PasswordResetView,
-)
+from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ValidationError
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -18,7 +16,30 @@ from rest_framework.response import Response
 
 from backend.email_sender import MailerSendPasswordResetForm
 
-from .serializers import LoginSerializer, SignupSerializer
+from .serializers import (
+    ChangePasswordSerializer,
+    LoginSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    SignupSerializer,
+    UpdatePreferencesSerializer,
+    UpdateUsernameSerializer,
+)
+
+User = get_user_model()
+
+
+def _frontend_url(path: str) -> str:
+    frontend_url = (settings.FRONTEND_URL or "").rstrip("/")
+    return f"{frontend_url}{path}"
+
+
+def redirect_to_frontend_login(request):
+    return redirect(_frontend_url("/pages/auth/login.html"))
+
+
+def redirect_to_frontend_signup(request):
+    return redirect(_frontend_url("/pages/auth/signup.html"))
 
 
 @swagger_auto_schema(
@@ -181,6 +202,7 @@ def api_delete_account(request):
                     "username": openapi.Schema(type=openapi.TYPE_STRING),
                     "email": openapi.Schema(type=openapi.TYPE_STRING),
                     "id": openapi.Schema(type=openapi.TYPE_INTEGER),
+                    "preferred_unit": openapi.Schema(type=openapi.TYPE_STRING),
                 },
             ),
         ),
@@ -191,50 +213,157 @@ def api_delete_account(request):
 @permission_classes([AllowAny])
 def current_user(request):
     if request.user.is_authenticated:
-        return Response({"username": request.user.username, "email": request.user.email, "id": request.user.id})
+        return Response(
+            {
+                "username": request.user.username,
+                "email": request.user.email,
+                "id": request.user.id,
+                "preferred_unit": request.user.preferred_unit,
+            }
+        )
     return Response(None)
 
 
-# Override Django's built-in password reset views to use custom templates in auth/ folder
-class CustomPasswordResetView(PasswordResetView):
-    template_name = "auth/password_reset_request_form.html"
-    email_template_name = "emails/password_reset_email.html"
-    form_class = MailerSendPasswordResetForm  # Use MailerSend instead of Django's email backend
+@swagger_auto_schema(
+    method="post",
+    operation_description="Request a password reset email for the given address.",
+    request_body=PasswordResetRequestSerializer,
+    responses={200: "If the email exists, a reset link will be sent."},
+    tags=["Authentication"],
+)
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def api_password_reset_request(request):
+    serializer = PasswordResetRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    form = MailerSendPasswordResetForm({"email": serializer.validated_data["email"]})
+    if form.is_valid():
+        form.save(
+            request=request,
+            use_https=not settings.DEBUG,
+            email_template_name="emails/password_reset_email.html",
+            subject_template_name="registration/password_reset_subject.txt",
+        )
+
+    return Response(
+        {"message": "If an account exists for that email, a reset link has been sent."},
+        status=status.HTTP_200_OK,
+    )
 
 
-class CustomPasswordResetDoneView(PasswordResetDoneView):
-    template_name = "auth/password_reset_email_sent.html"
+@swagger_auto_schema(
+    method="post",
+    operation_description="Confirm password reset with uid, token, and new password.",
+    request_body=PasswordResetConfirmSerializer,
+    responses={200: "Password reset successful", 400: "Invalid or expired token"},
+    tags=["Authentication"],
+)
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def api_password_reset_confirm(request):
+    serializer = PasswordResetConfirmSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    uid = serializer.validated_data["uid"]
+    token = serializer.validated_data["token"]
+    new_password = serializer.validated_data["new_password1"]
+
+    try:
+        user_id = force_str(urlsafe_base64_decode(uid))
+        user = User.objects.get(pk=user_id)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        return Response({"error": "Invalid reset link."}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not default_token_generator.check_token(user, token):
+        return Response({"error": "Invalid or expired reset link."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        validate_password(new_password, user)
+    except ValidationError as exc:
+        return Response({"error": exc.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+    return Response({"message": "Password reset successful. You can log in now."}, status=status.HTTP_200_OK)
 
 
-class CustomPasswordResetConfirmView(PasswordResetConfirmView):
-    template_name = "auth/password_reset_confirm_token.html"
+@swagger_auto_schema(
+    method="post",
+    operation_description="Change password for the authenticated user.",
+    request_body=ChangePasswordSerializer,
+    responses={200: "Password changed", 400: "Validation error"},
+    tags=["Authentication"],
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def api_change_password(request):
+    serializer = ChangePasswordSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    user = request.user
+    current_password = serializer.validated_data["current_password"]
+    if not user.check_password(current_password):
+        return Response({"current_password": ["Incorrect password."]}, status=status.HTTP_400_BAD_REQUEST)
+
+    new_password = serializer.validated_data["new_password1"]
+    try:
+        validate_password(new_password, user)
+    except ValidationError as exc:
+        return Response({"new_password1": exc.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+    return Response({"message": "Password updated successfully."}, status=status.HTTP_200_OK)
 
 
-class CustomPasswordResetCompleteView(PasswordResetCompleteView):
-    template_name = "auth/password_reset_complete_success.html"
+@swagger_auto_schema(
+    method="patch",
+    operation_description="Update username for the authenticated user.",
+    request_body=UpdateUsernameSerializer,
+    responses={200: "Username updated", 400: "Validation error"},
+    tags=["Authentication"],
+)
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def api_update_username(request):
+    serializer = UpdateUsernameSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    user = request.user
+    new_username = serializer.validated_data["username"].strip()
+    if User.objects.filter(username=new_username).exclude(pk=user.pk).exists():
+        return Response({"username": ["This username is already taken."]}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.username = new_username
+    user.save(update_fields=["username"])
+    return Response(
+        {"message": "Username updated successfully.", "username": user.username},
+        status=status.HTTP_200_OK,
+    )
 
 
-# Override django-allauth views to use custom templates in auth/ folder
-class CustomAllauthLoginView(LoginView):
-    template_name = "auth/login_with_social_providers.html"
+@swagger_auto_schema(
+    method="patch",
+    operation_description="Update authenticated user preferences.",
+    request_body=UpdatePreferencesSerializer,
+    responses={200: "Preferences updated", 400: "Validation error"},
+    tags=["Authentication"],
+)
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def api_update_preferences(request):
+    serializer = UpdatePreferencesSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def dispatch(self, request, *args, **kwargs):
-        # If already logged in, redirect to home
-        if request.user.is_authenticated:
-            return redirect("home")
-        return super().dispatch(request, *args, **kwargs)
-
-
-class CustomAllauthSignupView(SignupView):
-    template_name = "auth/signup_with_social_providers.html"
-
-    def dispatch(self, request, *args, **kwargs):
-        # If already logged in, redirect to home
-        if request.user.is_authenticated:
-            return redirect("home")
-        return super().dispatch(request, *args, **kwargs)
-
-
-class CustomPasswordChangeView(PasswordChangeView):
-    template_name = "auth/password_change.html"
-    success_url = reverse_lazy("account_login")
+    user = request.user
+    user.preferred_unit = serializer.validated_data["preferred_unit"]
+    user.save(update_fields=["preferred_unit"])
+    return Response(
+        {"message": "Preferences updated.", "preferred_unit": user.preferred_unit}, status=status.HTTP_200_OK
+    )

@@ -1,56 +1,73 @@
 # Database Migrations
 
-This project uses **Alembic** for database migrations with a multi-schema setup:
+This project splits schema ownership across three tools:
 
-- `core.fact_workouts`: Only the fact table is Alembic managed right now. Other dim_tables are managed by dbt + seeds. 
-- `everything else`: Managed by dbt or Django's migrations service
+| Layer | Tool | What it manages |
+|-------|------|-----------------|
+| Auth | **Django migrations** | `public.authentication_user` and allauth-related FK fixes (`backend/authentication/migrations/`) |
+| Core facts + app metadata | **Alembic** | `core.fact_workouts`, `core.exercise_media`, and other core tables added for the app |
+| Dimensions + analytics | **dbt + seeds** | `core.dim_*`, bridges, hierarchies, analytics models |
+
+Django is configured to **ignore** core app migrations via `MIGRATION_MODULES = {"core": None}` in `backend/settings.py`. Core models use `managed = False` and must not be created with `makemigrations`.
 
 ## Setup
-
-Make sure you have your environment loaded:
 
 ```bash
 source utils/load django dev
 ```
 
-## Running Migrations
+## Auth migrations (Django only)
+
+From project root:
+
+```bash
+python manage.py makemigrations authentication
+python manage.py migrate
+```
+
+Do **not** run `makemigrations` for `core`.
+
+## Core migrations (Alembic)
 
 ```bash
 cd db
 alembic upgrade head
 ```
 
-## Creating New Migrations
+### Creating a new core migration
+
+Prefer explicit revision files over autogenerate for tables outside Alembic metadata stubs:
 
 ```bash
 cd db
 alembic revision -m "description of changes"
 ```
 
-Then edit the generated file in `alembic/versions/`.
+Edit the generated file in `alembic/versions/`, then apply:
+
+```bash
+alembic upgrade head
+```
+
+Example: `006_exercise_media.py` adds `core.exercise_media` for glossary YouTube links.
+
+Note: dbt-managed dimension tables (`dim_exercises`, etc.) may not have database-level
+primary key constraints. Alembic tables that reference dimensions use logical `exercise_id`
+columns with unique indexes instead of foreign keys.
 
 ## Rollback
 
 ```bash
-# Rollback one version
+cd db
 alembic downgrade -1
-
-# Rollback to specific version
-alembic downgrade 002
-
-# Rollback all
+alembic downgrade 006
 alembic downgrade base
 ```
 
-## Check Current Version
+## Check status
 
 ```bash
+cd db
 alembic current
-```
-
-## View Migration History
-
-```bash
 alembic history
 ```
-

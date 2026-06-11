@@ -1,0 +1,190 @@
+/* Shared edit sheet: modal on desktop, bottom sheet on mobile */
+
+.edit-sheet {
+  padding: 0;
+  border: none;
+  background: transparent;
+  max-width: 100vw;
+  max-height: 100dvh;
+  width: 100%;
+}
+
+.edit-sheet::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.edit-sheet-surface {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  max-height: 90dvh;
+  overflow: hidden;
+}
+
+/* Mobile: bottom sheet */
+@media (max-width: 767px) {
+  .edit-sheet {
+    margin: auto 0 0;
+  }
+
+  .edit-sheet-surface {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-bottom: none;
+    width: 100vw;
+  }
+}
+
+/* Desktop: centered modal */
+@media (min-width: 768px) {
+  .edit-sheet {
+    margin: auto;
+    width: auto;
+  }
+
+  .edit-sheet-surface {
+    border-radius: var(--radius-md);
+    width: 480px;
+    max-width: calc(100vw - 48px);
+  }
+}
+
+.edit-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px var(--page-gutter) 8px;
+}
+
+.edit-sheet-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.edit-sheet-close {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.edit-sheet-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.edit-sheet-error {
+  margin: 0;
+  padding: 0 var(--page-gutter) 8px;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+.edit-sheet-form {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.edit-sheet-body {
+  padding: 4px var(--page-gutter) 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.edit-sheet-body .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.edit-sheet-body label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.edit-sheet-body input,
+.edit-sheet-body select,
+.edit-sheet-body textarea {
+  min-height: var(--touch-target);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.edit-sheet-body input:focus,
+.edit-sheet-body select:focus,
+.edit-sheet-body textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.edit-sheet-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 480px) {
+  .edit-sheet-row--quad {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.edit-sheet-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px var(--page-gutter);
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border-subtle);
+}
+
+.edit-sheet-cancel,
+.edit-sheet-save {
+  min-height: var(--touch-target);
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.edit-sheet-cancel {
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.edit-sheet-cancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.edit-sheet-save {
+  border: none;
+  background: var(--accent-gradient);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+
+.edit-sheet-save:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

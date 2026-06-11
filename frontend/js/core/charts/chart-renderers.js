@@ -1,12 +1,27 @@
-// Keep a single chart instance so we can destroy before redrawing
+// Keep chart instances per canvas so tabs do not clobber each other.
 
-let chartInstance = null;
+const chartInstances = new Map();
 
-export function destroyChart() {
-  if (chartInstance) {
-    chartInstance.destroy();
-    chartInstance = null;
+function getCanvasId(canvas) {
+  return canvas?.id || "default";
+}
+
+export function destroyChart(canvasId) {
+  if (canvasId) {
+    const instance = chartInstances.get(canvasId);
+    if (instance) {
+      instance.destroy();
+      chartInstances.delete(canvasId);
+    }
+    return;
   }
+  chartInstances.forEach((instance) => instance.destroy());
+  chartInstances.clear();
+}
+
+function getCssVar(name, fallback) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
 }
 
 export function shortLabel(name, maxLen = 14) {
@@ -14,140 +29,84 @@ export function shortLabel(name, maxLen = 14) {
   return name.slice(0, maxLen) + "\u2026";
 }
 
-
-export function renderFavExercisesChart(labels, values, fullNames, ranks){
-  destroyChart();
-  const canvas = document.getElementById("fav-exercises-canvas");
-  if (!canvas) return;
-    var n = values.length;
-  
-    // Make the chart container tall enough so the scroll wrapper can scroll vertically
-    var barHeight = 48;
-    var chartInner = canvas.closest(".chart-inner");
-    if (chartInner && n) {
-      chartInner.style.height = Math.max(320, n * barHeight) + "px";
-    }
-  
-    var isNarrow = window.innerWidth < 600;
-    var rankFontSize = isNarrow ? 10 : 14;
-    var labelFontSize = isNarrow ? 11 : 12;
-  
-    // Pre-compute which labels fit inside the bar vs. outside
-    var maxValue = Math.max.apply(null, values) || 1;
-    var yAxisWidth = 50;
-    var chartWidth = canvas.parentElement.clientWidth - yAxisWidth - 16;
-  
-    var alignPerBar = [];
-    var colorPerBar = [];
-    for (var i = 0; i < n; i++) {
-      var barPixelWidth = (values[i] / maxValue) * chartWidth;
-      var text = fullNames[i] + " - " + values[i] + " sets";
-      var approxTextWidth = text.length * 7;
-      if (barPixelWidth > approxTextWidth) {
-        alignPerBar.push("start");
-        colorPerBar.push("#0c0c0e");
-      } else {
-        alignPerBar.push("end");
-        colorPerBar.push("#ffffff");
-      }
-    }
-  
-    // Colour palette: one colour per bar
-    var palette = [
-      "rgba(34, 211, 238, 0.7)",
-      "rgba(168, 85, 247, 0.7)",
-      "rgba(251, 146, 60, 0.7)",
-      "rgba(52, 211, 153, 0.7)",
-      "rgba(251, 113, 133, 0.7)",
-      "rgba(96, 165, 250, 0.7)",
-      "rgba(250, 204, 21, 0.7)",
-      "rgba(244, 114, 182, 0.7)",
-      "rgba(129, 140, 248, 0.7)",
-      "rgba(45, 212, 191, 0.7)",
-    ];
-    var barColors = [];
-    var borderColors = [];
-    for (var i = 0; i < n; i++) {
-      var c = palette[i % palette.length];
-      barColors.push(c);
-      borderColors.push(c.replace("0.7)", "1)"));
-    }
-  
-    var ctx = canvas.getContext("2d");
-    var plugins = [];
-    if (typeof ChartDataLabels !== "undefined") plugins.push(ChartDataLabels);
-  
-    chartInstance = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: ranks,
-        datasets: [{
-          label: "Workouts",
-          data: values,
-          backgroundColor: barColors,
-          borderColor: borderColors,
-          borderWidth: 1,
-        }],
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
-        // Bars grow from left to right
-        animation: {
-          duration: 1000,
-          easing: "easeOutQuart",
-        },
-        layout: { padding: { left: 8, right: 8 } },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function(ctx) {
-                var name = fullNames[ctx.dataIndex] || ctx.chart.data.labels[ctx.dataIndex] || "";
-                return name + " - " + (ctx.raw || 0) + " sets";
-              },
-            },
-          },
-          datalabels: {
-            anchor: "end",
-            offset: 6,
-            font: { size: labelFontSize, weight: "bold" },
-            formatter: function(value, ctx) {
-              var name = fullNames[ctx.dataIndex] || ctx.chart.data.labels[ctx.dataIndex] || "";
-              return name + " - " + (value || 0) + " sets";
-            },
-            align: function(ctx) {
-              return alignPerBar[ctx.dataIndex] || "end";
-            },
-            color: function(ctx) {
-              return colorPerBar[ctx.dataIndex] || "#ffffff";
-            },
-          },
-        },
-        scales: {
-          x: { beginAtZero: true, display: false },
-          y: {
-            display: true,
-            grid: { display: false },
-            ticks: {
-              color: "#f4f4f5",
-              font: { size: rankFontSize, weight: "600" },
-              autoSkip: false,
-              callback: function(value) {
-                return "#" + (value + 1);
-              },
-            },
-          },
-        },
-      },
-      plugins: plugins,
-    });
+function unitSuffix(unit) {
+  return unit === "LBS" ? "lbs" : "kg";
 }
 
-export function formatVolumeKg(n) {
+function toDisplayUnit(kgValue, unit) {
+  const kg = Number(kgValue) || 0;
+  return unit === "LBS" ? kg * 2.2046226218 : kg;
+}
+
+
+/**
+ * Renders a modern ranked list with gradient progress bars.
+ * items: [{ rank, label, valueText, percent }]
+ */
+function renderStatList(listId, items) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  list.replaceChildren();
+
+  const fills = [];
+  for (const item of items) {
+    const li = document.createElement("li");
+    li.className = item.rank ? "stat-row" : "stat-row stat-row--no-rank";
+
+    let rank = null;
+    if (item.rank) {
+      rank = document.createElement("span");
+      rank.className = "stat-rank";
+      rank.textContent = item.rank;
+    }
+
+    const name = document.createElement("span");
+    name.className = "stat-name";
+    name.textContent = item.label;
+    name.title = item.label;
+
+    const value = document.createElement("span");
+    value.className = "stat-value";
+    value.textContent = item.valueText;
+
+    const track = document.createElement("div");
+    track.className = "stat-bar-track";
+    const fill = document.createElement("div");
+    fill.className = "stat-bar-fill";
+    track.appendChild(fill);
+    fills.push([fill, Math.max(0, Math.min(100, item.percent))]);
+
+    if (rank) li.append(rank);
+    li.append(name, value, track);
+    list.appendChild(li);
+  }
+
+  // Two frames so the 0-width state paints first and the bars animate in.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      fills.forEach(([fill, pct]) => {
+        fill.style.width = pct + "%";
+      });
+    });
+  });
+}
+
+export function renderFavExercisesChart(labels, values, fullNames, ranks) {
+  const max = Math.max(...values, 1);
+  renderStatList(
+    "fav-exercises-list",
+    values.map((v, i) => ({
+      rank: "#" + (ranks?.[i] || i + 1),
+      label: fullNames?.[i] || labels[i] || "",
+      valueText: `${v} sets`,
+      percent: (v / max) * 100,
+    }))
+  );
+}
+
+export function formatVolume(n, unit = "KG") {
   if (n == null || Number.isNaN(Number(n))) return "—";
-  const v = Number(n);
+  const v = toDisplayUnit(n, unit);
   const opts =
     v >= 100
       ? { maximumFractionDigits: 0, minimumFractionDigits: 0 }
@@ -155,7 +114,7 @@ export function formatVolumeKg(n) {
   return new Intl.NumberFormat("en-US", opts).format(v);
 }
 
-export function renderVolumeTable(results, handlers) {
+export function renderVolumeTable(results, unit, handlers) {
   const tbody = document.getElementById("volume-table-body");
   if (!tbody) return;
 
@@ -210,19 +169,17 @@ export function renderVolumeTable(results, handlers) {
 
     const volTd = document.createElement("td");
     volTd.className = "volume-col-vol";
-    volTd.textContent = formatVolumeKg(row.total_volume_kg);
+    volTd.textContent = formatVolume(row.total_volume_kg, unit);
 
     tr.append(rankTd, nameTd, sparkTd, volTd);
     tbody.appendChild(tr);
   }
 }
 
-const VOL_LINE = "rgb(34, 211, 238)";
-
-export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type) {
-  destroyChart();
+export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, unit = "KG") {
   const canvas = document.getElementById("volume-daily-canvas");
   if (!canvas) return;
+  destroyChart(getCanvasId(canvas));
 
   const box = document.getElementById("volume-daily-chart-inner");
   const sizeEl = document.getElementById("volume-daily-chart-size");
@@ -241,21 +198,45 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type) 
 
   const t = type || "line";
   const plugins = typeof ChartDataLabels !== "undefined" ? [ChartDataLabels] : [];
+  const accent = getCssVar("--accent-secondary", "#a78bfa");
+  const textMuted = getCssVar("--text-muted", "#71717a");
 
-  chartInstance = new Chart(canvas.getContext("2d"), {
+  // Soft vertical gradient under the line / inside the bars
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+  if (t === "line") {
+    gradient.addColorStop(0, "rgba(139, 92, 246, 0.35)");
+    gradient.addColorStop(1, "rgba(139, 92, 246, 0)");
+  } else {
+    gradient.addColorStop(0, "rgba(167, 139, 250, 0.95)");
+    gradient.addColorStop(1, "rgba(124, 58, 237, 0.65)");
+  }
+
+  const fmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+  const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+
+  chartInstances.set(getCanvasId(canvas), new Chart(ctx, {
     type: t,
     data: {
       labels,
       datasets: [
         {
-          label: exerciseName ? "Volume (kg) — " + exerciseName : "Volume (kg)",
-          data: values,
-          borderColor: VOL_LINE,
-          backgroundColor:
-            t === "bar" ? "rgba(34, 211, 238, 0.45)" : "rgba(34, 211, 238, 0.15)",
+          label: exerciseName || "Volume",
+          data: values.map((v) => toDisplayUnit(v, unit)),
+          borderColor: accent,
+          backgroundColor: gradient,
           fill: t === "line",
-          tension: 0.25,
-          borderWidth: t === "line" ? 2 : 1,
+          tension: 0.35,
+          borderWidth: t === "line" ? 2.5 : 0,
+          borderRadius: t === "bar" ? 8 : 0,
+          borderSkipped: false,
+          maxBarThickness: t === "bar" ? 24 : undefined,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: accent,
+          pointHoverBorderColor: "#fff",
+          pointHoverBorderWidth: 2,
+          hitRadius: 12,
         },
       ],
     },
@@ -264,26 +245,112 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type) 
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { labels: { color: "#e4e4e7" } },
+        legend: { display: false },
         tooltip: {
+          backgroundColor: getCssVar("--bg-elevated", "#16161a"),
+          borderColor: getCssVar("--border-subtle", "#2a2a2e"),
+          borderWidth: 1,
+          titleColor: getCssVar("--text-primary", "#f4f4f5"),
+          bodyColor: getCssVar("--text-secondary", "#a1a1aa"),
+          padding: 12,
+          cornerRadius: 10,
+          displayColors: false,
           callbacks: {
-            label: (c) => formatVolumeKg(c.raw) + " kg",
+            label: (c) => `${fmt.format(c.raw)} ${unitSuffix(unit)}`,
           },
         },
         datalabels: { display: false },
       },
       scales: {
         x: {
-          ticks: { display: false },
+          ticks: {
+            color: textMuted,
+            font: { size: 10 },
+            maxTicksLimit: 6,
+            maxRotation: 0,
+            autoSkip: true,
+          },
           grid: { display: false },
+          border: { display: false },
         },
         y: {
           beginAtZero: true,
-          ticks: { display: false },
-          grid: { color: "rgba(255,255,255,0.06)" },
+          ticks: {
+            color: textMuted,
+            font: { size: 10 },
+            maxTicksLimit: 5,
+            callback: (v) => compact.format(v),
+          },
+          grid: { color: "rgba(139, 92, 246, 0.08)" },
+          border: { display: false, dash: [4, 4] },
         },
       },
     },
     plugins,
-  });
+  }));
+}
+
+function getChartPalette() {
+  return [
+    "rgba(139, 92, 246, 0.75)",
+    "rgba(217, 70, 239, 0.75)",
+    "rgba(99, 102, 241, 0.75)",
+    "rgba(192, 132, 252, 0.75)",
+    "rgba(236, 72, 153, 0.75)",
+    "rgba(124, 58, 237, 0.75)",
+    "rgba(167, 139, 250, 0.75)",
+    "rgba(244, 114, 182, 0.75)",
+  ];
+}
+
+export function renderWorkoutSplitsChart(labels, values) {
+  const canvas = document.getElementById("workout-splits-canvas");
+  if (!canvas) return;
+  destroyChart(getCanvasId(canvas));
+  const palette = getChartPalette();
+  const total = values.reduce((sum, v) => sum + v, 0) || 1;
+  chartInstances.set(getCanvasId(canvas), new Chart(canvas.getContext("2d"), {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: labels.map((_, i) => palette[i % palette.length]),
+        borderColor: getCssVar("--bg-primary", "#000"),
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "52%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { color: getCssVar("--text-primary", "#f4f4f5") },
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.label}: ${ctx.raw} sets · ${((ctx.raw / total) * 100).toFixed(0)}%`,
+          },
+        },
+        datalabels: { display: false },
+      },
+    },
+  }));
+}
+
+export function renderGymWeekdaysChart(labels, values) {
+  const rows = labels.map((label, i) => ({ label, value: values[i] }));
+  rows.sort((a, b) => b.value - a.value);
+  const max = Math.max(...values, 1);
+  renderStatList(
+    "gym-weekdays-list",
+    rows.map((r, i) => ({
+      rank: "#" + (i + 1),
+      label: r.label,
+      valueText: `${r.value} ${r.value === 1 ? "day" : "days"}`,
+      percent: (r.value / max) * 100,
+    }))
+  );
 }

@@ -6,6 +6,8 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
+from django.utils import timezone
+
 from .common import (
     _build_children,
     _subtree_terminal_exercise_ids,
@@ -114,3 +116,55 @@ def get_total_volume_per_day(
     results.sort(key=lambda x: x["date"])
 
     return results
+
+
+def get_workout_splits(user_id: int, start_date: date | None, end_date: date | None):
+    query_file = SQL_DIR / "get_workout_splits.sql"
+    query = query_file.read_text()
+    return execute_sql(
+        query,
+        {
+            "user_id": user_id,
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+    )
+
+
+def get_gym_weekdays(user_id: int, start_date: date | None, end_date: date | None):
+    query_file = SQL_DIR / "get_gym_weekdays.sql"
+    query = query_file.read_text()
+    return execute_sql(
+        query,
+        {
+            "user_id": user_id,
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+    )
+
+
+def get_home_summary(user_id: int):
+    query_file = SQL_DIR / "get_home_summary.sql"
+    query = query_file.read_text()
+    rows = execute_sql(query, {"user_id": user_id})
+    if not rows:
+        return {
+            "days_since_last_workout": None,
+            "total_volume_kg": 0,
+            "total_volume_lbs": 0,
+        }
+
+    row = rows[0]
+    last_date = row.get("last_workout_date")
+    days_since = None
+    if last_date:
+        today = timezone.localdate()
+        days_since = (today - last_date).days
+
+    total_kg = float(row.get("total_volume_kg") or 0)
+    return {
+        "days_since_last_workout": days_since,
+        "total_volume_kg": round(total_kg, 2),
+        "total_volume_lbs": round(total_kg * 2.20462, 2),
+    }

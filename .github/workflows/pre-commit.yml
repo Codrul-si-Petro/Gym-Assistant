@@ -5,7 +5,7 @@ on:
     branches: [main, dev]
     paths:
         - 'backend/**'
-        - 'tests/ui/**'
+        - 'tests/e2e/**'
 
 jobs:
   lint-and-typecheck:

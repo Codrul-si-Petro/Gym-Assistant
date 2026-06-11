@@ -1,11 +1,16 @@
 // useful variables and functions to be reused across the project
 // will have to deprecate a lot of stuff after
-export const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+const IS_LOCAL =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "::1";
+
+export const API_BASE = IS_LOCAL
   ? "http://127.0.0.1:8000"
   : "https://api.gym-assistant.app";
 
-export const BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-  ? "http://localhost:5500"
+export const BASE = IS_LOCAL
+  ? window.location.origin
   : "https://gym-assistant.app";
 
 export const TODAY = new Date().toISOString().slice(0, 10);

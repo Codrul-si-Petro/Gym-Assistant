@@ -3,31 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home</title>
-  <link rel="stylesheet" href="css/homepage.css?v=2">
+  <title>Gym Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/general-components/theme.css?v=7">
+  <link rel="stylesheet" href="css/general-components/profile-menu.css?v=6">
+  <link rel="stylesheet" href="css/general-components/info-popover.css?v=1">
+  <link rel="stylesheet" href="css/homepage.css?v=6">
   <link rel="icon" href="./assets/favicon.ico" sizes="any">
 </head>
-<body>
+<body class="home-page" data-info-page="home">
 
-<nav class="container">
-  <a href="#workout" id="item1">&#10051; Gym Assistant</a>
-  <div id="auth-links">
-    <a href="pages/auth/login.html" id="login-link">Login</a>
-    <a href="pages/auth/signup.html" id="signup-link">Sign up</a>
-    <a href="#" id="logout-link" style="display:none;">Log out</a>
+<header class="site-header container">
+  <div class="header-left">
+    <button type="button" class="theme-toggle" aria-label="Switch theme">☀</button>
   </div>
-</nav>
-
-<div class="Intro">
-  <h2>Find your <span id="word">motivation.</span></h2>
-  <div id="authenticated-links" style="display: none">
-  <a href="pages/core/workouts_table.html" class="cta-button">View workout history</a>
-  <a href="pages/core/workouts_input.html" class="cta-button">Start logging a workout</a>
-  <a href="pages/core/dashboard.html" class="cta-button">Your stats</a>
+  <div id="nav-actions" class="nav-actions">
   </div>
-</div>
+</header>
 
-<script src="js/auth/store-jwt.js"></script>
-<script src="js/homepage.js"></script>
+<main>
+  <section class="hero hero-animate">
+    <div class="hero-brand reveal">
+      <p class="hero-brand-name">Gym Assistant</p>
+    </div>
+
+    <div id="home-stats" class="home-stats reveal reveal-delay-1" hidden>
+      <p class="home-stats-label">Your summary</p>
+      <p id="home-inactivity" class="home-stat-line"></p>
+      <p id="home-total-lifted" class="home-stat-line home-stat-accent"></p>
+    </div>
+
+    <p class="hero-badge reveal reveal-delay-1">Track. Learn. Progress.</p>
+    <h1 class="hero-title reveal reveal-delay-2">Find your <span id="word" class="hero-accent">motivation.</span></h1>
+    <p class="hero-subtitle reveal reveal-delay-3">A calm, focused space to log workouts, explore exercises, and understand your training.</p>
+
+    <div id="authenticated-links" class="hero-ctas reveal reveal-delay-4" style="display: none">
+      <a href="pages/core/workouts_input.html" class="cta-button">Start logging</a>
+      <a href="pages/core/workouts_table.html" class="cta-button cta-button--ghost">View history</a>
+      <a href="pages/core/dashboard.html" class="cta-button cta-button--ghost">Metrics</a>
+      <a href="pages/core/explore.html" class="cta-button cta-button--ghost">Explore exercises</a>
+    </div>
+  </section>
+
+  <section class="features">
+    <article class="feature-card card reveal">
+      <h3>Log with clarity</h3>
+      <p>Record sets, reps, and load in a clean workflow built for the gym floor.</p>
+    </article>
+    <article class="feature-card card reveal reveal-delay-1">
+      <h3>See your progress</h3>
+      <p>Charts and history help you spot trends in volume and favourite movements.</p>
+    </article>
+    <article class="feature-card card reveal reveal-delay-2">
+      <h3>Learn the movements</h3>
+      <p>Browse the exercise glossary with cues and demo videos when you need a refresher.</p>
+    </article>
+  </section>
+</main>
+
+<footer class="site-footer reveal">
+  <p>Gym Assistant is for personal fitness tracking. Always consult a professional before starting a new program.</p>
+  <p>Questions or suggestions? <a id="support-link" href="mailto:support@gym-assistant.app?subject=Gym%20Assistant%20Feedback">Email us</a></p>
+</footer>
+
+<script src="js/auth/store-jwt.js?v=2"></script>
+<script type="module" src="js/general-components/theme.js?v=2"></script>
+<script type="module" src="js/general-components/profile-menu.js?v=2"></script>
+<script type="module" src="js/general-components/info-popover.js?v=1"></script>
+<script type="module" src="js/general-components/animations.js?v=2"></script>
+<script type="module" src="js/homepage.js?v=2"></script>
 </body>
 </html>

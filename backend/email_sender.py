@@ -30,11 +30,8 @@ class MailerSendPasswordResetForm(PasswordResetForm):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
-        reset_url = (
-            f"{settings.FRONTEND_URL}"
-            f"{context['protocol']}://{context['domain']}"
-            f"{context['url']}?uid={uid}&token={token}"
-        )
+        frontend_url = settings.FRONTEND_URL.rstrip("/")
+        reset_url = f"{frontend_url}/pages/auth/password_reset_confirm.html?uid={uid}&token={token}"
 
         html = render_to_string(
             email_template_name,
