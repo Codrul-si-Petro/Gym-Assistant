@@ -224,7 +224,6 @@ async function loadFavExercisesChart() {
   const chartInner = document.querySelector("#tab-favourites .chart-inner");
 
   if (msg) msg.textContent = "";
-  setVolumeMainView("table");
   if (skeleton) skeleton.classList.remove("hidden");
   if (chartInner) chartInner.style.display = "none";
   destroyChart("fav-exercises-canvas");
@@ -265,6 +264,10 @@ async function loadVolumeTable() {
   const skeleton = document.getElementById("chart-skeleton-volume");
 
   if (msg) msg.textContent = "";
+  // If the daily chart block got hidden while a selection is still set (e.g.
+  // after switching tabs), drop the stale selection so the table comes back.
+  const dailyBlock = document.getElementById("volume-daily-chart-block");
+  if (volumeDailySelection && dailyBlock?.hidden) volumeDailySelection = null;
   if (!volumeDailySelection) setVolumeMainView("table");
   if (skeleton) skeleton.classList.remove("hidden");
   setVolumeTableVisible(false);

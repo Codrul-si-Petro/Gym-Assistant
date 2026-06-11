@@ -20,7 +20,7 @@
   height: 8px;
 }
 .chart-scroll-wrap::-webkit-scrollbar-track {
-  background: #16161a;
+  background: var(--bg-elevated);
   border-radius: 4px;
 }
 .chart-scroll-wrap::-webkit-scrollbar-thumb {
@@ -62,7 +62,7 @@
 .skeleton-bar {
   height: 36px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #1e1e24 25%, #2a2a32 50%, #1e1e24 75%);
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border-subtle) 50%, var(--bg-hover) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }

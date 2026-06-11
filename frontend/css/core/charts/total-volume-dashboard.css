@@ -47,8 +47,8 @@
 }
 
 .volume-back-btn:hover {
-  background: #1f1f24;
-  border-color: #3f3f46;
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
 }
 
 /* -----------------------------------------------------------------------------
@@ -71,7 +71,7 @@
 #chart-skeleton-volume .skeleton-bar {
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(90deg, #1e1e24 25%, #2a2a32 50%, #1e1e24 75%);
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border-subtle) 50%, var(--bg-hover) 75%);
   background-size: 200% 100%;
   animation: volume-shimmer 1.5s ease-in-out infinite;
 }
@@ -150,7 +150,7 @@
 
 /* Subtle hover to show row boundaries on touch/desktop. */
 .volume-table tbody tr:hover td {
-  background: rgba(39, 39, 42, 0.35);
+  background: var(--bg-hover);
 }
 
 /* -----------------------------------------------------------------------------
@@ -160,7 +160,7 @@
   width: 2.25rem;
   text-align: right;
   font-variant-numeric: tabular-nums;
-  color: #71717a;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -184,7 +184,7 @@
   border: none;
   padding: 0;
   margin: 0;
-  color: #e4e4e7;
+  color: var(--text-primary);
   cursor: pointer;
   font: inherit;
   text-align: left;
@@ -217,7 +217,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #71717a;
+  color: var(--text-muted);
 }
 
 /* Placeholder until real sparkline/canvas preview exists. */
@@ -228,9 +228,9 @@
   min-width: 44px;
   min-height: 44px;
   padding: 0 10px;
-  border: 1px dashed #3f3f46;
+  border: 1px dashed var(--border-strong);
   border-radius: 10px;
-  background: linear-gradient(180deg, #1a1a1f 0%, #141418 100%);
+  background: var(--bg-card);
   color: var(--accent-secondary);
   cursor: pointer;
   font-size: 18px;
@@ -268,9 +268,9 @@
   margin-top: 16px;
   padding: 14px 16px;
   border-radius: 10px;
-  background: #16161a;
-  border: 1px solid #2a2a2e;
-  color: #a1a1aa;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.45;
 }
@@ -283,9 +283,9 @@
   max-width: min(90vw, 360px);
   padding: 12px 20px;
   border-radius: 10px;
-  background: #27272a;
-  border: 1px solid #3f3f46;
-  color: #f4f4f5;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   font-size: 14px;
   line-height: 1.4;
   text-align: center;

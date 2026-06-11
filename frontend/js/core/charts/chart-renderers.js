@@ -199,25 +199,44 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, 
   const t = type || "line";
   const plugins = typeof ChartDataLabels !== "undefined" ? [ChartDataLabels] : [];
   const accent = getCssVar("--accent-secondary", "#a78bfa");
-  const accentSoft = "rgba(139, 92, 246, 0.2)";
+  const textMuted = getCssVar("--text-muted", "#71717a");
 
-  chartInstances.set(getCanvasId(canvas), new Chart(canvas.getContext("2d"), {
+  // Soft vertical gradient under the line / inside the bars
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+  if (t === "line") {
+    gradient.addColorStop(0, "rgba(139, 92, 246, 0.35)");
+    gradient.addColorStop(1, "rgba(139, 92, 246, 0)");
+  } else {
+    gradient.addColorStop(0, "rgba(167, 139, 250, 0.95)");
+    gradient.addColorStop(1, "rgba(124, 58, 237, 0.65)");
+  }
+
+  const fmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+  const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+
+  chartInstances.set(getCanvasId(canvas), new Chart(ctx, {
     type: t,
     data: {
       labels,
       datasets: [
         {
-          label: exerciseName ? `Volume (${unitSuffix(unit)}) — ${exerciseName}` : `Volume (${unitSuffix(unit)})`,
+          label: exerciseName || "Volume",
           data: values.map((v) => toDisplayUnit(v, unit)),
           borderColor: accent,
-          backgroundColor:
-            t === "bar" ? accent : accentSoft,
+          backgroundColor: gradient,
           fill: t === "line",
-          tension: 0.25,
-          borderWidth: t === "line" ? 3 : 1,
-          borderRadius: t === "bar" ? 10 : 0,
-          maxBarThickness: t === "bar" ? 28 : undefined,
-          pointRadius: t === "line" ? 2.5 : 0,
+          tension: 0.35,
+          borderWidth: t === "line" ? 2.5 : 0,
+          borderRadius: t === "bar" ? 8 : 0,
+          borderSkipped: false,
+          maxBarThickness: t === "bar" ? 24 : undefined,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: accent,
+          pointHoverBorderColor: "#fff",
+          pointHoverBorderWidth: 2,
+          hitRadius: 12,
         },
       ],
     },
@@ -226,23 +245,44 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, 
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { labels: { color: getCssVar("--text-primary", "#e4e4e7") } },
+        legend: { display: false },
         tooltip: {
+          backgroundColor: getCssVar("--bg-elevated", "#16161a"),
+          borderColor: getCssVar("--border-subtle", "#2a2a2e"),
+          borderWidth: 1,
+          titleColor: getCssVar("--text-primary", "#f4f4f5"),
+          bodyColor: getCssVar("--text-secondary", "#a1a1aa"),
+          padding: 12,
+          cornerRadius: 10,
+          displayColors: false,
           callbacks: {
-            label: (c) => `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(c.raw)} ${unitSuffix(unit)}`,
+            label: (c) => `${fmt.format(c.raw)} ${unitSuffix(unit)}`,
           },
         },
         datalabels: { display: false },
       },
       scales: {
         x: {
-          ticks: { display: false },
+          ticks: {
+            color: textMuted,
+            font: { size: 10 },
+            maxTicksLimit: 6,
+            maxRotation: 0,
+            autoSkip: true,
+          },
           grid: { display: false },
+          border: { display: false },
         },
         y: {
           beginAtZero: true,
-          ticks: { color: getCssVar("--text-secondary", "#a1a1aa") },
-          grid: { color: "rgba(255,255,255,0.06)" },
+          ticks: {
+            color: textMuted,
+            font: { size: 10 },
+            maxTicksLimit: 5,
+            callback: (v) => compact.format(v),
+          },
+          grid: { color: "rgba(139, 92, 246, 0.08)" },
+          border: { display: false, dash: [4, 4] },
         },
       },
     },
@@ -300,20 +340,14 @@ export function renderWorkoutSplitsChart(labels, values) {
   }));
 }
 
-const WEEKDAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
 export function renderGymWeekdaysChart(labels, values) {
   const rows = labels.map((label, i) => ({ label, value: values[i] }));
-  rows.sort((a, b) => {
-    const ai = WEEKDAY_ORDER.findIndex((d) => d.toLowerCase().startsWith(String(a.label).slice(0, 3).toLowerCase()));
-    const bi = WEEKDAY_ORDER.findIndex((d) => d.toLowerCase().startsWith(String(b.label).slice(0, 3).toLowerCase()));
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-  });
+  rows.sort((a, b) => b.value - a.value);
   const max = Math.max(...values, 1);
   renderStatList(
     "gym-weekdays-list",
-    rows.map((r) => ({
-      rank: "",
+    rows.map((r, i) => ({
+      rank: "#" + (i + 1),
       label: r.label,
       valueText: `${r.value} ${r.value === 1 ? "day" : "days"}`,
       percent: (r.value / max) * 100,
