@@ -49,6 +49,12 @@
   --shadow-md: 0 4px 24px rgba(15, 23, 42, 0.08);
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   color-scheme: dark;
 }
