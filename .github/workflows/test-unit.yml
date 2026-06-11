@@ -5,13 +5,13 @@ on:
     branches: [main, dev]
     paths:
         - 'backend/**'
-        - 'tests/ui/**'
+        - 'tests/e2e/**'
         - 'tests/meta/**'
   push:
     branches: [main, dev]
     paths:
         - 'backend/**'
-        - 'tests/ui/**'
+        - 'tests/e2e/**'
         - 'tests/meta/**'
 
 jobs: 

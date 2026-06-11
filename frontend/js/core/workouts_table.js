@@ -9,12 +9,21 @@ if (
 }
 
 const PAGE_SIZE = 50;
-let nextPageUrl = `${API_BASE}/api/workouts/?page=1&page_size=${PAGE_SIZE}`;
+const SET_TYPE_SEEDS = ["Working set", "Warm-up", "Drop set", "None"];
+const COL_COUNT = 13;
+
+let nextPageUrl = "";
 let isLoading = false;
 let hasMore = true;
 let loadedCount = 0;
 let totalCount = null;
 let cachedMaps = null;
+let dimensionLists = { exercises: [], attachments: [], equipment: [] };
+let rowDataMap = {};
+const seenSplits = new Set();
+const seenSetTypes = new Set();
+let activeFilters = {};
+let editSheet = null;
 
 function getAuthHeaders() {
   const token = localStorage.getItem("access_token");
@@ -59,24 +68,110 @@ function escapeHtml(s) {
   return div.innerHTML;
 }
 
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function formatRowDate(row) {
-  if (row.ta_created_at) return row.ta_created_at.slice(0, 10);
   if (row.date_id) return String(row.date_id).slice(0, 10);
+  if (row.ta_created_at) return row.ta_created_at.slice(0, 10);
   if (row.date) return String(row.date).slice(0, 10);
   return "";
 }
 
+function buildFilterQueryString() {
+  const params = new URLSearchParams();
+  params.set("page", "1");
+  params.set("page_size", String(PAGE_SIZE));
+  if (activeFilters.exercise_id) params.set("exercise_id", activeFilters.exercise_id);
+  if (activeFilters.workout_split) params.set("workout_split", activeFilters.workout_split);
+  if (activeFilters.set_type) params.set("set_type", activeFilters.set_type);
+  if (activeFilters.workout_number) params.set("workout_number", activeFilters.workout_number);
+  if (activeFilters.start_date) params.set("start_date", activeFilters.start_date);
+  if (activeFilters.end_date) params.set("end_date", activeFilters.end_date);
+  return params.toString();
+}
+
+function getListUrl() {
+  return `${API_BASE}/api/workouts/?${buildFilterQueryString()}`;
+}
+
+function countActiveFilters() {
+  return Object.keys(activeFilters).length;
+}
+
+function updateFilterBadge() {
+  const badge = document.getElementById("filters-badge");
+  if (!badge) return;
+  const n = countActiveFilters();
+  badge.textContent = String(n);
+  badge.hidden = n === 0;
+}
+
+function collectFilterOption(row) {
+  if (row.workout_split) seenSplits.add(row.workout_split);
+  if (row.set_type) seenSetTypes.add(row.set_type);
+}
+
+function refillSelect(selectId, values, currentValue) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const keep = currentValue || select.value;
+  while (select.options.length > 1) select.remove(1);
+  [...values].sort((a, b) => a.localeCompare(b)).forEach((val) => {
+    const opt = document.createElement("option");
+    opt.value = val;
+    opt.textContent = val;
+    select.appendChild(opt);
+  });
+  if (keep) select.value = keep;
+}
+
+function refreshFilterSelects() {
+  refillSelect("filter-split", seenSplits, activeFilters.workout_split || "");
+  refillSelect("filter-set-type", new Set([...SET_TYPE_SEEDS, ...seenSetTypes]), activeFilters.set_type || "");
+}
+
+function populateExerciseFilter() {
+  const select = document.getElementById("filter-exercise");
+  if (!select || select.options.length > 1) return;
+  dimensionLists.exercises.forEach((ex) => {
+    const opt = document.createElement("option");
+    opt.value = String(ex.exercise_id);
+    opt.textContent = ex.exercise_name;
+    select.appendChild(opt);
+  });
+}
+
+async function loadSplitFilterOptions(headers) {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/workout-splits`, { headers });
+    if (!res.ok) return;
+    const data = await res.json();
+    (data.results || []).forEach((row) => {
+      if (row.workout_split) seenSplits.add(row.workout_split);
+    });
+    refreshFilterSelects();
+  } catch {
+    /* splits dropdown falls back to values seen in loaded rows */
+  }
+}
+
 function buildRowHtml(row, exerciseMap, attachmentMap, equipmentMap) {
+  rowDataMap[row.workout_id] = row;
+  collectFilterOption(row);
+
   const date = formatRowDate(row);
   const exercise = exerciseMap[row.exercise] ?? row.exercise ?? "";
   const attachment = attachmentMap[row.attachment] ?? row.attachment ?? "";
   const equipment = equipmentMap[row.equipment] ?? row.equipment ?? "";
-  return `<tr>
+
+  return `<tr class="workout-row" data-workout-id="${row.workout_id}" tabindex="0" role="button" aria-label="Edit set">
       <td>${row.workout_number ?? ""}</td>
       <td>${date}</td>
       <td>${escapeHtml(String(exercise))}</td>
       <td>${row.set_number ?? ""}</td>
-      <td>${row.repetitions ?? ""}</td>
+      <td data-col="reps">${row.repetitions ?? ""}</td>
       <td>${row.load ?? ""}</td>
       <td>${escapeHtml(String(equipment))}</td>
       <td>${escapeHtml(String(attachment))}</td>
@@ -84,7 +179,28 @@ function buildRowHtml(row, exerciseMap, attachmentMap, equipmentMap) {
       <td>${escapeHtml(String(row.set_type || ""))}</td>
       <td>${escapeHtml(String(row.comments || ""))}</td>
       <td>${escapeHtml(String(row.workout_split || ""))}</td>
+      <td class="edit-col"><span class="edit-icon" aria-hidden="true">✎</span></td>
   </tr>`;
+}
+
+function updateRowFromData(tr, row, maps) {
+  const exercise = maps.exerciseMap[row.exercise] ?? row.exercise ?? "";
+  const attachment = maps.attachmentMap[row.attachment] ?? row.attachment ?? "";
+  const equipment = maps.equipmentMap[row.equipment] ?? row.equipment ?? "";
+  const cells = tr.querySelectorAll("td");
+  if (cells.length < COL_COUNT) return;
+  cells[0].textContent = row.workout_number ?? "";
+  cells[1].textContent = formatRowDate(row);
+  cells[2].textContent = String(exercise);
+  cells[3].textContent = row.set_number ?? "";
+  cells[4].textContent = row.repetitions ?? "";
+  cells[5].textContent = row.load ?? "";
+  cells[6].textContent = String(equipment);
+  cells[7].textContent = String(attachment);
+  cells[8].textContent = row.unit || "";
+  cells[9].textContent = row.set_type || "";
+  cells[10].textContent = row.comments || "";
+  cells[11].textContent = row.workout_split || "";
 }
 
 async function loadDimensionMaps(headers) {
@@ -103,15 +219,20 @@ async function loadDimensionMaps(headers) {
       atRes.ok ? atRes.json() : [],
       eqRes.ok ? eqRes.json() : [],
     ]);
-    parseDimensionList(exJson).forEach((e) => {
+    dimensionLists.exercises = parseDimensionList(exJson);
+    dimensionLists.attachments = parseDimensionList(atJson);
+    dimensionLists.equipment = parseDimensionList(eqJson);
+
+    dimensionLists.exercises.forEach((e) => {
       exerciseMap[e.exercise_id] = e.exercise_name;
     });
-    parseDimensionList(atJson).forEach((a) => {
+    dimensionLists.attachments.forEach((a) => {
       attachmentMap[a.attachment_id] = a.attachment_name;
     });
-    parseDimensionList(eqJson).forEach((e) => {
+    dimensionLists.equipment.forEach((e) => {
       equipmentMap[e.equipment_id] = e.equipment_name;
     });
+    populateExerciseFilter();
   } catch {
     /* use IDs if lookups fail */
   }
@@ -119,9 +240,11 @@ async function loadDimensionMaps(headers) {
   return cachedMaps;
 }
 
-function setStatusMessage(text) {
+function setStatusMessage(text, isSuccess) {
   const authMsg = document.getElementById("auth-msg");
-  if (authMsg) authMsg.textContent = text;
+  if (!authMsg) return;
+  authMsg.textContent = text;
+  authMsg.classList.toggle("auth-msg--success", !!isSuccess);
 }
 
 function setLoadingRow(visible) {
@@ -134,13 +257,233 @@ function updatePaginationControls() {
   const countEl = document.getElementById("workouts-count");
   if (countEl) {
     const totalText = totalCount != null ? ` of ${totalCount}` : "";
-    countEl.textContent = `Showing ${loadedCount}${totalText} workouts`;
+    countEl.textContent = `Showing ${loadedCount}${totalText} sets`;
   }
   if (loadMoreBtn) {
     loadMoreBtn.hidden = !hasMore;
     loadMoreBtn.disabled = isLoading;
     loadMoreBtn.textContent = isLoading ? "Loading…" : "Load more";
   }
+}
+
+function formatApiErrors(data) {
+  if (!data || typeof data !== "object") return "Something went wrong.";
+  if (data.detail) return String(data.detail);
+  const parts = [];
+  Object.keys(data).forEach((key) => {
+    const val = data[key];
+    const messages = Array.isArray(val) ? val : [String(val)];
+    messages.forEach((msg) => parts.push(`${key}: ${msg}`));
+  });
+  return parts.length ? parts.join(" ") : "Something went wrong.";
+}
+
+function buildSelectOptions(items, idKey, nameKey, selectedId) {
+  return items
+    .map((item) => {
+      const id = item[idKey];
+      const selected = String(id) === String(selectedId) ? " selected" : "";
+      return `<option value="${id}"${selected}>${escapeHtml(item[nameKey])}</option>`;
+    })
+    .join("");
+}
+
+function buildEditFormHtml(row) {
+  const date = formatRowDate(row);
+  const maxDate = todayIsoDate();
+  return `
+    <div class="edit-sheet-row">
+      <div class="field">
+        <label for="edit-workout_number">Workout #</label>
+        <input type="number" id="edit-workout_number" name="workout_number" min="1" value="${row.workout_number ?? 1}" required>
+      </div>
+      <div class="field">
+        <label for="edit-date">Date</label>
+        <input type="date" id="edit-date" name="date" value="${date}" max="${maxDate}" required>
+      </div>
+    </div>
+    <div class="field">
+      <label for="edit-workout_split">Split</label>
+      <input type="text" id="edit-workout_split" name="workout_split" maxlength="50" value="${escapeHtml(row.workout_split || "")}" required>
+    </div>
+    <div class="field">
+      <label for="edit-exercise">Exercise</label>
+      <select id="edit-exercise" name="exercise" required>
+        ${buildSelectOptions(dimensionLists.exercises, "exercise_id", "exercise_name", row.exercise)}
+      </select>
+    </div>
+    <div class="field">
+      <label for="edit-equipment">Equipment</label>
+      <select id="edit-equipment" name="equipment" required>
+        ${buildSelectOptions(dimensionLists.equipment, "equipment_id", "equipment_name", row.equipment)}
+      </select>
+    </div>
+    <div class="field">
+      <label for="edit-attachment">Attachment</label>
+      <select id="edit-attachment" name="attachment">
+        ${buildSelectOptions(dimensionLists.attachments, "attachment_id", "attachment_name", row.attachment)}
+      </select>
+    </div>
+    <div class="edit-sheet-row edit-sheet-row--quad">
+      <div class="field">
+        <label for="edit-set_number">Set</label>
+        <input type="number" id="edit-set_number" name="set_number" min="1" max="200" value="${row.set_number ?? 1}" required>
+      </div>
+      <div class="field">
+        <label for="edit-repetitions">Reps</label>
+        <input type="number" id="edit-repetitions" name="repetitions" min="1" max="1000" value="${row.repetitions ?? 1}" required>
+      </div>
+      <div class="field">
+        <label for="edit-load">Load</label>
+        <input type="number" id="edit-load" name="load" min="0" step="any" value="${row.load ?? 0}" required>
+      </div>
+      <div class="field">
+        <label for="edit-unit">Unit</label>
+        <select id="edit-unit" name="unit">
+          <option value="KG"${row.unit === "KG" ? " selected" : ""}>KG</option>
+          <option value="LBS"${row.unit === "LBS" ? " selected" : ""}>LBS</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="edit-set_type">Set type</label>
+      <input type="text" id="edit-set_type" name="set_type" value="${escapeHtml(row.set_type || "Working set")}">
+    </div>
+    <div class="field">
+      <label for="edit-comments">Comments</label>
+      <textarea id="edit-comments" name="comments" rows="2">${escapeHtml(row.comments || "")}</textarea>
+    </div>`;
+}
+
+function readEditPayload(formEl) {
+  const dateVal = formEl.querySelector("#edit-date").value;
+  if (dateVal > todayIsoDate()) {
+    throw new Error("Workout date cannot be in the future.");
+  }
+  const attachmentVal = formEl.querySelector("#edit-attachment").value;
+  return {
+    workout_number: parseInt(formEl.querySelector("#edit-workout_number").value, 10),
+    date: dateVal,
+    workout_split: formEl.querySelector("#edit-workout_split").value.trim(),
+    exercise: parseInt(formEl.querySelector("#edit-exercise").value, 10),
+    equipment: parseInt(formEl.querySelector("#edit-equipment").value, 10),
+    attachment: attachmentVal ? parseInt(attachmentVal, 10) : null,
+    set_number: parseInt(formEl.querySelector("#edit-set_number").value, 10),
+    repetitions: parseInt(formEl.querySelector("#edit-repetitions").value, 10),
+    load: parseFloat(formEl.querySelector("#edit-load").value),
+    unit: formEl.querySelector("#edit-unit").value,
+    set_type: formEl.querySelector("#edit-set_type").value.trim() || "Working set",
+    comments: formEl.querySelector("#edit-comments").value.trim() || "None",
+  };
+}
+
+function openEditSheet(workoutId) {
+  const row = rowDataMap[workoutId];
+  if (!row || !editSheet) return;
+
+  editSheet.open({
+    title: "Edit set",
+    formHtml: buildEditFormHtml(row),
+    onSave: async (formEl) => {
+      const headers = getAuthHeaders();
+      if (!headers) throw new Error("Not logged in.");
+
+      const payload = readEditPayload(formEl);
+      const res = await fetch(`${API_BASE}/api/workouts/${workoutId}/`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(formatApiErrors(data));
+
+      rowDataMap[workoutId] = data;
+      collectFilterOption(data);
+      refreshFilterSelects();
+
+      const tr = document.querySelector(`tr[data-workout-id="${workoutId}"]`);
+      if (tr && cachedMaps) updateRowFromData(tr, data, cachedMaps);
+      setStatusMessage("Set updated.", true);
+    },
+  });
+}
+
+function initEditSheet() {
+  if (window.GymEditSheet) {
+    editSheet = GymEditSheet.create({ title: "Edit set" });
+  }
+}
+
+function initRowClicks() {
+  const tbody = document.getElementById("workout-tbody");
+  if (!tbody) return;
+
+  tbody.addEventListener("click", (event) => {
+    const tr = event.target.closest(".workout-row");
+    if (!tr) return;
+    openEditSheet(tr.dataset.workoutId);
+  });
+
+  tbody.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const tr = event.target.closest(".workout-row");
+    if (!tr) return;
+    event.preventDefault();
+    openEditSheet(tr.dataset.workoutId);
+  });
+}
+
+function readFiltersFromForm() {
+  const exercise = document.getElementById("filter-exercise")?.value || "";
+  const split = document.getElementById("filter-split")?.value || "";
+  const setType = document.getElementById("filter-set-type")?.value || "";
+  const workoutNumber = document.getElementById("filter-workout-number")?.value || "";
+  const startDate = document.getElementById("filter-start-date")?.value || "";
+  const endDate = document.getElementById("filter-end-date")?.value || "";
+
+  const filters = {};
+  if (exercise) filters.exercise_id = exercise;
+  if (split) filters.workout_split = split;
+  if (setType) filters.set_type = setType;
+  if (workoutNumber) filters.workout_number = workoutNumber;
+  if (startDate) filters.start_date = startDate;
+  if (endDate) filters.end_date = endDate;
+  return filters;
+}
+
+function applyFilters() {
+  activeFilters = readFiltersFromForm();
+  updateFilterBadge();
+  fetchWorkoutsPage(true);
+}
+
+function clearFilters() {
+  activeFilters = {};
+  ["filter-exercise", "filter-split", "filter-set-type"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  ["filter-workout-number", "filter-start-date", "filter-end-date"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  updateFilterBadge();
+  fetchWorkoutsPage(true);
+}
+
+function initFilters() {
+  const toggle = document.getElementById("filters-toggle");
+  const panel = document.getElementById("filters-panel");
+  if (toggle && panel) {
+    toggle.addEventListener("click", () => {
+      const open = panel.hidden;
+      panel.hidden = !open;
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
+  document.getElementById("filters-apply")?.addEventListener("click", applyFilters);
+  document.getElementById("filters-clear")?.addEventListener("click", clearFilters);
+  updateFilterBadge();
 }
 
 async function fetchWorkoutsPage(reset = false) {
@@ -150,17 +493,17 @@ async function fetchWorkoutsPage(reset = false) {
   const tbody = document.getElementById("workout-tbody");
   if (!headers) {
     setStatusMessage("Not logged in. Log in to see workouts.");
-    if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">Not logged in</td></tr>';
+    if (tbody) tbody.innerHTML = `<tr><td colspan="${COL_COUNT}" class="empty-msg">Not logged in</td></tr>`;
     updatePaginationControls();
     return;
   }
 
   if (reset) {
-    nextPageUrl = `${API_BASE}/api/workouts/?page=1&page_size=${PAGE_SIZE}`;
+    nextPageUrl = getListUrl();
     hasMore = true;
     loadedCount = 0;
     totalCount = null;
-    cachedMaps = null;
+    rowDataMap = {};
     if (tbody) tbody.innerHTML = "";
     const wrap = document.querySelector(".table-wrap");
     if (wrap) wrap.scrollLeft = 0;
@@ -176,7 +519,7 @@ async function fetchWorkoutsPage(reset = false) {
     if (res.status === 401) {
       setStatusMessage("Session expired. Please log in again.");
       if (tbody && reset) {
-        tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">Unauthorized</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="${COL_COUNT}" class="empty-msg">Unauthorized</td></tr>`;
       }
       hasMore = false;
       return;
@@ -186,7 +529,7 @@ async function fetchWorkoutsPage(reset = false) {
     const payload = contentType.includes("application/json") ? await res.json() : null;
 
     if (!res.ok) {
-      const detail = payload?.detail || payload?.error || `Request failed (${res.status}).`;
+      const detail = payload?.detail || formatApiErrors(payload) || `Request failed (${res.status}).`;
       throw new Error(detail);
     }
 
@@ -200,7 +543,7 @@ async function fetchWorkoutsPage(reset = false) {
     if (count != null) totalCount = count;
 
     if (reset && rows.length === 0) {
-      if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">No workouts found</td></tr>';
+      if (tbody) tbody.innerHTML = `<tr><td colspan="${COL_COUNT}" class="empty-msg">No workouts found</td></tr>`;
       hasMore = false;
       loadedCount = 0;
       return;
@@ -212,6 +555,7 @@ async function fetchWorkoutsPage(reset = false) {
       .join("");
     if (tbody) tbody.insertAdjacentHTML("beforeend", html);
     loadedCount += rows.length;
+    refreshFilterSelects();
 
     if (!hasMore) {
       setStatusMessage("");
@@ -219,7 +563,7 @@ async function fetchWorkoutsPage(reset = false) {
   } catch (err) {
     setStatusMessage(err?.message || "Failed to load workouts.");
     if (reset && tbody) {
-      tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">Error loading data</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="${COL_COUNT}" class="empty-msg">Error loading data</td></tr>`;
       loadedCount = 0;
     }
     hasMore = false;
@@ -239,6 +583,11 @@ function initLoadMore() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  fetchWorkoutsPage(true);
+  initEditSheet();
+  initRowClicks();
+  initFilters();
   initLoadMore();
+  const headers = getAuthHeaders();
+  if (headers) void loadSplitFilterOptions(headers);
+  fetchWorkoutsPage(true);
 });

@@ -11,6 +11,8 @@ if not BACKEND_URL or not FRONTEND_URL:
 
 
 E2E_DASHBOARD_WORKOUT_SPLIT = "e2e-test-data"
+# Fixed date for the persistent E2E user seed workouts (dashboard + history).
+E2E_SEED_WORKOUT_DATE = "2026-04-09"
 
 # user that gets deleted after each test sesh
 SHORTLIVED_E2E_TESTER_NAME = "MosquitoJoe"

@@ -76,16 +76,19 @@ function buildAuthLinks(container) {
 
 async function fetchCurrentUser() {
   const token = localStorage.getItem("access_token");
-  if (!token) return null;
+  if (!token) return { unauthorized: true };
   try {
     const res = await fetch(`${API_BASE}${API_PREFIX}auth/current-user/`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
-    if (!res.ok) return null;
+    if (res.status === 401) return { unauthorized: true };
+    if (!res.ok) return { username: "Account" };
     const data = await res.json();
-    return data || null;
+    if (!data) return { username: "Account" };
+    return data;
   } catch {
-    return null;
+    // Transient network errors should not wipe a valid session.
+    return { username: "Account" };
   }
 }
 
@@ -100,7 +103,7 @@ export async function initProfileMenu(containerId = "nav-actions") {
   }
 
   const user = await fetchCurrentUser();
-  if (!user) {
+  if (user?.unauthorized) {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     buildAuthLinks(container);

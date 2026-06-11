@@ -9,10 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/general-components/theme.css?v=7">
   <link rel="stylesheet" href="css/general-components/profile-menu.css?v=6">
+  <link rel="stylesheet" href="css/general-components/info-popover.css?v=1">
   <link rel="stylesheet" href="css/homepage.css?v=6">
   <link rel="icon" href="./assets/favicon.ico" sizes="any">
 </head>
-<body class="home-page">
+<body class="home-page" data-info-page="home">
 
 <header class="site-header container">
   <div class="header-left">
@@ -29,6 +30,7 @@
     </div>
 
     <div id="home-stats" class="home-stats reveal reveal-delay-1" hidden>
+      <p class="home-stats-label">Your summary</p>
       <p id="home-inactivity" class="home-stat-line"></p>
       <p id="home-total-lifted" class="home-stat-line home-stat-accent"></p>
     </div>
@@ -69,6 +71,7 @@
 <script src="js/auth/store-jwt.js?v=2"></script>
 <script type="module" src="js/general-components/theme.js?v=2"></script>
 <script type="module" src="js/general-components/profile-menu.js?v=2"></script>
+<script type="module" src="js/general-components/info-popover.js?v=1"></script>
 <script type="module" src="js/general-components/animations.js?v=2"></script>
 <script type="module" src="js/homepage.js?v=2"></script>
 </body>

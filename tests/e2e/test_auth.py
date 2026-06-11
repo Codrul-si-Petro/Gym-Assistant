@@ -1,19 +1,20 @@
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.constants import BACKEND_URL, SHORTLIVED_E2E_TESTER_NAME, SHORTLIVED_E2E_TESTER_PASS
+from tests.constants import SHORTLIVED_E2E_TESTER_NAME, SHORTLIVED_E2E_TESTER_PASS
+from tests.e2e.helpers import clear_auth_state, login
 
 
+@pytest.mark.no_auth
 @pytest.mark.order(1)
 def test_signup(page: Page, frontend_url: str):
-    page.context.clear_cookies()
-    page.goto(frontend_url)
+    clear_auth_state(page, frontend_url)
     page.wait_for_load_state("networkidle")
 
-    page.locator("#signup-link").click()
+    # Unauthenticated header shows CTA links (replaces legacy #signup-link)
+    page.get_by_role("link", name="Get started").click()
     page.wait_for_load_state("networkidle")
 
-    # here I should assert the redirect url is /accounts/signup/
     expect(page).to_have_url(f"{frontend_url}/pages/auth/signup.html")
 
     page.fill("#username", SHORTLIVED_E2E_TESTER_NAME)
@@ -27,21 +28,13 @@ def test_signup(page: Page, frontend_url: str):
     expect(page).to_have_url(f"{frontend_url}/pages/auth/login.html")
 
 
+@pytest.mark.no_auth
 @pytest.mark.order(2)
-def test_login(page: Page, test_credentials: tuple[str, str], frontend_url):
-    E2E_TESTER_NAME, E2E_TESTER_PASS = test_credentials
+def test_login(page: Page, test_credentials: tuple[str, str], frontend_url: str, e2e_user_bootstrapped):
+    clear_auth_state(page, frontend_url)
+    username, password = test_credentials
+    login(page, frontend_url, username, password)
 
-    page.goto(f"{frontend_url}/pages/auth/login.html")
-    page.wait_for_load_state("networkidle")
-
-    page.fill("#username", E2E_TESTER_NAME)
-    page.fill("#password", E2E_TESTER_PASS)
-    page.click('button[type="submit"]')
-    page.wait_for_load_state("networkidle")
-
-    # Should be redirected to home
-    expect(page).to_have_url(f"{frontend_url}/index.html")
-    # Verify we're logged in
-    expect(page.locator("#logout-link")).to_have_text("Log out", timeout=5000)
-
-    page.context.request.post(f"{BACKEND_URL}/api/auth/delete-account/")
+    # Logged-in state: profile avatar menu (replaces legacy #logout-link)
+    page.locator(".profile-trigger").click()
+    expect(page.locator("#profile-logout-btn")).to_have_text("Log out")

@@ -11,7 +11,7 @@ import {
   renderWorkoutSplitsChart,
   renderGymWeekdaysChart,
 } from "./chart-renderers.js";
-import { fetchFavExercises, fetchGymWeekdays, fetchHomeSummary, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSplits } from "./data-fetch.js";
+import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSplits } from "./data-fetch.js";
 
 let volumeParentId = null;
 const volumeParentStack = [];
@@ -153,35 +153,6 @@ function showVolumeChartComingSoonToast() {
     el.setAttribute("aria-hidden", "true");
     volumeChartToastTimer = null;
   }, VOLUME_CHART_TOAST_MS);
-}
-
-function formatSummaryNumber(value) {
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value);
-}
-
-async function loadMetricsSummary() {
-  const section = document.getElementById("metrics-summary");
-  const inactivityEl = document.getElementById("metrics-inactivity");
-  const liftedEl = document.getElementById("metrics-total-lifted");
-  if (!section || !inactivityEl || !liftedEl) return;
-
-  try {
-    const data = await fetchHomeSummary();
-    section.hidden = false;
-    if (data.days_since_last_workout == null) {
-      inactivityEl.textContent = "No workouts logged yet.";
-    } else if (data.days_since_last_workout === 0) {
-      inactivityEl.textContent = "You hit the gym today.";
-    } else if (data.days_since_last_workout === 1) {
-      inactivityEl.textContent = "You haven't been to the gym in 1 day.";
-    } else {
-      inactivityEl.textContent = `You haven't been to the gym in ${data.days_since_last_workout} days.`;
-    }
-    const converted = convertKgToPreferred(data.total_volume_kg, preferredUnit);
-    liftedEl.textContent = `${formatSummaryNumber(converted)} ${unitSuffix(preferredUnit)} lifted until now`;
-  } catch {
-    section.hidden = true;
-  }
 }
 
 function onDateChange() {
@@ -515,7 +486,6 @@ async function reloadActiveTab() {
 
 window.addEventListener("preferred-unit-changed", async () => {
   await loadPreferredUnit();
-  await loadMetricsSummary();
   await reloadActiveTab();
 });
 
@@ -523,7 +493,6 @@ const defaultTab =
   document.querySelector(".chart-tab.active")?.dataset.tab || "favourites";
 void (async () => {
   await loadPreferredUnit();
-  await loadMetricsSummary();
   if (defaultTab === "favourites") loadFavExercisesChart();
   if (defaultTab === "volume") loadVolumeTable();
   if (defaultTab === "splits") loadWorkoutSplitsChart();

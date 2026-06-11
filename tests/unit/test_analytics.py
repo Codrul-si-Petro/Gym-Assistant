@@ -28,6 +28,49 @@ def test_total_volume_authenticated_returns_200(authenticated_client):
     assert "results" in response.data
 
 
+def test_rest_days_authenticated_returns_200(authenticated_client):
+    response = authenticated_client.get("/api/v1/rest-days", format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert "results" in response.data
+    assert "count" in response.data
+
+
+def test_total_volume_daily_requires_exercise_id(authenticated_client):
+    response = authenticated_client.get("/api/v1/total-volume-daily", format="json")
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_total_volume_daily_returns_200(authenticated_client):
+    response = authenticated_client.get("/api/v1/total-volume-daily", {"exercise_id": 1}, format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert "results" in response.data
+    assert isinstance(response.data["results"], list)
+
+
+def test_workout_splits_returns_200(authenticated_client):
+    response = authenticated_client.get("/api/v1/workout-splits", format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert "results" in response.data
+    assert isinstance(response.data["results"], list)
+
+
+def test_gym_weekdays_returns_200(authenticated_client):
+    response = authenticated_client.get("/api/v1/gym-weekdays", format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert "results" in response.data
+    assert isinstance(response.data["results"], list)
+
+
+def test_home_summary_returns_200(authenticated_client):
+    response = authenticated_client.get("/api/v1/home-summary", format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert set(response.data.keys()) == {
+        "days_since_last_workout",
+        "total_volume_kg",
+        "total_volume_lbs",
+    }
+
+
 def test_total_volume_with_parent_id_returns_results(authenticated_client):
     response = authenticated_client.get(
         "/api/v1/total-volume",

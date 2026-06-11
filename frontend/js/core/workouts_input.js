@@ -223,13 +223,21 @@ function loadWorkoutNumber(options) {
 
 function setDefaultDate() {
     var dateInput = document.getElementById("date");
-    if (dateInput && !dateInput.value) {
-        dateInput.value = new Date().toISOString().slice(0, 10);
+    if (!dateInput) return;
+    var today = new Date().toISOString().slice(0, 10);
+    dateInput.max = today;
+    if (!dateInput.value) {
+        dateInput.value = today;
     }
 }
 
 function getPayload() {
     var dateVal = document.getElementById("date").value;
+    var today = new Date().toISOString().slice(0, 10);
+    if (dateVal > today) {
+        showMessage("Workout date cannot be in the future.", "error");
+        return null;
+    }
     var exerciseName = (document.getElementById("exercise_name").value || "").trim();
     var attachmentName = (document.getElementById("attachment_name").value || "").trim() || "None";
     var equipmentName = (document.getElementById("equipment_name").value || "").trim() || "None";
@@ -263,12 +271,15 @@ function onSubmit(e) {
         showMessage("Please enter a workout split before submitting.", "error");
         return;
     }
+    var payload = getPayload();
+    if (!payload) return;
+
     var btn = document.getElementById("submit-btn");
     btn.disabled = true;
     fetch(API_BASE + "/api/workouts/", {
         method: "POST",
         headers: headers,
-        body: JSON.stringify(getPayload()),
+        body: JSON.stringify(payload),
     })
         .then(function (res) {
             return res.json().then(function (data) {

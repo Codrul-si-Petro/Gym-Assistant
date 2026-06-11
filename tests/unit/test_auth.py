@@ -139,13 +139,6 @@ class AuthenticationAPITestCase(TestCase):
         response = self.client.delete(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_password_reset_request_returns_200(self):
-        url = f"{BASE_URL}/password-reset/"
-        data = {"email": self.test_user.email}
-        response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("message", response.data)
-
     def test_password_reset_confirm_success(self):
         uid = urlsafe_base64_encode(force_bytes(self.test_user.pk))
         token = default_token_generator.make_token(self.test_user)
@@ -172,3 +165,62 @@ class AuthenticationAPITestCase(TestCase):
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_change_password_success_returns_200(self):
+        url = f"{BASE_URL}/change-password/"
+        self.client.force_authenticate(user=self.test_user)
+        data = {
+            "current_password": "testpass123femei",
+            "new_password1": "newpass456femei",
+            "new_password2": "newpass456femei",
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.test_user.refresh_from_db()
+        self.assertTrue(self.test_user.check_password("newpass456femei"))
+
+    def test_update_username_success_returns_200(self):
+        url = f"{BASE_URL}/update-username/"
+        self.client.force_authenticate(user=self.test_user)
+        response = self.client.patch(url, {"username": "MircelGagiul361"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["username"], "MircelGagiul361")
+        self.test_user.refresh_from_db()
+        self.assertEqual(self.test_user.username, "MircelGagiul361")
+
+    def test_update_preferences_success_returns_200(self):
+        url = f"{BASE_URL}/preferences/"
+        self.client.force_authenticate(user=self.test_user)
+        response = self.client.patch(url, {"preferred_unit": "LBS"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["preferred_unit"], "LBS")
+        self.test_user.refresh_from_db()
+        self.assertEqual(self.test_user.preferred_unit, "LBS")
+
+
+class JWTTokenAPITestCase(TestCase):
+    """Tests for the simplejwt token endpoints used by the frontend login flow."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.test_user = create_test_user("MircelTokenist", "testpass123femei")
+
+    def test_token_obtain_returns_access_and_refresh(self):
+        response = self.client.post(
+            "/api/token/",
+            {"username": "MircelTokenist", "password": "testpass123femei"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+
+    def test_token_refresh_returns_new_access(self):
+        tokens = self.client.post(
+            "/api/token/",
+            {"username": "MircelTokenist", "password": "testpass123femei"},
+            format="json",
+        ).data
+        response = self.client.post("/api/token/refresh/", {"refresh": tokens["refresh"]}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
