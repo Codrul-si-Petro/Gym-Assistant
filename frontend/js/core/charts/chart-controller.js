@@ -21,6 +21,16 @@ let volumeDailySelection = null; // { exerciseId: number, exerciseName: string }
 let volumeDailyChartType = "line"; // "line" | "bar"
 let preferredUnit = getPreferredUnit();
 
+const dateFrom = document.getElementById("start_date");
+const dateTo = document.getElementById("end_date");
+
+function getDateRange() {
+  return {
+    start: dateFrom?.value || "",
+    end: dateTo?.value || "",
+  };
+}
+
 function updateVolumeHeadingUnit() {
   const heading = document.querySelector(".volume-col-vol");
   if (!heading) return;
@@ -52,13 +62,14 @@ async function reloadVolumeDailyChart() {
   const vmsg = document.getElementById("volume-daily-chart-msg");
   skel?.classList.remove("hidden");
   if (inner) inner.style.display = "none";
-  destroyChart();
+  destroyChart("volume-daily-canvas");
   if (vmsg) vmsg.textContent = "";
+  const { start, end } = getDateRange();
   try {
     const { results: daily = [] } = await fetchTotalVolumeDaily(
       volumeDailySelection.exerciseId,
-      dateFrom?.value,
-      dateTo?.value
+      start,
+      end
     );
     skel?.classList.add("hidden");
     if (!daily.length) {
@@ -76,7 +87,7 @@ async function reloadVolumeDailyChart() {
   } catch (e) {
     skel?.classList.add("hidden");
     if (vmsg) vmsg.textContent = "Failed to load daily volume.";
-    destroyChart();
+    destroyChart("volume-daily-canvas");
     if (inner) inner.style.display = "none";
     if (String(e.message || "").includes("401")) {
       window.location.replace(BASE + "/pages/auth/login.html");
@@ -216,14 +227,16 @@ async function loadFavExercisesChart() {
   setVolumeMainView("table");
   if (skeleton) skeleton.classList.remove("hidden");
   if (chartInner) chartInner.style.display = "none";
+  destroyChart("fav-exercises-canvas");
 
+  const { start, end } = getDateRange();
   try {
-    const data = await fetchFavExercises(dateFrom.value, dateTo.value);
+    const data = await fetchFavExercises(start, end);
     const results = data?.results || [];
 
     if (results.length === 0) {
       if (msg) msg.textContent = "No data to display for this range.";
-      destroyChart();
+      destroyChart("fav-exercises-canvas");
       if (skeleton) skeleton.classList.add("hidden");
       return;
     }
@@ -238,7 +251,7 @@ async function loadFavExercisesChart() {
     renderFavExercisesChart(labels, values, fullNames, ranks);
   } catch (err) {
     if (msg) msg.textContent = "Failed to load chart data.";
-    destroyChart();
+    destroyChart("fav-exercises-canvas");
     if (skeleton) skeleton.classList.add("hidden");
 
     if (String(err.message || "").includes("401")) {
@@ -257,11 +270,12 @@ async function loadVolumeTable() {
   setVolumeTableVisible(false);
 
   updateVolumeToolbar();
+  const { start, end } = getDateRange();
 
   try {
     const data = await fetchTotalVolume(
-      dateFrom.value,
-      dateTo.value,
+      start,
+      end,
       volumeParentId
     );
     const results = data?.results || [];
@@ -305,13 +319,13 @@ async function loadVolumeTable() {
         // Daily skeleton while API loads; hide canvas until we have data
         skel?.classList.remove("hidden");
         if (inner) inner.style.display = "none";
-        destroyChart();
+        destroyChart("volume-daily-canvas");
 
         try {
           const { results: daily = [] } = await fetchTotalVolumeDaily(
             row.exercise_id,
-            dateFrom?.value,
-            dateTo?.value
+            start,
+            end
           );
           skel?.classList.add("hidden");
 
@@ -339,7 +353,7 @@ async function loadVolumeTable() {
         } catch (e) {
           skel?.classList.add("hidden");
           if (vmsg) vmsg.textContent = "Failed to load daily volume.";
-          destroyChart();
+          destroyChart("volume-daily-canvas");
           volumeDailySelection = null;
           if (inner) inner.style.display = "none";
           if (String(e.message || "").includes("401")) {
@@ -367,13 +381,15 @@ async function loadWorkoutSplitsChart() {
   if (msg) msg.textContent = "";
   if (skeleton) skeleton.classList.remove("hidden");
   if (chartInner) chartInner.style.display = "none";
+  destroyChart("workout-splits-canvas");
 
+  const { start, end } = getDateRange();
   try {
-    const data = await fetchWorkoutSplits(dateFrom.value, dateTo.value);
+    const data = await fetchWorkoutSplits(start, end);
     const results = data?.results || [];
     if (!results.length) {
       if (msg) msg.textContent = "No split data for this range.";
-      destroyChart();
+      destroyChart("workout-splits-canvas");
       if (skeleton) skeleton.classList.add("hidden");
       return;
     }
@@ -385,7 +401,7 @@ async function loadWorkoutSplitsChart() {
     );
   } catch (err) {
     if (msg) msg.textContent = "Failed to load split data.";
-    destroyChart();
+    destroyChart("workout-splits-canvas");
     if (skeleton) skeleton.classList.add("hidden");
     if (String(err.message || "").includes("401")) {
       window.location.replace(BASE + "/pages/auth/login.html");
@@ -400,13 +416,15 @@ async function loadGymWeekdaysChart() {
   if (msg) msg.textContent = "";
   if (skeleton) skeleton.classList.remove("hidden");
   if (chartInner) chartInner.style.display = "none";
+  destroyChart("gym-weekdays-canvas");
 
+  const { start, end } = getDateRange();
   try {
-    const data = await fetchGymWeekdays(dateFrom.value, dateTo.value);
+    const data = await fetchGymWeekdays(start, end);
     const results = data?.results || [];
     if (!results.length) {
       if (msg) msg.textContent = "No weekday data for this range.";
-      destroyChart();
+      destroyChart("gym-weekdays-canvas");
       if (skeleton) skeleton.classList.add("hidden");
       return;
     }
@@ -418,7 +436,7 @@ async function loadGymWeekdaysChart() {
     );
   } catch (err) {
     if (msg) msg.textContent = "Failed to load weekday data.";
-    destroyChart();
+    destroyChart("gym-weekdays-canvas");
     if (skeleton) skeleton.classList.add("hidden");
     if (String(err.message || "").includes("401")) {
       window.location.replace(BASE + "/pages/auth/login.html");
@@ -426,8 +444,6 @@ async function loadGymWeekdaysChart() {
   }
 }
 
-const dateFrom = document.getElementById("start_date");
-const dateTo = document.getElementById("end_date");
 if (dateFrom) {
   dateFrom.setAttribute("max", TODAY);
   dateFrom.addEventListener("change", onDateChange);
@@ -455,7 +471,7 @@ document.getElementById("volume-daily-close")?.addEventListener("click", () => {
   if (inner) inner.style.display = "none";
   document.getElementById("volume-daily-chart-msg") &&
     (document.getElementById("volume-daily-chart-msg").textContent = "");
-  destroyChart();
+  destroyChart("volume-daily-canvas");
   volumeDailySelection = null;
   setVolumeMainView("table");
   const tableInner = document.getElementById("volume-table-inner");
@@ -485,6 +501,20 @@ if (chartExId && placeholder) {
     (chartName || "exercise #" + chartExId) +
     " — hook up timeseries API next.";
 }
+
+async function reloadActiveTab() {
+  const active = document.querySelector(".chart-tab.active")?.dataset.tab || "favourites";
+  if (active === "favourites") await loadFavExercisesChart();
+  if (active === "volume") await loadVolumeTable();
+  if (active === "splits") await loadWorkoutSplitsChart();
+  if (active === "weekdays") await loadGymWeekdaysChart();
+}
+
+window.addEventListener("preferred-unit-changed", async () => {
+  await loadPreferredUnit();
+  await loadMetricsSummary();
+  await reloadActiveTab();
+});
 
 const defaultTab =
   document.querySelector(".chart-tab.active")?.dataset.tab || "favourites";

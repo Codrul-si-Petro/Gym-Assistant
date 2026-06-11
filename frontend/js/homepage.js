@@ -58,11 +58,9 @@ async function loadHomeSummary() {
 
 function updateHomeAuthState() {
   const loggedIn = !!localStorage.getItem("access_token");
-  const guestCtas = document.getElementById("guest-ctas");
   const authenticatedLinks = document.getElementById("authenticated-links");
   const statsEl = document.getElementById("home-stats");
 
-  if (guestCtas) guestCtas.style.display = loggedIn ? "none" : "flex";
   if (authenticatedLinks) authenticatedLinks.style.display = loggedIn ? "flex" : "none";
   if (statsEl) statsEl.hidden = !loggedIn;
 

@@ -63,7 +63,6 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class UpdateUsernameSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, min_length=3, max_length=150)
-    current_password = serializers.CharField(required=True, write_only=True)
 
 
 class UpdatePreferencesSerializer(serializers.Serializer):

@@ -193,12 +193,12 @@
 
 /* Highlight name on hover; chevron keeps accent color (see below). */
 .volume-exercise-drill:hover .volume-exercise-drill-label {
-  color: #22d3ee;
+  color: var(--accent-secondary);
 }
 
 /* Trailing “>” for exercises that expand to children. */
 .volume-exercise-drill-chevron {
-  color: #22d3ee;
+  color: var(--accent-secondary);
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -231,7 +231,7 @@
   border: 1px dashed #3f3f46;
   border-radius: 10px;
   background: linear-gradient(180deg, #1a1a1f 0%, #141418 100%);
-  color: #22d3ee;
+  color: var(--accent-secondary);
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
@@ -239,13 +239,13 @@
 }
 
 .volume-minichart-placeholder:hover {
-  border-color: #22d3ee;
-  background: #1c2124;
-  color: #67e8f9;
+  border-color: var(--accent-secondary);
+  background: var(--bg-hover);
+  color: var(--accent);
 }
 
 .volume-minichart-placeholder:focus-visible {
-  outline: 2px solid #22d3ee;
+  outline: 2px solid var(--accent-secondary);
   outline-offset: 2px;
 }
 
@@ -257,7 +257,7 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  color: #22d3ee;
+  color: var(--accent-secondary);
   white-space: nowrap;
 }
 

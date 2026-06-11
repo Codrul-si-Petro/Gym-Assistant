@@ -90,6 +90,6 @@
 }
 
 .volume-daily-type-btn.is-active {
-  border-color: #22d3ee;
+  border-color: var(--accent-secondary);
   color: #e4e4e7;
 }

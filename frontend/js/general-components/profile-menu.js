@@ -59,13 +59,17 @@ function resolveCorePath(filename) {
   return `pages/core/${filename}`;
 }
 
+function resolveAuthPath(filename) {
+  if (window.location.pathname.includes("/pages/core/")) return `../auth/${filename}`;
+  if (window.location.pathname.includes("/pages/auth/")) return filename;
+  return `pages/auth/${filename}`;
+}
+
 function buildAuthLinks(container) {
-  const inSubdir = window.location.pathname.includes("/pages/");
-  const prefix = inSubdir ? "" : "pages/auth/";
   container.innerHTML = `
-    <div class="auth-links">
-      <a href="${prefix}login.html">Login</a>
-      <a href="${prefix}signup.html">Sign up</a>
+    <div class="auth-links auth-links--cta">
+      <a href="${resolveAuthPath("signup.html")}" class="cta-button">Get started</a>
+      <a href="${resolveAuthPath("login.html")}" class="cta-button cta-button--ghost">Log in</a>
     </div>
   `;
 }

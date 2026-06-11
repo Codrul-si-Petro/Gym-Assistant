@@ -1,6 +1,23 @@
-// Keep a single chart instance so we can destroy before redrawing
+// Keep chart instances per canvas so tabs do not clobber each other.
 
-let chartInstance = null;
+const chartInstances = new Map();
+
+function getCanvasId(canvas) {
+  return canvas?.id || "default";
+}
+
+export function destroyChart(canvasId) {
+  if (canvasId) {
+    const instance = chartInstances.get(canvasId);
+    if (instance) {
+      instance.destroy();
+      chartInstances.delete(canvasId);
+    }
+    return;
+  }
+  chartInstances.forEach((instance) => instance.destroy());
+  chartInstances.clear();
+}
 
 function getCssVar(name, fallback) {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -9,22 +26,15 @@ function getCssVar(name, fallback) {
 
 function getChartPalette() {
   return [
-    "rgba(34, 211, 238, 0.75)",
-    "rgba(168, 85, 247, 0.75)",
-    "rgba(251, 146, 60, 0.75)",
-    "rgba(52, 211, 153, 0.75)",
-    "rgba(251, 113, 133, 0.75)",
-    "rgba(96, 165, 250, 0.75)",
-    "rgba(250, 204, 21, 0.75)",
+    "rgba(139, 92, 246, 0.75)",
+    "rgba(217, 70, 239, 0.75)",
+    "rgba(99, 102, 241, 0.75)",
+    "rgba(192, 132, 252, 0.75)",
+    "rgba(236, 72, 153, 0.75)",
+    "rgba(124, 58, 237, 0.75)",
+    "rgba(167, 139, 250, 0.75)",
     "rgba(244, 114, 182, 0.75)",
   ];
-}
-
-export function destroyChart() {
-  if (chartInstance) {
-    chartInstance.destroy();
-    chartInstance = null;
-  }
 }
 
 export function shortLabel(name, maxLen = 14) {
@@ -43,9 +53,9 @@ function toDisplayUnit(kgValue, unit) {
 
 
 export function renderFavExercisesChart(labels, values, fullNames, ranks){
-  destroyChart();
   const canvas = document.getElementById("fav-exercises-canvas");
   if (!canvas) return;
+  destroyChart(getCanvasId(canvas));
     var n = values.length;
   
     // Make the chart container tall enough so the scroll wrapper can scroll vertically
@@ -93,7 +103,7 @@ export function renderFavExercisesChart(labels, values, fullNames, ranks){
     var plugins = [];
     if (typeof ChartDataLabels !== "undefined") plugins.push(ChartDataLabels);
   
-    chartInstance = new Chart(ctx, {
+    chartInstances.set(getCanvasId(canvas), new Chart(ctx, {
       type: "bar",
       data: {
         labels: ranks,
@@ -161,7 +171,7 @@ export function renderFavExercisesChart(labels, values, fullNames, ranks){
         },
       },
       plugins: plugins,
-    });
+    }));
 }
 
 export function formatVolume(n, unit = "KG") {
@@ -237,9 +247,9 @@ export function renderVolumeTable(results, unit, handlers) {
 }
 
 export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, unit = "KG") {
-  destroyChart();
   const canvas = document.getElementById("volume-daily-canvas");
   if (!canvas) return;
+  destroyChart(getCanvasId(canvas));
 
   const box = document.getElementById("volume-daily-chart-inner");
   const sizeEl = document.getElementById("volume-daily-chart-size");
@@ -258,10 +268,10 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, 
 
   const t = type || "line";
   const plugins = typeof ChartDataLabels !== "undefined" ? [ChartDataLabels] : [];
-  const accent = getCssVar("--accent-secondary", "#22d3ee");
-  const accentSoft = "rgba(34, 211, 238, 0.2)";
+  const accent = getCssVar("--accent-secondary", "#a78bfa");
+  const accentSoft = "rgba(139, 92, 246, 0.2)";
 
-  chartInstance = new Chart(canvas.getContext("2d"), {
+  chartInstances.set(getCanvasId(canvas), new Chart(canvas.getContext("2d"), {
     type: t,
     data: {
       labels,
@@ -307,15 +317,15 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, 
       },
     },
     plugins,
-  });
+  }));
 }
 
 export function renderWorkoutSplitsChart(labels, values) {
-  destroyChart();
   const canvas = document.getElementById("workout-splits-canvas");
   if (!canvas) return;
+  destroyChart(getCanvasId(canvas));
   const palette = getChartPalette();
-  chartInstance = new Chart(canvas.getContext("2d"), {
+  chartInstances.set(getCanvasId(canvas), new Chart(canvas.getContext("2d"), {
     type: "doughnut",
     data: {
       labels,
@@ -342,22 +352,22 @@ export function renderWorkoutSplitsChart(labels, values) {
         },
       },
     },
-  });
+  }));
 }
 
 export function renderGymWeekdaysChart(labels, values) {
-  destroyChart();
   const canvas = document.getElementById("gym-weekdays-canvas");
   if (!canvas) return;
-  const accent = getCssVar("--accent-secondary", "#22d3ee");
-  chartInstance = new Chart(canvas.getContext("2d"), {
+  destroyChart(getCanvasId(canvas));
+  const accent = getCssVar("--accent-secondary", "#a78bfa");
+  chartInstances.set(getCanvasId(canvas), new Chart(canvas.getContext("2d"), {
     type: "bar",
     data: {
       labels,
       datasets: [{
         label: "Gym days",
         data: values,
-        backgroundColor: "rgba(34, 211, 238, 0.75)",
+        backgroundColor: "rgba(139, 92, 246, 0.75)",
         borderColor: accent,
         borderWidth: 1,
         borderRadius: 10,
@@ -382,5 +392,5 @@ export function renderGymWeekdaysChart(labels, values) {
         },
       },
     },
-  });
+  }));
 }

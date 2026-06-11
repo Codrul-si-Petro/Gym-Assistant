@@ -1,5 +1,9 @@
-// Use localhost/127 if running locally, otherwise use current host
-if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+// Use localhost/127/::1 if running locally, otherwise use current host
+if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "::1"
+) {
     API_BASE = "http://127.0.0.1:8000";
 } else {
     API_BASE = "https://api.gym-assistant.app";
@@ -58,12 +62,9 @@ function showMessage(text, type, duration) {
     el.style.opacity = "";
     el.style.transition = "";
 
-    if (type !== "success") {
-        return;
-    }
-
+    var defaultDuration = type === "success" ? DEFAULT_SUCCESS_MS : DEFAULT_SUCCESS_MS;
     var effectiveDuration = Math.max(
-        duration != null ? duration : DEFAULT_SUCCESS_MS,
+        duration != null ? duration : defaultDuration,
         MESSAGE_MIN_MS
     );
 
@@ -92,19 +93,62 @@ function clearMessage() {
     el.style.transition = "";
 }
 
+var FIELD_LABELS = {
+    repetitions: "Reps",
+    set_number: "Set",
+    load: "Load",
+    exercise: "Exercise",
+    equipment: "Equipment",
+    attachment: "Attachment",
+    workout_split: "Split",
+    set_type: "Set type",
+    unit: "Unit",
+    date_id: "Date",
+};
+
+var WORKOUT_ERROR_MESSAGES = {
+    repetitions: {
+        "Ensure this value is greater than or equal to 1.": "Reps must be at least 1.",
+        "This field is required.": "Reps are required.",
+    },
+    set_number: {
+        "Ensure this value is greater than or equal to 1.": "Set number must be at least 1.",
+        "This field is required.": "Set number is required.",
+    },
+    load: {
+        "This field is required.": "Load is required.",
+    },
+};
+
+function humanizeWorkoutError(key, message) {
+    var mapped = WORKOUT_ERROR_MESSAGES[key] && WORKOUT_ERROR_MESSAGES[key][message];
+    if (mapped) return mapped;
+    var label = FIELD_LABELS[key] || key.replace(/_/g, " ");
+    if (/greater than or equal to 1/i.test(message)) {
+        return label + " must be at least 1.";
+    }
+    if (/required/i.test(message)) {
+        return label + " is required.";
+    }
+    return label + ": " + message;
+}
+
 function formatApiErrors(data) {
     if (!data || typeof data !== "object") return "Something went wrong.";
     var parts = [];
     if (Array.isArray(data)) {
         parts = data.map(String);
     } else if (data.non_field_errors) {
-        parts = data.non_field_errors;
+        parts = data.non_field_errors.map(String);
+    } else if (data.detail) {
+        parts = [String(data.detail)];
     } else {
         Object.keys(data).forEach(function (key) {
             var val = data[key];
-            var label = key.replace(/_/g, " ");
-            if (Array.isArray(val)) parts.push(label + ": " + val.join(" "));
-            else parts.push(label + ": " + String(val));
+            var messages = Array.isArray(val) ? val : [String(val)];
+            messages.forEach(function (msg) {
+                parts.push(humanizeWorkoutError(key, msg));
+            });
         });
     }
     return parts.length ? parts.join(" ") : "Something went wrong.";
@@ -216,7 +260,7 @@ function onSubmit(e) {
     }
     var split = (document.getElementById("workout_split").value || "").trim();
     if (!split) {
-        showMessage("Please select a workout split before submitting.", "error");
+        showMessage("Please enter a workout split before submitting.", "error");
         return;
     }
     var btn = document.getElementById("submit-btn");

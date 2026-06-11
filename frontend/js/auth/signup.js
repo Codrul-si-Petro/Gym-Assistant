@@ -1,8 +1,12 @@
-// Use localhost/127 if running locally, otherwise use current host
-if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+// Use localhost/127/::1 if running locally, otherwise use current host
+if (
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "::1"
+) {
   API_BASE = "http://127.0.0.1:8000"; // local backend
 } else {
-  API_BASE = 'https://gym-assistant.app';
+  API_BASE = "https://api.gym-assistant.app";
 }
 
 document.getElementById("signupForm").addEventListener("submit", async (e) => {

@@ -335,10 +335,6 @@ def api_update_username(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     user = request.user
-    current_password = serializer.validated_data["current_password"]
-    if not user.check_password(current_password):
-        return Response({"current_password": ["Incorrect password."]}, status=status.HTTP_400_BAD_REQUEST)
-
     new_username = serializer.validated_data["username"].strip()
     if User.objects.filter(username=new_username).exclude(pk=user.pk).exists():
         return Response({"username": ["This username is already taken."]}, status=status.HTTP_400_BAD_REQUEST)

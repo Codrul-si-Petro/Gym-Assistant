@@ -44,9 +44,17 @@ body {
 }
 
 .message.error {
-    background: rgba(248, 113, 113, 0.12);
-    color: var(--danger);
-    border: 1px solid rgba(248, 113, 113, 0.3);
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    min-width: min(90vw, 320px);
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    background: rgba(127, 29, 29, 0.95);
+    color: #fecaca;
+    border: 1px solid rgba(248, 113, 113, 0.5);
 }
 
 .message:empty {

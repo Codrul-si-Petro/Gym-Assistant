@@ -1,5 +1,4 @@
 import { API_BASE, API_PREFIX } from "../config.js";
-import { getPreferredUnit, setPreferredUnit } from "../user-preferences.js";
 
 function getAuthHeaders() {
   const token = localStorage.getItem("access_token");
@@ -18,13 +17,34 @@ function showMessage(text, type = "") {
   el.className = `account-msg ${type}`.trim();
 }
 
+const ERROR_MESSAGES = {
+  current_password: {
+    "Incorrect password.": "You entered an incorrect password. Please try again",
+  },
+  username: {
+    "This username is already taken.": "This username is already taken. Please choose another.",
+  },
+  new_password2: {
+    "Passwords do not match.": "The new passwords do not match. Please try again.",
+  },
+};
+
+function humanizeFieldError(key, message) {
+  const mapped = ERROR_MESSAGES[key]?.[message];
+  if (mapped) return mapped;
+  if (key === "current_password" && /incorrect/i.test(message)) {
+    return "You entered an incorrect password. Please try again";
+  }
+  return message;
+}
+
 function formatErrors(data) {
   if (!data || typeof data !== "object") return "Something went wrong.";
   const parts = [];
   Object.keys(data).forEach((key) => {
     const val = data[key];
-    if (Array.isArray(val)) parts.push(`${key}: ${val.join(" ")}`);
-    else parts.push(`${key}: ${String(val)}`);
+    const messages = Array.isArray(val) ? val : [String(val)];
+    messages.forEach((msg) => parts.push(humanizeFieldError(key, msg)));
   });
   return parts.length ? parts.join(" ") : "Something went wrong.";
 }
@@ -40,7 +60,6 @@ async function submitUsername(event) {
   const form = event.target;
   const payload = {
     username: form.username.value.trim(),
-    current_password: form.current_password.value,
   };
 
   const res = await fetch(`${API_BASE}${API_PREFIX}auth/update-username/`, {
@@ -54,7 +73,7 @@ async function submitUsername(event) {
     return;
   }
   showMessage(data.message || "Username updated.", "success");
-  form.current_password.value = "";
+  form.reset();
 }
 
 async function submitPassword(event) {
@@ -86,51 +105,5 @@ async function submitPassword(event) {
   form.reset();
 }
 
-async function loadPreferences() {
-  const headers = getAuthHeaders();
-  const select = document.getElementById("preferred-unit");
-  if (!headers || !select) return;
-
-  try {
-    const res = await fetch(`${API_BASE}${API_PREFIX}auth/current-user/`, { headers });
-    if (!res.ok) return;
-    const data = await res.json();
-    const unit = data?.preferred_unit || getPreferredUnit();
-    select.value = setPreferredUnit(unit);
-  } catch {
-    select.value = getPreferredUnit();
-  }
-}
-
-async function submitPreferences(event) {
-  event.preventDefault();
-  const headers = getAuthHeaders();
-  if (!headers) {
-    showMessage("Please log in first.", "error");
-    return;
-  }
-
-  const form = event.target;
-  const payload = {
-    preferred_unit: form.preferred_unit.value,
-  };
-
-  const res = await fetch(`${API_BASE}${API_PREFIX}auth/preferences/`, {
-    method: "PATCH",
-    headers,
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    showMessage(formatErrors(data), "error");
-    return;
-  }
-
-  setPreferredUnit(data.preferred_unit || payload.preferred_unit);
-  showMessage("Display preference updated.", "success");
-}
-
 document.getElementById("username-form")?.addEventListener("submit", submitUsername);
-document.getElementById("preferences-form")?.addEventListener("submit", submitPreferences);
 document.getElementById("password-form")?.addEventListener("submit", submitPassword);
-window.addEventListener("DOMContentLoaded", loadPreferences);
