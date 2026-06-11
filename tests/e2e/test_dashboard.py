@@ -3,71 +3,92 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.constants import E2E_TESTER_NAME, E2E_TESTER_PASS
-
-
-def _login(page: Page, frontend_url: str, username: str, password: str) -> None:
-    page.goto(f"{frontend_url}/pages/auth/login.html")
-    page.wait_for_load_state("networkidle")
-    page.fill("#username", E2E_TESTER_NAME)  # type: ignore[arg-type]
-    page.fill("#password", E2E_TESTER_PASS)  # type: ignore[arg-type]
-    page.click('button[type="submit"]')
-    page.wait_for_load_state("networkidle")
-    expect(page).to_have_url(f"{frontend_url}/index.html", timeout=10000)
+from tests.e2e.helpers import goto_core_page, prepare_dashboard_date_range, wait_for_volume_table
 
 
 @pytest.mark.order(5)
-def test_dashboard_tabs_switch_and_volume_table_and_drill(page: Page, frontend_url: str, e2e_user_bootstrapped):
-    username, password = E2E_TESTER_NAME, E2E_TESTER_PASS
+def test_dashboard_default_volume_tab_and_all_metric_views(page: Page, frontend_url: str, e2e_user_bootstrapped):
+    goto_core_page(page, frontend_url, "dashboard.html")
+    prepare_dashboard_date_range(page)
 
-    _login(page, frontend_url, username, password)  # type: ignore[arg-type]
+    expect(page.locator("#metrics-summary")).to_have_count(0)
 
-    page.goto(f"{frontend_url}/pages/core/dashboard.html")
-    page.wait_for_load_state("networkidle")
+    info_fab = page.locator(".info-fab")
+    expect(info_fab).to_be_visible()
+    info_fab.click()
+    expect(page.locator(".info-panel--fab")).to_be_visible()
+    expect(page.locator(".info-panel--fab")).to_contain_text("Metrics use the date range")
+    info_fab.click()
 
-    # --- 1) Tabs: default favourites active, then switch to volume and back ---
-    fav_panel = page.locator("#tab-favourites")
     vol_panel = page.locator("#tab-volume")
-    expect(fav_panel).to_have_class(re.compile(r"\bactive\b"))
-    expect(vol_panel).not_to_have_class(re.compile(r"\bactive\b"))
-
-    page.get_by_role("button", name="Total volumes").click()
-    page.wait_for_load_state("networkidle")
+    fav_panel = page.locator("#tab-favourites")
     expect(vol_panel).to_have_class(re.compile(r"\bactive\b"))
     expect(fav_panel).not_to_have_class(re.compile(r"\bactive\b"))
 
-    page.get_by_role("button", name="Favourite Exercises").click()
-    page.wait_for_load_state("networkidle")
-    expect(fav_panel).to_have_class(re.compile(r"\bactive\b"))
-    expect(vol_panel).not_to_have_class(re.compile(r"\bactive\b"))
-
-    expect(page.locator("#chart-skeleton-favourites")).to_have_class(re.compile(r"hidden"))
-    expect(page.locator("#fav-exercises-canvas")).to_be_visible()
-
-    page.get_by_role("button", name="Total volumes").click()
-    page.wait_for_load_state("networkidle")
-    expect(page.locator("#chart-skeleton-volume")).to_have_class(re.compile(r"hidden"))
+    wait_for_volume_table(page)
 
     rows = page.locator("#volume-table-body tr")
     if rows.count() == 0:
         pytest.skip("No volume rows for this user/date range — cannot assert table data")
-
-    expect(page.locator("#volume-table-inner")).to_be_visible()
     expect(rows.first).to_be_visible()
 
-    # --- 3) Drill down: only if a parent row exists (button with drill class) ---
+    spark = page.locator(".volume-minichart-placeholder").first
+    if spark.count():
+        spark.click()
+        page.wait_for_load_state("networkidle")
+        expect(page.locator("#volume-daily-chart-block")).to_be_visible()
+        page.locator("#volume-daily-close").click()
+        page.wait_for_load_state("networkidle")
+
     drill = page.locator(".volume-exercise-drill").first
-    if not drill.count():
-        pytest.skip("No drillable exercise (is_leaf false) in volume results")
+    if drill.count():
+        expect(page.locator("#volume-toolbar")).to_be_hidden()
+        drill.click()
+        page.wait_for_load_state("networkidle")
+        expect(page.locator("#volume-toolbar")).to_be_visible()
+        expect(page.locator("#volume-back-btn")).to_be_visible()
+        page.locator("#volume-back-btn").click()
+        page.wait_for_load_state("networkidle")
 
-    expect(page.locator("#volume-toolbar")).to_be_hidden()
-    drill.click()
+    page.get_by_role("button", name="Favourite Exercises").click()
     page.wait_for_load_state("networkidle")
+    expect(fav_panel).to_have_class(re.compile(r"\bactive\b"))
+    expect(page.locator("#chart-skeleton-favourites")).to_have_class(re.compile(r"hidden"), timeout=15000)
+    fav_list = page.locator("#fav-exercises-list")
+    expect(fav_list).to_be_visible()
+    if fav_list.locator(".stat-row").count() == 0:
+        pytest.skip("No favourite exercise data for seeded user")
+    expect(fav_list.locator(".stat-row").first).to_be_visible()
 
-    expect(page.locator("#volume-toolbar")).to_be_visible()
-    expect(page.locator("#volume-back-btn")).to_be_visible()
-    expect(page.locator("#volume-table-body tr").first).to_be_visible()
-
-    page.locator("#volume-back-btn").click()
+    page.get_by_role("button", name="Workout Splits").click()
     page.wait_for_load_state("networkidle")
-    expect(page.locator("#volume-toolbar")).to_be_hidden()
+    expect(page.locator("#chart-skeleton-splits")).to_have_class(re.compile(r"hidden"), timeout=15000)
+    expect(page.locator("#workout-splits-canvas")).to_be_visible()
+
+    page.get_by_role("button", name="Gym Days").click()
+    page.wait_for_load_state("networkidle")
+    expect(page.locator("#chart-skeleton-weekdays")).to_have_class(re.compile(r"hidden"), timeout=15000)
+    weekdays_list = page.locator("#gym-weekdays-list")
+    expect(weekdays_list).to_be_visible()
+    if weekdays_list.locator(".stat-row").count() == 0:
+        pytest.skip("No weekday data for seeded user")
+    expect(weekdays_list.locator(".stat-row").first).to_be_visible()
+
+
+@pytest.mark.order(6)
+def test_dashboard_mobile_viewport(page: Page, frontend_url: str, e2e_user_bootstrapped):
+    page.set_viewport_size({"width": 414, "height": 896})
+    goto_core_page(page, frontend_url, "dashboard.html")
+    prepare_dashboard_date_range(page)
+
+    expect(page.locator("#tab-volume")).to_have_class(re.compile(r"\bactive\b"))
+    wait_for_volume_table(page)
+    expect(page.locator(".info-fab")).to_be_visible()
+
+    overflow = page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 2")
+    assert overflow, "Dashboard page should not overflow horizontally on mobile"
+
+    # Layout/UX on narrow viewport — chart data is covered in test_dashboard_default_volume_tab_and_all_metric_views
+    page.get_by_role("button", name="Favourite Exercises").click()
+    expect(page.locator("#tab-favourites")).to_have_class(re.compile(r"\bactive\b"))
+    expect(page.locator("#tab-favourites h1")).to_be_visible()

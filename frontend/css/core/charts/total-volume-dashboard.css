@@ -10,7 +10,7 @@
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0 0 12px;
-  color: #f4f4f5;
+  color: var(--text-primary);
 }
 
 /* .sr-only — visually hidden text kept for screen readers (e.g. “Open chart”). */
@@ -37,18 +37,18 @@
 /* Primary control to go up one level in the hierarchy. */
 .volume-back-btn {
   padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid #2a2a2e;
-  background: #16161a;
-  color: #e4e4e7;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
   font-size: 14px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .volume-back-btn:hover {
-  background: #1f1f24;
-  border-color: #3f3f46;
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
 }
 
 /* -----------------------------------------------------------------------------
@@ -71,7 +71,7 @@
 #chart-skeleton-volume .skeleton-bar {
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(90deg, #1e1e24 25%, #2a2a32 50%, #1e1e24 75%);
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border-subtle) 50%, var(--bg-hover) 75%);
   background-size: 200% 100%;
   animation: volume-shimmer 1.5s ease-in-out infinite;
 }
@@ -116,20 +116,31 @@
   font-size: 0.9rem;
   font-weight: 600;
   white-space: nowrap;
-  color: #a1a1aa;
-  background: #1a1a1e;
+  color: var(--text-secondary);
+  background: var(--bg-card);
   position: sticky;
   top: 0;
   z-index: 2;
-  box-shadow: 0 1px 0 0 #2a2a2e;
-  /* drop text-transform: uppercase if you want literal match to workout table */
+  box-shadow: 0 1px 0 0 var(--border-subtle);
+}
+
+.volume-table thead th.volume-col-rank {
+  text-align: right;
+}
+
+.volume-table thead th.volume-col-chart {
+  text-align: center;
+}
+
+.volume-table thead th.volume-col-vol {
+  text-align: right;
 }
 
 .volume-table tbody td {
   padding: 12px;
   vertical-align: middle;
-  border-bottom: 1px solid #27272a;
-  color: #f4f4f5;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
 }
 
 /* Remove double border after last row. */
@@ -139,7 +150,7 @@
 
 /* Subtle hover to show row boundaries on touch/desktop. */
 .volume-table tbody tr:hover td {
-  background: rgba(39, 39, 42, 0.35);
+  background: var(--bg-hover);
 }
 
 /* -----------------------------------------------------------------------------
@@ -149,7 +160,7 @@
   width: 2.25rem;
   text-align: right;
   font-variant-numeric: tabular-nums;
-  color: #71717a;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -173,7 +184,7 @@
   border: none;
   padding: 0;
   margin: 0;
-  color: #e4e4e7;
+  color: var(--text-primary);
   cursor: pointer;
   font: inherit;
   text-align: left;
@@ -182,12 +193,12 @@
 
 /* Highlight name on hover; chevron keeps accent color (see below). */
 .volume-exercise-drill:hover .volume-exercise-drill-label {
-  color: #22d3ee;
+  color: var(--accent-secondary);
 }
 
 /* Trailing “>” for exercises that expand to children. */
 .volume-exercise-drill-chevron {
-  color: #22d3ee;
+  color: var(--accent-secondary);
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -206,7 +217,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #71717a;
+  color: var(--text-muted);
 }
 
 /* Placeholder until real sparkline/canvas preview exists. */
@@ -217,10 +228,10 @@
   min-width: 44px;
   min-height: 44px;
   padding: 0 10px;
-  border: 1px dashed #3f3f46;
+  border: 1px dashed var(--border-strong);
   border-radius: 10px;
-  background: linear-gradient(180deg, #1a1a1f 0%, #141418 100%);
-  color: #22d3ee;
+  background: var(--bg-card);
+  color: var(--accent-secondary);
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
@@ -228,13 +239,13 @@
 }
 
 .volume-minichart-placeholder:hover {
-  border-color: #22d3ee;
-  background: #1c2124;
-  color: #67e8f9;
+  border-color: var(--accent-secondary);
+  background: var(--bg-hover);
+  color: var(--accent);
 }
 
 .volume-minichart-placeholder:focus-visible {
-  outline: 2px solid #22d3ee;
+  outline: 2px solid var(--accent-secondary);
   outline-offset: 2px;
 }
 
@@ -246,7 +257,7 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  color: #22d3ee;
+  color: var(--accent-secondary);
   white-space: nowrap;
 }
 
@@ -257,9 +268,9 @@
   margin-top: 16px;
   padding: 14px 16px;
   border-radius: 10px;
-  background: #16161a;
-  border: 1px solid #2a2a2e;
-  color: #a1a1aa;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.45;
 }
@@ -272,9 +283,9 @@
   max-width: min(90vw, 360px);
   padding: 12px 20px;
   border-radius: 10px;
-  background: #27272a;
-  border: 1px solid #3f3f46;
-  color: #f4f4f5;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
   font-size: 14px;
   line-height: 1.4;
   text-align: center;

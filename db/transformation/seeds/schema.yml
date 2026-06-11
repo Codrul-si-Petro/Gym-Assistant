@@ -52,6 +52,9 @@ seeds:
   - name: seed_exercise_muscle
     description: "Bridge table to link muscles with exercises"
 
+  - name: seed_exercise_media
+    description: "Reference data for core.exercise_media glossary videos (loaded via Alembic 007)"
+
 sources:
   - name: core
     schema: core

@@ -1,25 +1,18 @@
 /*  chart messages, usually errors :( */
 .chart-msg {
   margin-bottom: 12px;
-  color: #a1a1aa; /* gray text for secondary messages */
+  color: var(--text-secondary);
   font-size: 14px;
 }
 .chart-msg:empty { display: none; }
 
-/* chart scroll wrapper */
 .chart-scroll-wrap {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
-  padding: 16px;
-  background: #16161a;        /* chart container bg */
-  border-radius: 8px;
-  border: 1px solid #2a2a2e;  /* subtle border */
   max-height: 70vh;
-
-  /* Firefox */
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) #16161a;
+  scrollbar-color: var(--border-subtle) var(--bg-elevated);
 }
 
 .chart-scroll-wrap::-webkit-scrollbar {
@@ -27,7 +20,7 @@
   height: 8px;
 }
 .chart-scroll-wrap::-webkit-scrollbar-track {
-  background: #16161a;
+  background: var(--bg-elevated);
   border-radius: 4px;
 }
 .chart-scroll-wrap::-webkit-scrollbar-thumb {
@@ -69,7 +62,7 @@
 .skeleton-bar {
   height: 36px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #1e1e24 25%, #2a2a32 50%, #1e1e24 75%);
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border-subtle) 50%, var(--bg-hover) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }

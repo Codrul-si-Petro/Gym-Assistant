@@ -1,0 +1,72 @@
+.account-page {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.account-page h1 {
+  margin: 0 0 16px;
+  font-size: 1.5rem;
+}
+
+.account-msg {
+  min-height: 1.25rem;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+
+.account-msg.success {
+  color: var(--success);
+}
+
+.account-msg.error {
+  color: var(--danger);
+}
+
+.account-card {
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.account-card h2 {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.account-form label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.account-form input {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.account-form select {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.account-form input:focus,
+.account-form select:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.account-form .cta-button {
+  margin-top: 6px;
+  align-self: flex-start;
+}

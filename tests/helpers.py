@@ -10,7 +10,13 @@ from rest_framework.test import ImproperlyConfigured
 
 from backend.core.models import Attachments, Equipment, Exercises
 
-from .constants import BACKEND_URL, E2E_DASHBOARD_WORKOUT_SPLIT, E2E_TESTER_NAME, E2E_TESTER_PASS
+from .constants import (
+    BACKEND_URL,
+    E2E_DASHBOARD_WORKOUT_SPLIT,
+    E2E_SEED_WORKOUT_DATE,
+    E2E_TESTER_NAME,
+    E2E_TESTER_PASS,
+)
 
 
 # will try to remember to use this ffs
@@ -93,6 +99,20 @@ def get_test_user_id(username: str) -> int | None:
         return row[0] if row else None
 
 
+def _workout_list_has_rows(data) -> bool:
+    if isinstance(data, dict):
+        count = data.get("count")
+        if isinstance(count, int):
+            return count > 0
+        results = data.get("results")
+        if isinstance(results, list):
+            return len(results) > 0
+        return False
+    if isinstance(data, list):
+        return len(data) > 0
+    return bool(data)
+
+
 class E2EUserBootstrap:
     def __init__(self):
         self.session = requests.Session()
@@ -141,28 +161,28 @@ class E2EUserBootstrap:
     def attach_auth(self, access_token: str):
         self.session.headers.update({"Authorization": f"Bearer {access_token}"})
 
-    def check_workouts_exist(self):
-        url = f"{self.base}/api/workouts/"
-
-        res = self.session.get(url)
-
+    def has_e2e_seed_data(self) -> bool:
+        """True when the persistent E2E seed split already exists for this user."""
+        res = self.session.get(
+            f"{self.base}/api/workouts/",
+            params={
+                "workout_split": E2E_DASHBOARD_WORKOUT_SPLIT,
+                "page_size": 1,
+            },
+        )
         if res.status_code != 200:
-            raise RuntimeError(f"Failed to fetch workouts: {res.status_code} - {res.text}")
-
-        data = res.json()
-        if not data:
             return False
-
-        return True
+        return _workout_list_has_rows(res.json())
 
     def fill_synthetic_workouts(self):
+        """Insert the stable E2E seed sets once (skipped when seed split already exists)."""
         url = f"{self.base}/api/workouts/"
 
         base_payload = {
             "equipment": 1,
             "exercise": 1,
             "workout_split": E2E_DASHBOARD_WORKOUT_SPLIT,
-            "date": "2026-04-09",
+            "date": E2E_SEED_WORKOUT_DATE,
             "repetitions": 10,
             "load": 20,
             "unit": "KG",
@@ -171,33 +191,29 @@ class E2EUserBootstrap:
         }
 
         for set_number in range(1, 4):
-            payload = base_payload.copy()
-            payload["set_number"] = set_number  # or vary if needed
-
+            payload = {**base_payload, "set_number": set_number}
             res = self.session.post(url, json=payload)
-
             if res.status_code not in (200, 201):
                 raise RuntimeError(f"Workout seed failed: {res.status_code} - {res.text}")
 
-        # another loop... lazy, I know. I'm tired of this
-        # refactor later? hopefully not
         for set_number in range(1, 4):
-            payload = base_payload.copy()
-            payload["set_number"] = set_number  # or vary if needed
-            payload["exercise"] = 3  # 2 is already taken by the workout_input e2e test
-
+            payload = {**base_payload, "set_number": set_number, "exercise": 3}
             res = self.session.post(url, json=payload)
-
             if res.status_code not in (200, 201):
                 raise RuntimeError(f"Workout seed failed: {res.status_code} - {res.text}")
 
 
 def bootstrap_e2e_test_user():
+    """
+    Ensure the long-lived E2E user exists and has seed workouts.
+    Existing seed data is left in place; new rows are only inserted when missing.
+    """
     b = E2EUserBootstrap()
     b.ensure_user()
     tokens = b.get_bearer_tokens()
     b.attach_auth(tokens["access"])
 
-    data_exists = b.check_workouts_exist()
-    if not data_exists:
+    if not b.has_e2e_seed_data():
         b.fill_synthetic_workouts()
+
+    return b

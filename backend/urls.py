@@ -5,15 +5,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from backend.authentication.views import (
-    CustomAllauthLoginView,
-    CustomAllauthSignupView,
-    CustomPasswordChangeView,
-    CustomPasswordResetCompleteView,
-    CustomPasswordResetConfirmView,
-    CustomPasswordResetDoneView,
-    CustomPasswordResetView,
-)
+from backend.authentication.views import redirect_to_frontend_login, redirect_to_frontend_signup
 
 from .views import homepageView
 
@@ -40,16 +32,10 @@ urlpatterns = [
     # Swagger UI
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
-    # Authentication - Override Django's built-in password reset views with custom templates
-    path("auth/password_reset/", CustomPasswordResetView.as_view(), name="password_reset"),
-    path("auth/password_reset/done/", CustomPasswordResetDoneView.as_view(), name="password_reset_done"),
-    path("auth/reset/<uidb64>/<token>/", CustomPasswordResetConfirmView.as_view(), name="password_reset_confirm"),
-    path("auth/reset/done/", CustomPasswordResetCompleteView.as_view(), name="password_reset_complete"),
-    # Override django-allauth views with custom templates
-    path("accounts/login/", CustomAllauthLoginView.as_view(), name="account_login"),
-    path("accounts/signup/", CustomAllauthSignupView.as_view(), name="account_signup"),
-    # Include remaining allauth URLs (logout, email verification, etc.)
-    path("accounts/password/change/", CustomPasswordChangeView.as_view(), name="account_change_password"),
+    # Redirect legacy Django auth entry points to static frontend
+    path("accounts/login/", redirect_to_frontend_login, name="account_login"),
+    path("accounts/signup/", redirect_to_frontend_signup, name="account_signup"),
+    # allauth internals (social callbacks, logout, etc.)
     path("accounts/", include("allauth.urls")),
     path("social/", include("allauth.socialaccount.providers.google.urls")),  # google login
     # include Authentication

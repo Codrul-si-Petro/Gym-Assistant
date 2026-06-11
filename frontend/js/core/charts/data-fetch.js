@@ -19,7 +19,6 @@ export async function fetchTotalVolume(startDate, endDate, parentID) {
   if (parentID != null && parentID !== "") {
     url.searchParams.set("parent_id", String(parentID));
   }
-  
 
   const headers = getAuthHeaders();
   const res = await fetch(url.toString(), { headers });
@@ -37,6 +36,36 @@ export async function fetchTotalVolumeDaily(exerciseId, startDate, endDate) {
   const headers = getAuthHeaders();
   const res = await fetch(url.toString(), { headers });
 
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchWorkoutSplits(startDate, endDate) {
+  const url = new URL(API_BASE + "/api/v1/workout-splits");
+  if (startDate) url.searchParams.set("start_date", startDate);
+  if (endDate) url.searchParams.set("end_date", endDate);
+
+  const headers = getAuthHeaders();
+  const res = await fetch(url.toString(), { headers });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchGymWeekdays(startDate, endDate) {
+  const url = new URL(API_BASE + "/api/v1/gym-weekdays");
+  if (startDate) url.searchParams.set("start_date", startDate);
+  if (endDate) url.searchParams.set("end_date", endDate);
+
+  const headers = getAuthHeaders();
+  const res = await fetch(url.toString(), { headers });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchHomeSummary() {
+  const url = new URL(API_BASE + "/api/v1/home-summary");
+  const headers = getAuthHeaders();
+  const res = await fetch(url.toString(), { headers });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
