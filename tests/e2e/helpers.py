@@ -70,6 +70,11 @@ def prepare_dashboard_date_range(page: Page) -> None:
         page.locator("#end_date").dispatch_event("change")
 
 
+def click_metrics_tab(page: Page, tab: str) -> None:
+    """Activate a metrics tab (tabs use role=tab, not button)."""
+    page.locator(f".chart-tab[data-tab='{tab}']").click()
+
+
 def wait_for_volume_table(page: Page) -> None:
     """Wait for the volume tab to finish loading; skip if analytics has no rows."""
     page.wait_for_function(
@@ -104,7 +109,7 @@ def wait_for_favourites_list(page: Page) -> None:
             lambda res: "/api/v1/favourite-exercises" in res.url and res.request.method == "GET" and res.status == 200,
             timeout=20000,
         ):
-            page.get_by_role("button", name="Favourite Exercises").click()
+            click_metrics_tab(page, "favourites")
 
     click_favourites_tab()
     expect(page.locator("#tab-favourites")).to_have_class(re.compile(r"\bactive\b"))
@@ -112,7 +117,7 @@ def wait_for_favourites_list(page: Page) -> None:
 
     chart_msg = (page.locator("#chart-msg").inner_text() or "").strip()
     if "Failed to load" in chart_msg:
-        page.get_by_role("button", name="Total Volumes").click()
+        click_metrics_tab(page, "volume")
         page.wait_for_timeout(300)
         click_favourites_tab()
         expect(page.locator("#chart-skeleton-favourites")).to_have_class(re.compile(r"hidden"), timeout=15000)

@@ -1,6 +1,10 @@
 # Gym Assistant
 
-Gym assistant SaaS intended for gym goers to log their workouts and get feedback through charts and interactive views ( *well at least not yet but sometime!* )
+SaaS intended for gym goers to get insights from their workouts through charts and interactive views.
+Forget pen and paper and slow, clunky Excels you forget to update then have to spend extra 30 minutes remembering what you have done. 
+Use the Gym Asssistant app consistently and take a deep look into your trends to figure out your weak and strong points. 
+
+- 
 
 ## Contributor set up
 

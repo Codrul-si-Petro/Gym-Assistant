@@ -75,7 +75,7 @@ class Muscles(models.Model):
 class ExerciseMedia(models.Model):
     """Optional media metadata for exercises (YouTube demos, notes).
 
-    Schema: Alembic migration `006_exercise_media` in `db/alembic/versions/`.
+    Schema: dbt model `exercise_media` in `db/transformation/models/core/`.
     exercise_id references dim_exercises logically (no DB FK; dbt rebuilds dims).
     """
 
@@ -95,6 +95,31 @@ class ExerciseMedia(models.Model):
     class Meta:
         managed = False
         db_table = 'core"."exercise_media'
+
+
+class AttachmentMedia(models.Model):
+    """Optional image metadata for attachments (glossary reference photos).
+
+    Schema: dbt model `attachment_media` in `db/transformation/models/core/`.
+    attachment_id references dim_attachments logically (no DB FK; dbt rebuilds dims).
+    """
+
+    media_id = models.AutoField(primary_key=True, db_index=True)
+    attachment = models.OneToOneField(
+        to="Attachments",
+        on_delete=models.CASCADE,
+        db_column="attachment_id",
+        related_name="media",
+    )
+    image_url = models.TextField()
+    display_title = models.TextField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    ta_created_at = models.DateTimeField(auto_now_add=True)
+    ta_updated_at = models.DateTimeField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'core"."attachment_media'
 
 
 class Exercise_Muscle_Bridge(models.Model):
@@ -124,6 +149,31 @@ class Equipment(models.Model):
     class Meta:
         managed = False
         db_table = 'core"."dim_equipment'
+
+
+class EquipmentMedia(models.Model):
+    """Optional image metadata for equipment (glossary reference photos).
+
+    Schema: dbt model `equipment_media` in `db/transformation/models/core/`.
+    equipment_id references dim_equipment logically (no DB FK; dbt rebuilds dims).
+    """
+
+    media_id = models.AutoField(primary_key=True, db_index=True)
+    equipment = models.OneToOneField(
+        to="Equipment",
+        on_delete=models.CASCADE,
+        db_column="equipment_id",
+        related_name="media",
+    )
+    image_url = models.TextField()
+    display_title = models.TextField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    ta_created_at = models.DateTimeField(auto_now_add=True)
+    ta_updated_at = models.DateTimeField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'core"."equipment_media'
 
 
 class Attachments(models.Model):

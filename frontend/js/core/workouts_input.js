@@ -13,6 +13,9 @@ var exerciseMap = {};
 var attachmentMap = {};
 var equipmentMap = {};
 
+/** Sentinel FK for optional attachment/equipment (matches backend PLACEHOLDER_DIMENSION_ID). */
+var PLACEHOLDER_DIMENSION_ID = -1;
+
 /** Default time before success messages fade (ms). */
 var DEFAULT_SUCCESS_MS = 3500;
 /** Delete-last confirmation: keep visible longer (5–10s range). */
@@ -221,6 +224,12 @@ function loadWorkoutNumber(options) {
         .catch(function () {});
 }
 
+function dimensionIdFromName(map, name) {
+    if (map[name] != null) return map[name];
+    if (name === "None") return PLACEHOLDER_DIMENSION_ID;
+    return null;
+}
+
 function setDefaultDate() {
     var dateInput = document.getElementById("date");
     if (!dateInput) return;
@@ -244,8 +253,8 @@ function getPayload() {
 
     return {
         exercise: exerciseMap[exerciseName] || null,
-        attachment: attachmentMap[attachmentName] || attachmentMap["None"] || null,
-        equipment: equipmentMap[equipmentName] || equipmentMap["None"] || null,
+        attachment: dimensionIdFromName(attachmentMap, attachmentName),
+        equipment: dimensionIdFromName(equipmentMap, equipmentName),
         workout_number: parseInt(document.getElementById("workout_number").value, 10) || 1,
         set_number: parseInt(document.getElementById("set_number").value, 10) || 1,
         repetitions: parseInt(document.getElementById("repetitions").value, 10) || 0,

@@ -28,6 +28,12 @@ seeds:
       +primary_key: attachment_id
     seed_exercise_muscle:
       +primary_key: id
+    seed_exercise_media:
+      +primary_key: exercise_id
+    seed_attachment_media:
+      +primary_key: attachment_id
+    seed_equipment_media:
+      +primary_key: equipment_id
 
 models:
   transformation:
@@ -50,6 +56,12 @@ models:
         +primary_key: exercise_id
       dim_muscles:
         +primary_key: muscle_id
+      exercise_media:
+        +primary_key: media_id
+      attachment_media:
+        +primary_key: media_id
+      equipment_media:
+        +primary_key: media_id
 
     hierarchies:
       +tags: ['hierarchies']

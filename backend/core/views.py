@@ -1,3 +1,4 @@
+from django.db.models import OuterRef, Subquery
 from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -13,7 +14,9 @@ from backend.core.workout_validations import get_next_workout
 
 from .analytics.cache_utils import invalidate_user_analytics
 from .api_throttle import EndpointThrottle
-from .models import Attachments, Equipment, Exercise_Muscle_Bridge, ExerciseMedia, Exercises, Muscles, Workouts
+from .dimension_utils import exclude_placeholder_dimensions
+from .glossary.crud.crud import get_exercise_glossary, get_exercise_glossary_list
+from .models import AttachmentMedia, Attachments, Equipment, EquipmentMedia, Exercises, Muscles, Workouts
 from .pagination import WorkoutPagination
 from .serializers import (
     AttachmentSerializer,
@@ -23,45 +26,6 @@ from .serializers import (
     MusclesSerializer,
     WorkoutSerializer,
 )
-
-
-def _youtube_embed_url(url: str | None) -> str | None:
-    if not url:
-        return None
-    if "youtu.be/" in url:
-        video_id = url.rsplit("/", 1)[-1].split("?")[0]
-        return f"https://www.youtube.com/embed/{video_id}"
-    if "v=" in url:
-        video_id = url.split("v=")[1].split("&")[0]
-        return f"https://www.youtube.com/embed/{video_id}"
-    if "/embed/" in url:
-        return url
-    return None
-
-
-def _build_glossary_entry(exercise: Exercises) -> dict:
-    bridges = Exercise_Muscle_Bridge.objects.filter(exercise=exercise).select_related("muscle")
-    muscles = [
-        {
-            "muscle_id": bridge.muscle.muscle_id,
-            "muscle_name": bridge.muscle.muscle_name,
-            "muscle_role": bridge.muscle_role,
-        }
-        for bridge in bridges
-    ]
-    media = ExerciseMedia.objects.filter(exercise=exercise).first()
-    youtube_url = media.youtube_url if media else None
-    return {
-        "exercise_id": exercise.exercise_id,
-        "exercise_name": exercise.exercise_name,
-        "exercise_movement_type": exercise.exercise_movement_type,
-        "muscles": muscles,
-        "youtube_url": youtube_url,
-        "display_title": media.display_title if media else None,
-        "notes": media.notes if media else None,
-        "youtube_embed_url": _youtube_embed_url(youtube_url),
-    }
-
 
 WORKOUT_LIST_FILTER_PARAMS = [
     openapi.Parameter("exercise_id", openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
@@ -208,7 +172,7 @@ class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Exercises.objects.filter(is_leaf=True)
+        return exclude_placeholder_dimensions(Exercises.objects.filter(is_leaf=True))
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
@@ -219,8 +183,7 @@ class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     @action(detail=False, methods=["get"], url_path="glossary")
     @method_decorator(cache_page(60 * 60 * 12))
     def glossary(self, request):
-        exercises = self.get_queryset().order_by("exercise_name")
-        payload = [_build_glossary_entry(exercise) for exercise in exercises]
+        payload = get_exercise_glossary_list()
         serializer = ExerciseGlossarySerializer(payload, many=True)
         return Response(serializer.data)
 
@@ -228,10 +191,10 @@ class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     @action(detail=True, methods=["get"], url_path="glossary")
     @method_decorator(cache_page(60 * 60 * 12))
     def glossary_detail(self, request, pk=None):
-        exercise = self.get_queryset().filter(pk=pk).first()
-        if exercise is None:
+        entry = get_exercise_glossary(int(pk))
+        if entry is None:
             return Response({"detail": "Exercise not found."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = ExerciseGlossarySerializer(_build_glossary_entry(exercise))
+        serializer = ExerciseGlossarySerializer(entry)
         return Response(serializer.data)
 
 
@@ -241,7 +204,7 @@ class MusclesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Muscles.objects.filter(is_leaf=True)
+        return exclude_placeholder_dimensions(Muscles.objects.filter(is_leaf=True))
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
@@ -255,7 +218,10 @@ class EquipmentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Equipment.objects.filter(is_leaf=True)
+        image_url = EquipmentMedia.objects.filter(equipment_id=OuterRef("equipment_id")).values("image_url")[:1]
+        return exclude_placeholder_dimensions(
+            Equipment.objects.filter(is_leaf=True).annotate(image_url=Subquery(image_url))
+        )
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
@@ -269,7 +235,10 @@ class AttachmentsViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     throttle_classes = [EndpointThrottle]
 
     def get_queryset(self):
-        return Attachments.objects.filter(is_leaf=True)
+        image_url = AttachmentMedia.objects.filter(attachment_id=OuterRef("attachment_id")).values("image_url")[:1]
+        return exclude_placeholder_dimensions(
+            Attachments.objects.filter(is_leaf=True).annotate(image_url=Subquery(image_url))
+        )
 
     @swagger_auto_schema(tags=["Core"])
     @method_decorator(cache_page(60 * 60 * 12))  # cache for 12 hrs
