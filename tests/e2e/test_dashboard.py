@@ -3,7 +3,7 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.e2e.helpers import goto_core_page, prepare_dashboard_date_range, wait_for_volume_table
+from tests.e2e.helpers import click_metrics_tab, goto_core_page, prepare_dashboard_date_range, wait_for_volume_table
 
 
 @pytest.mark.order(5)
@@ -12,13 +12,6 @@ def test_dashboard_default_volume_tab_and_all_metric_views(page: Page, frontend_
     prepare_dashboard_date_range(page)
 
     expect(page.locator("#metrics-summary")).to_have_count(0)
-
-    info_fab = page.locator(".info-fab")
-    expect(info_fab).to_be_visible()
-    info_fab.click()
-    expect(page.locator(".info-panel--fab")).to_be_visible()
-    expect(page.locator(".info-panel--fab")).to_contain_text("Metrics use the date range")
-    info_fab.click()
 
     vol_panel = page.locator("#tab-volume")
     fav_panel = page.locator("#tab-favourites")
@@ -50,7 +43,7 @@ def test_dashboard_default_volume_tab_and_all_metric_views(page: Page, frontend_
         page.locator("#volume-back-btn").click()
         page.wait_for_load_state("networkidle")
 
-    page.get_by_role("button", name="Favourite Exercises").click()
+    click_metrics_tab(page, "favourites")
     page.wait_for_load_state("networkidle")
     expect(fav_panel).to_have_class(re.compile(r"\bactive\b"))
     expect(page.locator("#chart-skeleton-favourites")).to_have_class(re.compile(r"hidden"), timeout=15000)
@@ -60,12 +53,12 @@ def test_dashboard_default_volume_tab_and_all_metric_views(page: Page, frontend_
         pytest.skip("No favourite exercise data for seeded user")
     expect(fav_list.locator(".stat-row").first).to_be_visible()
 
-    page.get_by_role("button", name="Workout Splits").click()
+    click_metrics_tab(page, "splits")
     page.wait_for_load_state("networkidle")
     expect(page.locator("#chart-skeleton-splits")).to_have_class(re.compile(r"hidden"), timeout=15000)
     expect(page.locator("#workout-splits-canvas")).to_be_visible()
 
-    page.get_by_role("button", name="Gym Days").click()
+    click_metrics_tab(page, "weekdays")
     page.wait_for_load_state("networkidle")
     expect(page.locator("#chart-skeleton-weekdays")).to_have_class(re.compile(r"hidden"), timeout=15000)
     weekdays_list = page.locator("#gym-weekdays-list")
@@ -83,12 +76,11 @@ def test_dashboard_mobile_viewport(page: Page, frontend_url: str, e2e_user_boots
 
     expect(page.locator("#tab-volume")).to_have_class(re.compile(r"\bactive\b"))
     wait_for_volume_table(page)
-    expect(page.locator(".info-fab")).to_be_visible()
 
     overflow = page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 2")
     assert overflow, "Dashboard page should not overflow horizontally on mobile"
 
     # Layout/UX on narrow viewport — chart data is covered in test_dashboard_default_volume_tab_and_all_metric_views
-    page.get_by_role("button", name="Favourite Exercises").click()
+    click_metrics_tab(page, "favourites")
     expect(page.locator("#tab-favourites")).to_have_class(re.compile(r"\bactive\b"))
     expect(page.locator("#tab-favourites h1")).to_be_visible()
