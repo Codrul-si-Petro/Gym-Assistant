@@ -169,24 +169,63 @@ function onDateChange() {
   if (active === "weekdays") loadGymWeekdaysChart();
 }
 
+const METRICS_TABS = new Set(["volume", "favourites", "splits", "weekdays"]);
+const DEFAULT_METRICS_TAB = "volume";
+
+function getTabFromLocation() {
+  const hash = location.hash.replace(/^#/, "");
+  if (METRICS_TABS.has(hash)) return hash;
+
+  const tabParam = new URLSearchParams(location.search).get("tab");
+  if (METRICS_TABS.has(tabParam)) return tabParam;
+
+  return DEFAULT_METRICS_TAB;
+}
+
+function syncTabToLocation(tab) {
+  const nextHash = tab === DEFAULT_METRICS_TAB ? "" : `#${tab}`;
+  const nextUrl = `${location.pathname}${location.search}${nextHash}`;
+  const currentUrl = `${location.pathname}${location.search}${location.hash}`;
+  if (currentUrl !== nextUrl) {
+    history.replaceState(null, "", nextUrl);
+  }
+}
+
+function loadTabData(tab) {
+  if (tab === "favourites") loadFavExercisesChart();
+  if (tab === "volume") loadVolumeTable();
+  if (tab === "splits") loadWorkoutSplitsChart();
+  if (tab === "weekdays") loadGymWeekdaysChart();
+}
+
+function activateTab(tab, { syncLocation = true, loadData = true } = {}) {
+  if (!METRICS_TABS.has(tab)) return;
+
+  tabs.forEach((t) => {
+    const isActive = t.dataset.tab === tab;
+    t.classList.toggle("active", isActive);
+    t.setAttribute("aria-selected", isActive ? "true" : "false");
+  });
+  panels.forEach((p) => p.classList.remove("active"));
+  document.getElementById(`tab-${tab}`)?.classList.add("active");
+
+  if (syncLocation) syncTabToLocation(tab);
+  if (loadData) loadTabData(tab);
+}
+
 const tabs = document.querySelectorAll(".chart-tab");
 const panels = document.querySelectorAll(".chart-panel");
 
+activateTab(getTabFromLocation(), { syncLocation: false, loadData: false });
+
 tabs.forEach((tab) => {
-  tab.addEventListener("click", () => {
-    tabs.forEach((t) => t.classList.remove("active"));
-    tab.classList.add("active");
+  tab.addEventListener("click", () => activateTab(tab.dataset.tab));
+});
 
-    const target = tab.dataset.tab;
-    panels.forEach((p) => p.classList.remove("active"));
-    const panel = document.getElementById(`tab-${target}`);
-    if (panel) panel.classList.add("active");
-
-    if (target === "favourites") loadFavExercisesChart();
-    if (target === "volume") loadVolumeTable();
-    if (target === "splits") loadWorkoutSplitsChart();
-    if (target === "weekdays") loadGymWeekdaysChart();
-  });
+window.addEventListener("hashchange", () => {
+  const tab = getTabFromLocation();
+  const active = document.querySelector(".chart-tab.active")?.dataset.tab;
+  if (tab !== active) activateTab(tab, { syncLocation: false });
 });
 
 async function loadFavExercisesChart() {
@@ -477,7 +516,7 @@ if (chartExId && placeholder) {
 }
 
 async function reloadActiveTab() {
-  const active = document.querySelector(".chart-tab.active")?.dataset.tab || "favourites";
+  const active = getTabFromLocation();
   if (active === "favourites") await loadFavExercisesChart();
   if (active === "volume") await loadVolumeTable();
   if (active === "splits") await loadWorkoutSplitsChart();
@@ -489,12 +528,8 @@ window.addEventListener("preferred-unit-changed", async () => {
   await reloadActiveTab();
 });
 
-const defaultTab =
-  document.querySelector(".chart-tab.active")?.dataset.tab || "favourites";
+const initialTab = getTabFromLocation();
 void (async () => {
   await loadPreferredUnit();
-  if (defaultTab === "favourites") loadFavExercisesChart();
-  if (defaultTab === "volume") loadVolumeTable();
-  if (defaultTab === "splits") loadWorkoutSplitsChart();
-  if (defaultTab === "weekdays") loadGymWeekdaysChart();
+  loadTabData(initialTab);
 })();

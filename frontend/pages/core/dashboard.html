@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metrics</title>
     <link rel="stylesheet" href="../../css/general-components/data-surface.css?v=2">
-    <link rel="stylesheet" href="../../css/core/dashboard.css?v=2">
+    <link rel="stylesheet" href="../../css/core/dashboard.css?v=3">
     <link rel="stylesheet" href="../../css/core/charts/total-volume-dashboard.css?v=3">
     <link rel="stylesheet" href="../../css/core/charts/total-volume-chart.css?v=3">
     <link rel="stylesheet" href="../../css/core/charts/fav-exercises-dashboard.css?v=3">
@@ -34,27 +34,29 @@
           <a href="workouts_input.html">Log workouts</a>
           <a href="workouts_table.html">Workout history</a>
           <a href="dashboard.html">Metrics</a>
-          <a href="explore.html">Explore</a>
+          <a href="explore.html">Glossary</a>
       </div>
       <div id="nav-actions" class="nav-actions">
       </div>
   </div>
 
-    <div class="chart-tabs">
-        <button type="button" class="chart-tab active" data-tab="volume">Total Volumes</button>
-        <button type="button" class="chart-tab" data-tab="favourites">Favourite Exercises</button>
-        <button type="button" class="chart-tab" data-tab="splits">Workout Splits</button>
-        <button type="button" class="chart-tab" data-tab="weekdays">Gym Days</button>
-    </div>
+    <div class="metrics-toolbar">
+        <div class="chart-tabs" role="tablist" aria-label="Metrics sections">
+            <button type="button" class="chart-tab active" role="tab" data-tab="volume" aria-selected="true">Total Volumes</button>
+            <button type="button" class="chart-tab" role="tab" data-tab="favourites" aria-selected="false">Favourite Exercises</button>
+            <button type="button" class="chart-tab" role="tab" data-tab="splits" aria-selected="false">Workout Splits</button>
+            <button type="button" class="chart-tab" role="tab" data-tab="weekdays" aria-selected="false">Gym Days</button>
+        </div>
 
-    <div class="chart-controls-wrap">
-      <div class="chart-controls">
-        <label for="start_date" class="chart-date-label">From</label>
-        <input type="date" id="start_date" class="chart-date" aria-label="From date" />
-        <span class="chart-date-sep" aria-hidden="true">—</span>
-        <label for="end_date" class="chart-date-label">To</label>
-        <input type="date" id="end_date" class="chart-date" aria-label="To date" />
-      </div>
+        <div class="chart-controls-wrap">
+          <div class="chart-controls">
+            <label for="start_date" class="chart-date-label">From</label>
+            <input type="date" id="start_date" class="chart-date" aria-label="From date" />
+            <span class="chart-date-sep" aria-hidden="true">—</span>
+            <label for="end_date" class="chart-date-label">To</label>
+            <input type="date" id="end_date" class="chart-date" aria-label="To date" />
+          </div>
+        </div>
     </div>
 
     <p id="chart-msg" class="chart-msg" aria-live="polite"></p>
@@ -180,7 +182,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-    <script type="module" src="../../js/core/charts/chart-controller.js?v=3"></script>
+    <script type="module" src="../../js/core/charts/chart-controller.js?v=4"></script>
 
 </body>
 </html>

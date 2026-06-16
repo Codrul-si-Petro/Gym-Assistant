@@ -256,11 +256,6 @@ SWAGGER_SETTINGS = {
     "USE_COMPAT_RENDERERS": False,  # Suppress deprecation warning about format prefix
 }
 
-# Database migration ownership:
-# - Django migrations: authentication app only (public schema / User + allauth FK fixes)
-# - Alembic migrations: core schema tables (fact_workouts, exercise_media, etc.)
-# - dbt + seeds: dimension tables (dim_exercises, dim_muscles, bridges, ...)
-# Never run `makemigrations` for core; add core schema changes under db/alembic/versions/.
 MIGRATION_MODULES = {
     "core": None,
 }

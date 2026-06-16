@@ -263,7 +263,7 @@ class HomeSummaryView(APIView):
                 {},
                 lambda: get_home_summary(user_id),
             )
-        except Exception as e:
+        except Exception as e:  # why do we throw a 500 error here directly and not let the server show any http code?
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(summary)

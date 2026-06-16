@@ -7,7 +7,7 @@ WITH leaf_nodes AS (
   WHERE c.muscle_id IS NULL
 )
 SELECT DISTINCT em.muscle_id
-FROM {{ ref('seed_exercise_muscles') }} em
+FROM {{ ref('seed_exercise_muscle') }} em
 WHERE NOT EXISTS (
     SELECT 1
     FROM leaf_nodes l

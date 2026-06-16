@@ -1,18 +1,18 @@
 equipment_id,equipment_name,equipment_description,equipment_parent_id,equipment_category,ta_created_at
 -1,None,N/A,,N/A,2025-12-01 15:39:54.599 +0200
-1,Olympic Barbell,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
-2,Pulley,N/A,,Consistent resistance,2025-12-01 15:39:54.599 +0200
-4,Elastic band,N/A,,Variable resistance,2025-12-01 15:39:54.599 +0200
-5,Weighted belt,N/A,,Free weight,2025-12-01 15:39:54.599 +0200
-7,Machine,N/A,18,Depends on the machine,2025-12-01 15:39:54.599 +0200
-8,Kettlebell,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
-9,Dumbbell,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
-10,Bodyweight,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
-11,Hexbar,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
-12,T bar,N/A,17,Free weight,2025-12-01 15:39:54.599 +0200
-13,Hack squat,N/A,18,Machines,2026-01-27 23:59:54.599 +0200
-14,Ab Wheel,N/A,,Free weight,2026-01-27 23:59:54.599 +0200
-15,Smith machine,N/A,18,Machines,2026-01-30 20:12:31.522 +0200
-16,EZ Barbell,Barbell with curves designed for an easier time gripping during curls,17,Free weights,2026-01-30 20:12:31.522 +0200
+1,Olympic Barbell,Long bar used for compound lifts usually,17,Free weight,2025-12-01 15:39:54.599 +0200
+2,Pulley,System of pulleys for adjustable resistance and angles,,Consistent resistance,2025-12-01 15:39:54.599 +0200
+4,Elastic band,Portable band for variable resistance,,Variable resistance,2025-12-01 15:39:54.599 +0200
+5,Weighted belt,Belt for adding load to bodyweight moves,,Free weight,2025-12-01 15:39:54.599 +0200
+7,Machine,Plate-loaded or selectorized gym machine,18,Depends on the machine,2025-12-01 15:39:54.599 +0200
+8,Kettlebell,Cast iron bell with an offset handle,17,Free weight,2025-12-01 15:39:54.599 +0200
+9,Dumbbell,Hand-held weight for unilateral work,17,Free weight,2025-12-01 15:39:54.599 +0200
+10,Bodyweight,No external load; use your own mass,17,Free weight,2025-12-01 15:39:54.599 +0200
+11,Hexbar,Hexagonal trap bar for deadlifts,17,Free weight,2025-12-01 15:39:54.599 +0200
+12,T bar,Landmine-style bar for rows and presses,17,Free weight,2025-12-01 15:39:54.599 +0200
+13,Hack squat,Angled sled machine for squat variations,18,Machines,2026-01-27 23:59:54.599 +0200
+14,Ab Wheel,Rolling wheel for core rollouts,,Free weight,2026-01-27 23:59:54.599 +0200
+15,Smith machine,Bar fixed on vertical rails,18,Machines,2026-01-30 20:12:31.522 +0200
+16,EZ Barbell,Curved bar for easier grip on curls,17,Free weights,2026-01-30 20:12:31.522 +0200
 17,Free weights,Resistances that require you to use your stabilizer muscles,,,2026-03-27 20:30:00.000 +0200
 18,Machine,Parent of all machines,,,2026-03-27 20:30:00.000 +0200

@@ -15,12 +15,19 @@ function formatNumber(value) {
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value);
 }
 
+function clearAuthTokens() {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+}
+
 async function loadHomeSummary() {
   const token = localStorage.getItem("access_token");
   const statsEl = document.getElementById("home-stats");
   const inactivityEl = document.getElementById("home-inactivity");
   const liftedEl = document.getElementById("home-total-lifted");
   if (!token || !statsEl || !inactivityEl || !liftedEl) return;
+
+  statsEl.hidden = true;
 
   try {
     const [summaryRes, userRes] = await Promise.all([
@@ -31,18 +38,24 @@ async function loadHomeSummary() {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       }),
     ]);
+
+    if (summaryRes.status === 401 || userRes.status === 401) {
+      clearAuthTokens();
+      updateHomeAuthState();
+      return;
+    }
     if (!summaryRes.ok || !userRes.ok) return;
+
     const data = await summaryRes.json();
     const user = await userRes.json();
     const unit = setPreferredUnit(user?.preferred_unit || "KG");
     const username = user?.username || "athlete";
-    statsEl.hidden = false;
 
     const days = data.days_since_last_workout;
     if (days == null) {
       inactivityEl.textContent = `Welcome back ${username}! Log your first workout today.`;
     } else if (days <= 0) {
-      inactivityEl.textContent = `Welcome back ${username}! Your last workout was today.`;
+      inactivityEl.textContent = `Welcome back ${username}! What a good day to lift some heavy weights.`;
     } else if (days < 5) {
       inactivityEl.textContent = `Welcome back ${username}! Your last workout was ${days} day${days === 1 ? "" : "s"} ago, enjoy your rest days.`;
     } else {
@@ -51,8 +64,9 @@ async function loadHomeSummary() {
 
     const converted = convertKgToPreferred(data.total_volume_kg, unit);
     liftedEl.textContent = `${formatNumber(converted)} ${unitSuffix(unit)} lifted until now`;
+    statsEl.hidden = false;
   } catch {
-    /* ignore summary errors on homepage */
+    statsEl.hidden = true;
   }
 }
 
@@ -62,7 +76,7 @@ function updateHomeAuthState() {
   const statsEl = document.getElementById("home-stats");
 
   if (authenticatedLinks) authenticatedLinks.style.display = loggedIn ? "flex" : "none";
-  if (statsEl) statsEl.hidden = !loggedIn;
+  if (statsEl) statsEl.hidden = true;
 
   if (loggedIn) loadHomeSummary();
 }

@@ -19,3 +19,60 @@ models:
 
   - name: exercise_muscle_bridge
     description: "Bridge table to link muscles with exercises"
+
+  - name: exercise_media
+    description: "Optional YouTube demo metadata for glossary exercises"
+    columns:
+      - name: media_id
+        tests:
+          - not_null
+          - unique
+      - name: exercise_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('seed_exercises')
+                field: exercise_id
+      - name: youtube_url
+        tests:
+          - not_null
+
+  - name: attachment_media
+    description: "Optional image metadata for glossary attachments"
+    columns:
+      - name: media_id
+        tests:
+          - not_null
+          - unique
+      - name: attachment_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('seed_attachments')
+                field: attachment_id
+      - name: image_url
+        tests:
+          - not_null
+
+  - name: equipment_media
+    description: "Optional image metadata for glossary equipment"
+    columns:
+      - name: media_id
+        tests:
+          - not_null
+          - unique
+      - name: equipment_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('seed_equipment')
+                field: equipment_id
+      - name: image_url
+        tests:
+          - not_null

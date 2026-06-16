@@ -199,14 +199,18 @@ class MusclesSerializer(serializers.ModelSerializer):
 
 
 class EquipmentSerializer(serializers.ModelSerializer):
+    image_url = serializers.CharField(read_only=True, allow_null=True)
+
     class Meta:
         model = Equipment
-        fields = ["equipment_id", "equipment_name", "equipment_description"]
+        fields = ["equipment_id", "equipment_name", "equipment_description", "equipment_category", "image_url"]
         read_only_fields = ["equipment_id", "ta_created_at"]
 
 
 class AttachmentSerializer(serializers.ModelSerializer):
+    image_url = serializers.CharField(read_only=True, allow_null=True)
+
     class Meta:
         model = Attachments
-        fields = ["attachment_id", "attachment_name", "attachment_description"]
+        fields = ["attachment_id", "attachment_name", "attachment_description", "image_url"]
         read_only_fields = ["attachment_id", "ta_created_at"]
