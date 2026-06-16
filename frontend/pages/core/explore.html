@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explore / Glossary</title>
+    <title>Glossary</title>
     <link rel="stylesheet" href="../../css/general-components/theme.css?v=7">
     <link rel="stylesheet" href="../../css/general-components/profile-menu.css?v=2">
     <link rel="stylesheet" href="../../css/general-components/navigation.css?v=2">
-    <link rel="stylesheet" href="../../css/core/explore.css?v=2">
+    <link rel="stylesheet" href="../../css/core/explore.css?v=4">
     <link rel="stylesheet" href="../../css/general-components/info-popover.css?v=1">
     <link rel="icon" href="../../assets/favicon.ico" sizes="any">
 </head>
@@ -27,7 +27,7 @@
             <a href="workouts_input.html">Log workouts</a>
             <a href="workouts_table.html">Workout history</a>
             <a href="dashboard.html">Metrics</a>
-            <a href="explore.html">Explore</a>
+            <a href="explore.html">Glossary</a>
         </div>
         <div id="nav-actions" class="nav-actions">
         </div>
@@ -35,13 +35,20 @@
 
     <main class="explore-page">
         <header class="explore-header reveal">
-            <h1>Explore / Glossary</h1>
-            <p>Browse exercises, target muscles, and demo videos.</p>
-            <input type="search" id="exercise-search" placeholder="Search exercises..." aria-label="Search exercises">
+            <h1>Glossary</h1>
+            <p>Browse exercises, attachments, equipment, target muscles, and demo videos.</p>
+            <div class="glossary-toolbar">
+                <div class="glossary-tabs" role="tablist" aria-label="Glossary sections">
+                    <button type="button" class="glossary-tab is-active" role="tab" data-section="exercises" aria-selected="true">Exercises</button>
+                    <button type="button" class="glossary-tab" role="tab" data-section="attachments" aria-selected="false">Attachments</button>
+                    <button type="button" class="glossary-tab" role="tab" data-section="equipment" aria-selected="false">Equipment</button>
+                </div>
+                <input type="search" id="glossary-search" placeholder="Search exercises..." aria-label="Search glossary">
+            </div>
         </header>
 
-        <div id="explore-status" class="explore-status" aria-live="polite">Loading exercises…</div>
-        <div id="exercise-grid" class="exercise-grid"></div>
+        <div id="glossary-status" class="explore-status" aria-live="polite">Loading glossary…</div>
+        <div id="glossary-grid" class="glossary-grid"></div>
     </main>
 
     <script type="module" src="../../js/general-components/theme.js?v=2"></script>
@@ -50,6 +57,6 @@
     <script type="module" src="../../js/general-components/animations.js?v=2"></script>
     <script src="../../js/auth/require-auth.js?v=2"></script>
     <script src="../../js/general-components/navigation.js?v=2"></script>
-    <script type="module" src="../../js/core/explore.js?v=2"></script>
+    <script type="module" src="../../js/core/explore.js?v=6"></script>
 </body>
 </html>

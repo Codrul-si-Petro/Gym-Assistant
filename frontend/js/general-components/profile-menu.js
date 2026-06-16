@@ -25,7 +25,7 @@ function buildProfileMenu(container, user) {
         <div class="profile-email">${user?.username || "Account"}</div>
         <a href="${resolveCorePath("profile.html")}" role="menuitem">Profile</a>
         <a href="${resolveCorePath("account.html")}" role="menuitem">Account settings</a>
-        <a href="${resolveCorePath("explore.html")}" role="menuitem">Explore / Glossary</a>
+        <a href="${resolveCorePath("explore.html")}" role="menuitem">Glossary</a>
         <a href="mailto:${SUPPORT_EMAIL}?subject=Gym%20Assistant%20Support" role="menuitem">Support</a>
         <hr>
         <button type="button" id="profile-logout-btn" role="menuitem">Log out</button>

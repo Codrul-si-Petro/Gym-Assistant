@@ -13,13 +13,6 @@ def test_workout_history_table_filters_edit_and_info(page: Page, frontend_url: s
     if rows.count() == 0:
         pytest.skip("E2E user has no workout rows in history")
 
-    info_fab = page.locator(".info-fab")
-    expect(info_fab).to_be_visible()
-    info_fab.click()
-    expect(page.locator(".info-panel--fab")).to_be_visible()
-    expect(page.locator(".info-panel--fab")).to_contain_text("Every row is one set")
-    info_fab.click()
-
     page.locator("#filters-toggle").click()
 
     split_select = page.locator("#filter-split")

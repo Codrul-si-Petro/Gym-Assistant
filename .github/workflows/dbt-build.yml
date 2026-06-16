@@ -2,7 +2,7 @@ name: dbt build
 
 on:
   schedule:
-    - cron: "0 */12 * * *"
+    - cron: "0 */4 * * *"
   workflow_dispatch:
 
 # Optional: avoid concurrent runs stacking on the same DB

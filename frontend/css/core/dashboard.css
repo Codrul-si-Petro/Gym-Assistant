@@ -37,10 +37,23 @@ body {
   font-weight: 600;
 }
 
+.metrics-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 0 14px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
 .chart-tabs {
   display: flex;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   flex-wrap: wrap;
 }
 
@@ -72,7 +85,7 @@ body {
   width: 100%;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .chart-controls {

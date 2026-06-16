@@ -47,6 +47,7 @@ def test_get_attachments(authenticated_client):
         "attachment_id",
         "attachment_name",
         "attachment_description",
+        "image_url",
     }, "Missing keys from the response"
     assert isinstance(item["attachment_id"], int)
     assert isinstance(item["attachment_name"], str)
@@ -108,6 +109,8 @@ def test_get_equipment(authenticated_client):
         "equipment_id",
         "equipment_name",
         "equipment_description",
+        "equipment_category",
+        "image_url",
     }, "Missing keys from the response"
     assert isinstance(item["equipment_id"], int)
     assert isinstance(item["equipment_name"], str)

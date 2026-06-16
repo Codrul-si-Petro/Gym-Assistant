@@ -19,7 +19,44 @@
   line-height: 1.5;
 }
 
-#exercise-search {
+.glossary-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 12px 0 14px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.glossary-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.glossary-tab {
+  min-height: var(--touch-target);
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.glossary-tab.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg-hover);
+}
+
+#glossary-search {
   width: 100%;
   min-height: var(--touch-target);
   padding: 12px 14px;
@@ -37,29 +74,44 @@
   font-size: 0.9rem;
 }
 
-.exercise-grid {
+.glossary-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 14px;
 }
 
-.exercise-card {
+.glossary-card {
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.exercise-card h2 {
+.glossary-card h2 {
   margin: 0;
   font-size: 1.05rem;
   color: var(--text-primary);
   line-height: 1.3;
 }
 
-.exercise-meta {
+.glossary-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.glossary-meta {
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+.glossary-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
 }
 
 .muscle-list {
@@ -81,7 +133,7 @@
   color: var(--accent);
 }
 
-.exercise-notes {
+.glossary-notes {
   color: var(--text-secondary);
   font-size: 0.88rem;
   line-height: 1.5;
@@ -118,27 +170,44 @@
   text-decoration: underline;
 }
 
+.glossary-image-wrap {
+  width: 100%;
+  max-height: 220px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.glossary-image-wrap img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+}
+
 @media (min-width: 600px) {
   .explore-page {
     padding: 16px 20px 48px;
     max-width: 1100px;
   }
 
-  #exercise-search {
+  #glossary-search {
     max-width: 420px;
   }
 
-  .exercise-grid {
+  .glossary-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 18px;
   }
 
-  .exercise-card {
+  .glossary-card {
     padding: 20px;
     gap: 12px;
   }
 
-  .exercise-card h2 {
+  .glossary-card h2 {
     font-size: 1.15rem;
   }
 }

@@ -58,3 +58,5 @@ exercise_id,exercise_name,exercise_movement_type,exercise_parent_id,ta_created_a
 56,Box step ups,Compound,51,2026-05-05 20:00:04.03 +0200
 57,Leg raise,Compound,58,2026-05-05 20:00:04.03 +0200
 58,Crunch,Compound,,2026-05-05 20:00:04.03 +0200
+59,Push up,Compound,46,2026-06-16 15:00:00.02 +0200
+60,Crunch,Isolated,58,2026-06-16 15:00:00.02 +0200

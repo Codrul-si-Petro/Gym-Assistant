@@ -53,7 +53,49 @@ seeds:
     description: "Bridge table to link muscles with exercises"
 
   - name: seed_exercise_media
-    description: "Reference data for core.exercise_media glossary videos (loaded via Alembic 007)"
+    description: "Glossary of demo videos"
+    columns:
+      - name: exercise_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('seed_exercises')
+                field: exercise_id
+      - name: youtube_url
+        tests:
+          - not_null
+
+  - name: seed_attachment_media
+    description: "Glossary reference images for cable attachments"
+    columns:
+      - name: attachment_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('seed_attachments')
+                field: attachment_id
+      - name: image_url
+        tests:
+          - not_null
+
+  - name: seed_equipment_media
+    description: "Glossary reference images for equipment"
+    columns:
+      - name: equipment_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('seed_equipment')
+                field: equipment_id
+      - name: image_url
+        tests:
+          - not_null
 
 sources:
   - name: core
