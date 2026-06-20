@@ -3,26 +3,38 @@ name: Backmerge main to dev
 on:
   push:
     branches: [main]
+  pull_request_review:
+    types: [submitted]
+  workflow_run:
+    workflows: [unit-tests, Pre-commit]
+    types: [completed]
+  pull_request:
+    branches: [dev]
+    types: [synchronize]
+
+concurrency:
+  group: backmerge-automerge
+  cancel-in-progress: false
 
 jobs:
   backmerge:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Create or update backmerge PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Check if PR already exists
           EXISTING_PR=$(gh pr list --base dev --head main --json number --jq '.[0].number')
-          
+
           if [ -n "$EXISTING_PR" ]; then
             echo "PR #$EXISTING_PR already exists, it will auto-update with new commits"
           else
@@ -31,5 +43,126 @@ jobs:
               --base dev \
               --head main \
               --title "Backmerge: main to dev" \
-              --body "Automated PR to sync dev with latest changes from main."
+              --body "Automated PR to sync dev with latest changes from main.
+
+After CI passes, this PR is merged automatically once approved.
+          fi
+
+  automerge:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Merge backmerge PR when approved and checks pass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          is_backmerge_pr() {
+            local pr="$1"
+            local meta
+            meta="$(gh pr view "$pr" --json title,baseRefName,headRefName)"
+            echo "$meta" | jq -e '
+              .title == "Backmerge: main to dev"
+              and .baseRefName == "dev"
+              and .headRefName == "main"
+            ' >/dev/null
+          }
+
+          resolve_pr_number() {
+            if [ "${{ github.event_name }}" = "pull_request_review" ] || [ "${{ github.event_name }}" = "pull_request" ]; then
+              if [ "${{ github.event.pull_request.base.ref }}" = "dev" ] \
+                && [ "${{ github.event.pull_request.head.ref }}" = "main" ]; then
+                echo "${{ github.event.pull_request.number }}"
+                return
+              fi
+            fi
+            gh pr list --base dev --head main --state open --json number --jq '.[0].number // empty'
+          }
+
+          try_merge() {
+            local pr="$1"
+            local review merge_state
+
+            review="$(gh pr view "$pr" --json reviewDecision --jq -r '.reviewDecision')"
+            if [ "$review" != "APPROVED" ]; then
+              echo "PR #$pr is not approved yet (reviewDecision=$review)."
+              return 0
+            fi
+
+            echo "Waiting for required checks on PR #$pr..."
+            if ! gh pr checks "$pr" --required --watch --interval 30; then
+              echo "Required checks failed or were cancelled."
+              return 0
+            fi
+
+            merge_state="$(gh pr view "$pr" --json mergeStateStatus --jq -r '.mergeStateStatus')"
+            echo "Merge state: $merge_state"
+
+            if [ "$merge_state" = "MERGEABLE" ] || [ "$merge_state" = "CLEAN" ]; then
+              gh pr merge "$pr" --merge
+              echo "Merged PR #$pr."
+              return 0
+            fi
+
+            echo "PR #$pr is not mergeable yet ($merge_state)."
+            return 0
+          }
+
+          enable_auto_merge() {
+            local pr="$1"
+            if gh pr merge "$pr" --merge --auto 2>/dev/null; then
+              echo "Auto-merge enabled for PR #$pr."
+              return 0
+            fi
+            if gh pr view "$pr" --json autoMergeRequest --jq -e '.autoMergeRequest != null' >/dev/null; then
+              echo "Auto-merge already enabled for PR #$pr."
+              return 0
+            fi
+            echo "Could not enable auto-merge for PR #$pr."
+            return 0
+          }
+
+          PR="$(resolve_pr_number)"
+          if [ -z "$PR" ]; then
+            echo "No open main → dev backmerge PR found."
+            exit 0
+          fi
+
+          if ! is_backmerge_pr "$PR"; then
+            echo "PR #$PR is not the backmerge PR."
+            exit 0
+          fi
+
+          if [ "${{ github.event_name }}" = "pull_request_review" ]; then
+            if [ "${{ github.event.review.state }}" != "approved" ]; then
+              echo "Review was not an approval."
+              exit 0
+            fi
+            enable_auto_merge "$PR"
+            try_merge "$PR"
+            exit 0
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+              echo "Triggering workflow did not succeed."
+              exit 0
+            fi
+            try_merge "$PR"
+            exit 0
+          fi
+
+          # pull_request synchronize (Update branch)
+          echo "Backmerge PR #$PR was updated."
+          review="$(gh pr view "$PR" --json reviewDecision --jq -r '.reviewDecision')"
+          if [ "$review" = "APPROVED" ]; then
+            enable_auto_merge "$PR"
+            try_merge "$PR"
+          else
+            echo "Approval is stale after the update — re-approve PR #$PR to queue auto-merge."
           fi
