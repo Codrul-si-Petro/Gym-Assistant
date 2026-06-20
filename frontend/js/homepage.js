@@ -2,13 +2,13 @@ import { API_BASE, API_PREFIX, SUPPORT_EMAIL } from "./config.js";
 import { convertKgToPreferred, setPreferredUnit, unitSuffix } from "./user-preferences.js";
 
 const words = ["inspiration.", "passion.", "motivation."];
-let i = 0;
+let wordIndex = 0;
 
 setInterval(() => {
   const el = document.getElementById("word");
   if (!el) return;
-  i = (i + 1) % words.length;
-  el.textContent = words[i];
+  wordIndex = (wordIndex + 1) % words.length;
+  el.textContent = words[wordIndex];
 }, 1500);
 
 function formatNumber(value) {
@@ -20,11 +20,22 @@ function clearAuthTokens() {
   localStorage.removeItem("refresh_token");
 }
 
+function setViewMode(loggedIn) {
+  const guestLanding = document.getElementById("guest-landing");
+  const memberHero = document.getElementById("member-hero");
+  const siteFooter = document.getElementById("site-footer");
+
+  if (guestLanding) guestLanding.hidden = loggedIn;
+  if (memberHero) memberHero.hidden = !loggedIn;
+  if (siteFooter) siteFooter.hidden = !loggedIn;
+}
+
 async function loadHomeSummary() {
   const token = localStorage.getItem("access_token");
   const statsEl = document.getElementById("home-stats");
   const inactivityEl = document.getElementById("home-inactivity");
   const liftedEl = document.getElementById("home-total-lifted");
+  const memberNameEl = document.getElementById("member-name");
   if (!token || !statsEl || !inactivityEl || !liftedEl) return;
 
   statsEl.hidden = true;
@@ -51,15 +62,17 @@ async function loadHomeSummary() {
     const unit = setPreferredUnit(user?.preferred_unit || "KG");
     const username = user?.username || "athlete";
 
+    if (memberNameEl) memberNameEl.textContent = username;
+
     const days = data.days_since_last_workout;
     if (days == null) {
-      inactivityEl.textContent = `Welcome back ${username}! Log your first workout today.`;
+      inactivityEl.textContent = `Log your first workout today — let's build the habit.`;
     } else if (days <= 0) {
-      inactivityEl.textContent = `Welcome back ${username}! What a good day to lift some heavy weights.`;
+      inactivityEl.textContent = `What a good day to lift some heavy weights.`;
     } else if (days < 5) {
-      inactivityEl.textContent = `Welcome back ${username}! Your last workout was ${days} day${days === 1 ? "" : "s"} ago, enjoy your rest days.`;
+      inactivityEl.textContent = `Your last workout was ${days} day${days === 1 ? "" : "s"} ago — enjoy your rest days.`;
     } else {
-      inactivityEl.textContent = `Welcome back ${username}! Your last workout was ${days} days ago, it's time to get back in the gym.`;
+      inactivityEl.textContent = `Your last workout was ${days} days ago — time to get back in the gym.`;
     }
 
     const converted = convertKgToPreferred(data.total_volume_kg, unit);
@@ -72,10 +85,9 @@ async function loadHomeSummary() {
 
 function updateHomeAuthState() {
   const loggedIn = !!localStorage.getItem("access_token");
-  const authenticatedLinks = document.getElementById("authenticated-links");
-  const statsEl = document.getElementById("home-stats");
+  setViewMode(loggedIn);
 
-  if (authenticatedLinks) authenticatedLinks.style.display = loggedIn ? "flex" : "none";
+  const statsEl = document.getElementById("home-stats");
   if (statsEl) statsEl.hidden = true;
 
   if (loggedIn) loadHomeSummary();

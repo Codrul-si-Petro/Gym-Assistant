@@ -14,7 +14,7 @@
   padding: 8px var(--page-gutter);
   margin: 0 auto;
   width: calc(100% - (var(--page-gutter) * 2));
-  max-width: 1100px;
+  max-width: min(1280px, 100%);
 }
 
 .site-header .auth-links--cta {
@@ -39,7 +39,7 @@
   padding: 24px var(--page-gutter) 28px;
   text-align: center;
   width: 100%;
-  max-width: 760px;
+  max-width: min(920px, 100%);
 }
 
 .hero-brand {
@@ -120,7 +120,7 @@
   font-size: 0.95rem;
   line-height: 1.55;
   margin: 0 auto 24px;
-  max-width: 34ch;
+  max-width: min(640px, 92%);
 }
 
 .hero-ctas {
@@ -129,18 +129,200 @@
   align-items: stretch;
   gap: 10px;
   width: 100%;
-  max-width: 320px;
+  max-width: min(480px, 100%);
   margin: 0 auto;
 }
 
+/* Guest vs member visibility */
+.guest-only[hidden],
+.member-only[hidden] {
+  display: none !important;
+}
+
+.landing-section {
+  padding: 32px var(--page-gutter) 40px;
+}
+
+.landing-section-inner {
+  margin: 0 auto;
+  width: 100%;
+  max-width: min(1280px, 100%);
+}
+
+.landing-section-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.landing-section-header h2 {
+  margin: 0 0 10px;
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.landing-section-header p {
+  margin: 0 auto;
+  max-width: min(640px, 92%);
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* Product preview */
+.product-preview {
+  padding-top: 8px;
+}
+
+.preview-showcase {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: clamp(16px, 3vw, 32px);
+  margin-bottom: clamp(24px, 4vw, 48px);
+  perspective: 1200px;
+}
+
+.preview-device {
+  margin: 0;
+  height: fit-content;
+  align-self: flex-end;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-lg);
+  background: var(--bg-card);
+  line-height: 0;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.preview-device img {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+.preview-device--phone {
+  width: clamp(180px, 22vw, 280px);
+  flex-shrink: 0;
+  transform: rotate(3deg);
+  z-index: 2;
+}
+
+.preview-device--desktop {
+  width: clamp(280px, 62vw, 720px);
+  flex: 0 0 auto;
+  max-width: 720px;
+  transform: rotate(-2deg);
+  z-index: 1;
+}
+
+.preview-showcase:hover .preview-device--phone {
+  transform: rotate(2deg) translateY(-6px) scale(1.02);
+  box-shadow: 0 16px 48px var(--accent-glow);
+}
+
+.preview-showcase:hover .preview-device--desktop {
+  transform: rotate(-1deg) translateY(-4px) scale(1.01);
+}
+
+/* Personal note */
+.personal-note-card {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px;
+  text-align: center;
+}
+
+.personal-note-card p {
+  margin: 0 0 14px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.personal-note-card p:last-child {
+  margin-bottom: 0;
+}
+
+.personal-note-card a {
+  color: var(--accent-secondary);
+  text-decoration: none;
+}
+
+.personal-note-card a:hover {
+  text-decoration: underline;
+}
+
+/* Why track */
+.why-track-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.why-track-col {
+  padding: 20px;
+}
+
+.why-track-col h3 {
+  margin: 0 0 14px;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.why-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.why-list li {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  padding-left: 1.6em;
+  position: relative;
+}
+
+.why-list--negative li {
+  color: var(--text-secondary);
+}
+
+.why-list--negative li::before {
+  content: "✕";
+  position: absolute;
+  left: 0;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.why-list--positive li {
+  color: var(--text-primary);
+}
+
+.why-list--positive li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: 600;
+}
+
+/* Features */
 .features {
   display: grid;
   grid-template-columns: 1fr;
   gap: 14px;
-  margin: 0 auto;
-  padding: 8px var(--page-gutter) 40px;
-  width: 100%;
-  max-width: 1100px;
+  padding: 0;
 }
 
 .feature-card {
@@ -160,6 +342,112 @@
   font-size: 0.9rem;
 }
 
+/* Workout day steps */
+.workout-day-steps {
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  max-width: 480px;
+}
+
+.workout-day-steps li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Stats teaser */
+.stats-teaser-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.stats-teaser-item {
+  padding: 20px;
+  text-align: center;
+}
+
+.stats-teaser-icon {
+  display: block;
+  font-size: 1.75rem;
+  margin-bottom: 10px;
+}
+
+.stats-teaser-item h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.stats-teaser-item p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Social proof */
+.social-proof-quote {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px;
+  text-align: center;
+}
+
+.social-proof-quote p {
+  margin: 0 0 12px;
+  font-family: var(--font-serif);
+  font-size: clamp(1.1rem, 3vw, 1.35rem);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.social-proof-quote footer {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Final CTA */
+.final-cta {
+  text-align: center;
+  padding-bottom: 48px;
+}
+
+.final-cta h2 {
+  margin: 0 0 10px;
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-weight: 400;
+}
+
+.final-cta p {
+  margin: 0 auto 24px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
 @media (min-width: 600px) {
   .hero {
     padding: 40px 20px 36px;
@@ -167,7 +455,7 @@
 
   .hero-subtitle {
     font-size: 1.05rem;
-    max-width: 520px;
+    max-width: min(680px, 90%);
   }
 
   .hero-ctas {
@@ -181,11 +469,27 @@
   .features {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 18px;
-    padding: 16px 20px 56px;
   }
 
   .feature-card {
     padding: 22px;
+  }
+
+  .why-track-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    max-width: 900px;
+  }
+
+  .stats-teaser-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  .workout-day-steps {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 720px;
+    gap: 14px;
   }
 }
 
@@ -194,8 +498,53 @@
     padding: 56px 24px 48px;
   }
 
-  .features {
-    padding: 24px 24px 64px;
+  .landing-section {
+    padding: 48px var(--page-gutter) 56px;
+  }
+
+  .preview-showcase {
+    flex-wrap: nowrap;
+    align-items: flex-end;
+  }
+
+  .stats-teaser-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .workout-day-steps {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .preview-showcase {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .preview-device {
+    align-self: center;
+    margin-inline: auto;
+  }
+
+  .preview-device--desktop {
+    order: -1;
+    width: min(100%, 420px);
+    transform: none;
+  }
+
+  .preview-device--phone {
+    order: 0;
+    width: min(100%, 280px);
+    transform: none;
+  }
+
+  .preview-showcase:hover .preview-device--desktop,
+  .preview-showcase:hover .preview-device--phone {
+    transform: translateY(-4px);
   }
 }
 
@@ -207,5 +556,29 @@
   .site-header .auth-links--cta .cta-button {
     padding: 6px 10px;
     font-size: 0.8rem;
+  }
+
+  .preview-device--desktop {
+    width: min(100%, 360px);
+  }
+
+  .preview-device--phone {
+    width: min(100%, 260px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-device {
+    transition: none;
+  }
+
+  .preview-device--desktop,
+  .preview-device--phone {
+    transform: none;
+  }
+
+  .preview-showcase:hover .preview-device--desktop,
+  .preview-showcase:hover .preview-device--phone {
+    transform: none;
   }
 }
