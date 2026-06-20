@@ -71,6 +71,21 @@ def test_workouts_create_returns_201(authenticated_client, dims):
     assert data["workout_split"] == "Pytest Push"
 
 
+def test_workouts_create_without_split_or_equipment(authenticated_client, dims):
+    payload = _payload(dims)
+    del payload["workout_split"]
+    del payload["equipment"]
+    response = authenticated_client.post(BASE_URL, payload, format="json")
+    assert response.status_code == status.HTTP_201_CREATED, response.data
+    assert response.data["workout_split"] == "None"
+    assert response.data["equipment"] == -1
+
+
+def test_workouts_create_blank_split_defaults_to_none(authenticated_client, dims):
+    data = _create(authenticated_client, dims, workout_split="")
+    assert data["workout_split"] == "None"
+
+
 def test_workouts_list_returns_paginated_rows(authenticated_client, dims):
     _create(authenticated_client, dims)
     response = authenticated_client.get(BASE_URL, format="json")
