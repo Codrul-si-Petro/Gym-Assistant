@@ -4,6 +4,7 @@ from django.db.models import Max
 from django.utils import timezone
 from rest_framework import serializers
 
+from .dimension_utils import PLACEHOLDER_DIMENSION_ID, PLACEHOLDER_DIMENSION_NAME
 from .models import (
     Attachments,
     Calendar,
@@ -21,7 +22,10 @@ class WorkoutSerializer(serializers.ModelSerializer):
 
     exercise = serializers.PrimaryKeyRelatedField(queryset=Exercises.objects.all())
     attachment = serializers.PrimaryKeyRelatedField(queryset=Attachments.objects.all(), required=False)
-    equipment = serializers.PrimaryKeyRelatedField(queryset=Equipment.objects.all())
+    equipment = serializers.PrimaryKeyRelatedField(
+        queryset=Equipment.objects.all(),
+        required=False,
+    )
 
     workout_number = serializers.IntegerField(min_value=1, default=1)
     set_number = serializers.IntegerField(min_value=1, max_value=200, default=1)
@@ -30,7 +34,12 @@ class WorkoutSerializer(serializers.ModelSerializer):
     unit = serializers.ChoiceField(default="KG", choices=["KG", "LBS"])
     set_type = serializers.CharField(min_length=1, default="None")
     comments = serializers.CharField(min_length=1, required=False, default="None")
-    workout_split = serializers.CharField(max_length=50, min_length=1)
+    workout_split = serializers.CharField(
+        max_length=50,
+        required=False,
+        allow_blank=True,
+        default=PLACEHOLDER_DIMENSION_NAME,
+    )
     date = serializers.DateField(write_only=True)
     # expose the workout date on reads (the `date` field above is write-only)
     date_id = serializers.DateField(read_only=True)
@@ -88,11 +97,24 @@ class WorkoutSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Workout date cannot be in the future.")
         return value
 
+    def validate_workout_split(self, value):
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return PLACEHOLDER_DIMENSION_NAME
+        return value.strip()
+
     def _resolve_calendar_entry(self, date_input):
         try:
             return Calendar.objects.get(date_id=date_input)
         except Calendar.DoesNotExist:
             raise serializers.ValidationError({"date": f"Date {date_input} is outside the supported calendar range."})
+
+    def _resolve_equipment(self, validated_data):
+        """DRF field defaults pass raw PKs; Django FKs need model instances."""
+        equipment = validated_data.get("equipment")
+        if isinstance(equipment, Equipment):
+            return
+        pk = PLACEHOLDER_DIMENSION_ID if equipment is None else equipment
+        validated_data["equipment"] = Equipment.objects.get(pk=pk)
 
     def create(self, validated_data):
         """
@@ -104,6 +126,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
 
         user = self.context["request"].user
         validated_data["user"] = user
+        self._resolve_equipment(validated_data)
 
         # Max set_number for this (user, exercise, workout_number); next allowed is max + 1
         agg = Workouts.objects.filter(
@@ -143,6 +166,9 @@ class WorkoutSerializer(serializers.ModelSerializer):
         date_input = validated_data.pop("date", None)
         if date_input is not None:
             validated_data["date"] = self._resolve_calendar_entry(date_input)
+
+        if "equipment" in validated_data:
+            self._resolve_equipment(validated_data)
 
         exercise = validated_data.get("exercise", instance.exercise)
         workout_number = validated_data.get("workout_number", instance.workout_number)

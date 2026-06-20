@@ -262,7 +262,7 @@ function getPayload() {
         unit: document.getElementById("unit").value || "KG",
         set_type: (document.getElementById("set_type").value || "").trim() || "Working set",
         comments: (document.getElementById("comments").value || "").trim() || "None",
-        workout_split: (document.getElementById("workout_split").value || "").trim(),
+        workout_split: (document.getElementById("workout_split").value || "").trim() || "None",
         date: dateVal || new Date().toISOString().slice(0, 10),
     };
 }
@@ -273,11 +273,6 @@ function onSubmit(e) {
     var headers = getAuthHeaders();
     if (!headers) {
         showMessage("Please log in to log workouts.", "error");
-        return;
-    }
-    var split = (document.getElementById("workout_split").value || "").trim();
-    if (!split) {
-        showMessage("Please enter a workout split before submitting.", "error");
         return;
     }
     var payload = getPayload();

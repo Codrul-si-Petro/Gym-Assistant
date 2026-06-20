@@ -8,6 +8,18 @@ if (
   API_BASE = "https://api.gym-assistant.app";
 }
 
+const PLACEHOLDER_DIMENSION_ID = -1;
+const PLACEHOLDER_DIMENSION_NAME = "None";
+
+function dimensionDisplayName(map, id) {
+  if (id === PLACEHOLDER_DIMENSION_ID || id == null) return PLACEHOLDER_DIMENSION_NAME;
+  return map[id] ?? id ?? "";
+}
+
+function displayWorkoutSplit(split) {
+  return split && split !== PLACEHOLDER_DIMENSION_NAME ? split : "";
+}
+
 const PAGE_SIZE = 50;
 const SET_TYPE_SEEDS = ["Working set", "Warm-up", "Drop set", "None"];
 const COL_COUNT = 13;
@@ -109,7 +121,9 @@ function updateFilterBadge() {
 }
 
 function collectFilterOption(row) {
-  if (row.workout_split) seenSplits.add(row.workout_split);
+  if (row.workout_split && row.workout_split !== PLACEHOLDER_DIMENSION_NAME) {
+    seenSplits.add(row.workout_split);
+  }
   if (row.set_type) seenSetTypes.add(row.set_type);
 }
 
@@ -163,8 +177,8 @@ function buildRowHtml(row, exerciseMap, attachmentMap, equipmentMap) {
 
   const date = formatRowDate(row);
   const exercise = exerciseMap[row.exercise] ?? row.exercise ?? "";
-  const attachment = attachmentMap[row.attachment] ?? row.attachment ?? "";
-  const equipment = equipmentMap[row.equipment] ?? row.equipment ?? "";
+  const attachment = dimensionDisplayName(attachmentMap, row.attachment);
+  const equipment = dimensionDisplayName(equipmentMap, row.equipment);
 
   return `<tr class="workout-row" data-workout-id="${row.workout_id}" tabindex="0" role="button" aria-label="Edit set">
       <td>${row.workout_number ?? ""}</td>
@@ -178,15 +192,15 @@ function buildRowHtml(row, exerciseMap, attachmentMap, equipmentMap) {
       <td>${escapeHtml(String(row.unit || ""))}</td>
       <td>${escapeHtml(String(row.set_type || ""))}</td>
       <td>${escapeHtml(String(row.comments || ""))}</td>
-      <td>${escapeHtml(String(row.workout_split || ""))}</td>
+      <td>${escapeHtml(displayWorkoutSplit(row.workout_split))}</td>
       <td class="edit-col"><span class="edit-icon" aria-hidden="true">✎</span></td>
   </tr>`;
 }
 
 function updateRowFromData(tr, row, maps) {
   const exercise = maps.exerciseMap[row.exercise] ?? row.exercise ?? "";
-  const attachment = maps.attachmentMap[row.attachment] ?? row.attachment ?? "";
-  const equipment = maps.equipmentMap[row.equipment] ?? row.equipment ?? "";
+  const attachment = dimensionDisplayName(maps.attachmentMap, row.attachment);
+  const equipment = dimensionDisplayName(maps.equipmentMap, row.equipment);
   const cells = tr.querySelectorAll("td");
   if (cells.length < COL_COUNT) return;
   cells[0].textContent = row.workout_number ?? "";
@@ -200,7 +214,7 @@ function updateRowFromData(tr, row, maps) {
   cells[8].textContent = row.unit || "";
   cells[9].textContent = row.set_type || "";
   cells[10].textContent = row.comments || "";
-  cells[11].textContent = row.workout_split || "";
+  cells[11].textContent = displayWorkoutSplit(row.workout_split);
 }
 
 async function loadDimensionMaps(headers) {
@@ -304,7 +318,7 @@ function buildEditFormHtml(row) {
     </div>
     <div class="field">
       <label for="edit-workout_split">Split</label>
-      <input type="text" id="edit-workout_split" name="workout_split" maxlength="50" value="${escapeHtml(row.workout_split || "")}" required>
+      <input type="text" id="edit-workout_split" name="workout_split" maxlength="50" value="${escapeHtml(row.workout_split === "None" ? "" : row.workout_split || "")}">
     </div>
     <div class="field">
       <label for="edit-exercise">Exercise</label>
@@ -314,7 +328,8 @@ function buildEditFormHtml(row) {
     </div>
     <div class="field">
       <label for="edit-equipment">Equipment</label>
-      <select id="edit-equipment" name="equipment" required>
+      <select id="edit-equipment" name="equipment">
+        <option value="${PLACEHOLDER_DIMENSION_ID}"${row.equipment === PLACEHOLDER_DIMENSION_ID ? " selected" : ""}>None</option>
         ${buildSelectOptions(dimensionLists.equipment, "equipment_id", "equipment_name", row.equipment)}
       </select>
     </div>
@@ -364,9 +379,9 @@ function readEditPayload(formEl) {
   return {
     workout_number: parseInt(formEl.querySelector("#edit-workout_number").value, 10),
     date: dateVal,
-    workout_split: formEl.querySelector("#edit-workout_split").value.trim(),
+    workout_split: formEl.querySelector("#edit-workout_split").value.trim() || "None",
     exercise: parseInt(formEl.querySelector("#edit-exercise").value, 10),
-    equipment: parseInt(formEl.querySelector("#edit-equipment").value, 10),
+    equipment: parseInt(formEl.querySelector("#edit-equipment").value, 10) || PLACEHOLDER_DIMENSION_ID,
     attachment: attachmentVal ? parseInt(attachmentVal, 10) : null,
     set_number: parseInt(formEl.querySelector("#edit-set_number").value, 10),
     repetitions: parseInt(formEl.querySelector("#edit-repetitions").value, 10),
