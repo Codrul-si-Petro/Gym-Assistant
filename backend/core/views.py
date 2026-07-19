@@ -132,7 +132,7 @@ class WorkoutsViewSet(
         return super().partial_update(request, *args, **kwargs)
 
     @swagger_auto_schema(
-        tags=["Core"], 
+        tags=["Core"],
         request_body=WorkoutSerializer,
         consumes=["application/x-www-form-urlencoded"],  # <-- force Swagger form
     )
