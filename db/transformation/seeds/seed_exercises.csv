@@ -60,3 +60,17 @@ exercise_id,exercise_name,exercise_movement_type,exercise_parent_id,ta_created_a
 58,Crunch,Compound,,2026-05-05 20:00:04.03 +0200
 59,Push up,Compound,46,2026-06-16 15:00:00.02 +0200
 60,Crunch,Isolated,58,2026-06-16 15:00:00.02 +0200
+61,Tibialis raise,Isolated,,2026-07-20 00:54:00.000 +0200
+62,Muscle up,Compound,49,2026-07-20 00:54:00.000 +0200
+63,Shrug,Isolated,,2026-07-20 00:54:00.000 +0200
+64,Wrist curl,Isolated,,2026-07-20 00:54:00.000 +0200
+65,Reverse wrist curl,Isolated,,2026-07-20 00:54:00.000 +0200
+66,Plank,Compound,,2026-07-20 00:54:00.000 +0200
+67,Nordic curl,Isolated,,2026-07-20 00:54:00.000 +0200
+68,Inverted row,Compound,50,2026-07-20 00:54:00.000 +0200
+69,Good morning,Compound,48,2026-07-20 00:54:00.000 +0200
+70,Farmers walk,Compound,,2026-07-20 00:54:00.000 +0200
+71,Front raise,Isolated,,2026-07-20 00:54:00.000 +0200
+72,Front squat,Compound,47,2026-07-20 01:01:00.000 +0200
+73,Sumo deadlift,Compound,48,2026-07-20 01:01:00.000 +0200
+74,Side plank,Compound,,2026-07-20 01:01:00.000 +0200
