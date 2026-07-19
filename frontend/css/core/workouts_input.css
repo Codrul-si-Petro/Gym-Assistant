@@ -75,11 +75,25 @@ body {
 }
 
 .form-row.form-meta {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     margin-bottom: 16px;
 }
 
-.form-row:not(.form-meta) {
+.form-row.form-auto-fields {
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-strong);
+}
+
+.form-row.form-set-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    margin-bottom: 16px;
+}
+
+.form-row:not(.form-meta):not(.form-auto-fields):not(.form-set-metrics) {
     grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
     margin-bottom: 16px;
 }
@@ -118,6 +132,26 @@ body {
     outline: none;
     border-color: var(--accent-secondary);
     box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.field input[readonly] {
+    cursor: default;
+}
+
+.field-auto label {
+    color: var(--text-muted);
+}
+
+.field-auto input[readonly] {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-color: var(--border-strong);
+    opacity: 1;
+}
+
+.field-auto input[readonly]:focus {
+    border-color: var(--border-strong);
+    box-shadow: none;
 }
 
 .field textarea {
@@ -179,7 +213,17 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .form-row:not(.form-meta) {
+    /* Workout # and set stay on one row so each field stays compact. */
+    .form-row.form-auto-fields {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .form-row.form-set-metrics {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .form-row:not(.form-meta):not(.form-auto-fields):not(.form-set-metrics) {
         grid-template-columns: 1fr 1fr;
     }
 

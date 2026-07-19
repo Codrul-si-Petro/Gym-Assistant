@@ -18,7 +18,12 @@ def get_next_workout(user):
     max_num = agg["workout_number__max"]
 
     if max_num is None:
-        return {"max_workout_number": None, "next_workout_number": 1, "hour_elapsed": False}
+        return {
+            "max_workout_number": None,
+            "next_workout_number": 1,
+            "hour_elapsed": False,
+            "workout_split": None,
+        }
 
     last_created = (
         Workouts.objects.filter(user=user).order_by("-ta_created_at").values_list("ta_created_at", flat=True).first()
@@ -29,11 +34,32 @@ def get_next_workout(user):
 
     next_num = max_num + 1 if hour_elapsed else max_num
 
+    workout_split = None
+    if not hour_elapsed:
+        workout_split = (
+            Workouts.objects.filter(user=user)
+            .order_by("-ta_created_at")
+            .values_list("workout_split", flat=True)
+            .first()
+        )
+
     return {
         "max_workout_number": max_num,
         "next_workout_number": next_num,
         "hour_elapsed": hour_elapsed,
+        "workout_split": workout_split,
     }
+
+
+def get_next_set_number(user, exercise_id, workout_number):
+    """Return the next set number for (user, exercise, workout_number), capped at 200."""
+    agg = Workouts.objects.filter(
+        user=user,
+        exercise_id=exercise_id,
+        workout_number=workout_number,
+    ).aggregate(Max("set_number"))
+    max_set = agg["set_number__max"] or 0
+    return min(max_set + 1, 200)
 
 
 def validate_workout_number(user, value: int):
@@ -45,11 +71,6 @@ def validate_workout_number(user, value: int):
     info = get_next_workout(user)
     max_workout_number = info["max_workout_number"]
 
-    if max_workout_number is None:
-        if value != 1:
-            raise serializers.ValidationError("This is your first workout. Workout number must be 1.")
-        return value
-
     next_workout_number = max_workout_number + 1
 
     if value < max_workout_number:
@@ -58,9 +79,8 @@ def validate_workout_number(user, value: int):
         )
     if value > next_workout_number:
         raise serializers.ValidationError(
-            f"Can't skip workout numbers. Next allowed is {max_workout_number} or {next_workout_number}."
+            f"Can't skip workout numbers. You are currently doing workout {max_workout_number}."
         )
-
     if info["hour_elapsed"] and value == max_workout_number:
         raise serializers.ValidationError(
             f"More than 6 hours have passed since your last input. "

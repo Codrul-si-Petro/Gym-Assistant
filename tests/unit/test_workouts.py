@@ -211,8 +211,57 @@ def test_workouts_list_invalid_filters_return_400(authenticated_client, db):
 def test_next_workout_info_returns_200(authenticated_client, db):
     response = authenticated_client.get(f"{BASE_URL}next-workout-info/", format="json")
     assert response.status_code == status.HTTP_200_OK
-    assert set(response.data.keys()) == {"max_workout_number", "next_workout_number", "hour_elapsed"}
+    assert set(response.data.keys()) == {
+        "max_workout_number",
+        "next_workout_number",
+        "hour_elapsed",
+        "workout_split",
+    }
     assert response.data["next_workout_number"] == 1
+    assert response.data["workout_split"] is None
+
+
+def test_workouts_create_auto_computes_workout_and_set_number(authenticated_client, dims):
+    """Client-supplied workout_number/set_number are ignored; server assigns the next values."""
+    first = _create(authenticated_client, dims, set_number=99, workout_number=99)
+    assert first["workout_number"] == 1
+    assert first["set_number"] == 1
+
+    second = _create(authenticated_client, dims, set_number=50, workout_number=50)
+    assert second["workout_number"] == 1
+    assert second["set_number"] == 2
+
+
+def test_workouts_create_defaults_split_from_session(authenticated_client, dims):
+    _create(authenticated_client, dims, workout_split="Session Push")
+    data = _create(authenticated_client, dims, exercise=dims["exercise_alt"], workout_split="")
+    assert data["workout_split"] == "Session Push"
+
+
+def test_workouts_create_explicit_split_overrides_session_default(authenticated_client, dims):
+    _create(authenticated_client, dims, workout_split="Session Push")
+    data = _create(authenticated_client, dims, workout_split="Session Pull")
+    assert data["workout_split"] == "Session Pull"
+
+
+def test_next_set_info_returns_200(authenticated_client, dims):
+    _create(authenticated_client, dims, set_number=1)
+    response = authenticated_client.get(
+        f"{BASE_URL}next-set-info/",
+        {"exercise_id": dims["exercise"]},
+        format="json",
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data == {
+        "exercise_id": dims["exercise"],
+        "workout_number": 1,
+        "next_set_number": 2,
+    }
+
+
+def test_next_set_info_requires_exercise_id(authenticated_client, db):
+    response = authenticated_client.get(f"{BASE_URL}next-set-info/", format="json")
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 def test_delete_last_workout_returns_200(authenticated_client, dims):
