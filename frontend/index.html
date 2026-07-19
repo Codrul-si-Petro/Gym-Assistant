@@ -10,7 +10,8 @@
   <link rel="stylesheet" href="css/general-components/theme.css?v=7">
   <link rel="stylesheet" href="css/general-components/profile-menu.css?v=7">
   <link rel="stylesheet" href="css/general-components/info-popover.css?v=1">
-  <link rel="stylesheet" href="css/homepage.css?v=13">
+  <link rel="stylesheet" href="css/homepage.css?v=17">
+  <link rel="stylesheet" href="css/core/workout-count-card.css?v=3">
   <link rel="icon" href="./assets/favicon.ico" sizes="any">
 </head>
 <body class="home-page" data-info-page="home">
@@ -34,6 +35,21 @@
       <p class="home-stats-label">Your summary</p>
       <p id="home-inactivity" class="home-stat-line"></p>
       <p id="home-total-lifted" class="home-stat-line home-stat-accent"></p>
+      <div class="home-trend-list">
+        <div id="home-week-trend" class="home-trend-row" role="img"></div>
+        <div id="home-month-trend" class="home-trend-row" role="img"></div>
+      </div>
+    </div>
+
+    <div id="workout-count-card" class="workout-count-card reveal reveal-delay-2" hidden>
+      <div class="workout-count-item">
+        <span id="workout-count-week" class="workout-count-value">0</span>
+        <span class="workout-count-label">Workouts this week</span>
+      </div>
+      <div class="workout-count-item">
+        <span id="workout-count-month" class="workout-count-value">0</span>
+        <span class="workout-count-label">Workouts this month</span>
+      </div>
     </div>
 
     <p class="hero-badge reveal reveal-delay-1">Track. Learn. Progress.</p>
@@ -215,6 +231,7 @@
 <script type="module" src="js/general-components/profile-menu.js?v=2"></script>
 <script type="module" src="js/general-components/info-popover.js?v=2"></script>
 <script type="module" src="js/general-components/animations.js?v=2"></script>
-<script type="module" src="js/homepage.js?v=5"></script>
+<script type="module" src="js/homepage.js?v=10"></script>
+<script type="module" src="js/core/workout-count-card.js?v=1"></script>
 </body>
 </html>
