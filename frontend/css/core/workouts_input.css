@@ -209,9 +209,14 @@ body {
 }
 
 @media (max-width: 600px) {
-    .form-row.form-meta,
-    .form-row.form-auto-fields {
+    .form-row.form-meta {
         grid-template-columns: 1fr;
+    }
+
+    /* Workout # and set stay on one row so each field stays compact. */
+    .form-row.form-auto-fields {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
     }
 
     .form-row.form-set-metrics {
