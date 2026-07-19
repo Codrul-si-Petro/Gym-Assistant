@@ -43,9 +43,7 @@ jobs:
               --base dev \
               --head main \
               --title "Backmerge: main to dev" \
-              --body "Automated PR to sync dev with latest changes from main.
-
-After CI passes, this PR is merged automatically once approved."
+              --body "Automated PR to sync dev with latest changes from main. After CI passes, this PR is merged automatically once approved."
           fi
 
   automerge:
