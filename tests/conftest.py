@@ -43,10 +43,11 @@ def _log_process_output(label: str, process: subprocess.Popen) -> None:
         print(f"--- {label} stderr ---\n{stderr}")
 
 
-def _start_or_raise(cmd: list[str], cwd: Path, label: str) -> subprocess.Popen:
+def _start_or_raise(cmd: list[str], cwd: Path, label: str, env: dict[str, str] | None = None) -> subprocess.Popen:
     process = subprocess.Popen(
         cmd,
         cwd=cwd,
+        env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -77,10 +78,15 @@ def start_servers(request):
     django_addr = _host_port(BACKEND_URL, 8000)
     frontend_port = _frontend_port(FRONTEND_URL)
 
+    # E2E always boots with DEBUG so api_throttle uses the relaxed rate. Without this,
+    # a local shell that forgot `load django dev` still runs production 15/min limits
+    # and flakes late in the suite (workout history edit save gets 429).
+    django_env = {**os.environ, "DJANGO_DEBUG": "True"}
     django_process = _start_or_raise(
         [sys.executable, "manage.py", "runserver", "--noreload", django_addr],
         BASE_DIR,
         "Django",
+        env=django_env,
     )
 
     frontend_process = _start_or_raise(
