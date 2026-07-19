@@ -17,7 +17,6 @@ def test_workout_form_submit_then_delete(page: Page, frontend_url: str, e2e_user
     page.wait_for_selector("#exercises_list option", state="attached", timeout=15000)
     page.fill("#exercise_name", "Triceps extension")
     page.fill("#equipment_name", "Olympic Barbell")
-    page.fill("#set_number", "1")
     page.fill("#set_type", "Working set")
     page.fill("#repetitions", "10")
     page.fill("#load", "50")
@@ -27,7 +26,7 @@ def test_workout_form_submit_then_delete(page: Page, frontend_url: str, e2e_user
     page.click("#submit-btn")
 
     msg = page.locator("#message")
-    expect(msg).to_contain_text("Workout saved", timeout=10000)
+    expect(msg).to_contain_text("Saved:", timeout=10000)
 
     page.click("#delete-last-btn")
     expect(msg).to_contain_text("Deleted", timeout=10000)

@@ -10,7 +10,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, JSONParser
 from rest_framework.response import Response
 
-from backend.core.workout_validations import get_next_workout
+from backend.core.workout_validations import get_next_set_number, get_next_workout
 
 from .analytics.cache_utils import invalidate_user_analytics
 from .api_throttle import EndpointThrottle
@@ -108,7 +108,7 @@ class WorkoutsViewSet(
 
     @swagger_auto_schema(
         request_body=WorkoutSerializer,  # <-- use serializer to avoid writing schema each time
-        tags=["Core"],
+        tags=["workout-logging"],
         consumes=["application/x-www-form-urlencoded"],  # <-- force Swagger form
     )
     def create(self, request, *args, **kwargs):
@@ -123,20 +123,58 @@ class WorkoutsViewSet(
         return super().retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
-        tags=["Core"],
+        tags=["workout-logging"],
         request_body=WorkoutSerializer,
+        consumes=["application/x-www-form-urlencoded"],  # <-- force Swagger form
         operation_description="Partially update one workout set row owned by the current user.",
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
-    @swagger_auto_schema(tags=["Core"], request_body=WorkoutSerializer)
+    @swagger_auto_schema(
+        tags=["Core"], 
+        request_body=WorkoutSerializer,
+        consumes=["application/x-www-form-urlencoded"],  # <-- force Swagger form
+    )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 
+    @swagger_auto_schema(
+        tags=["workout-logging"],
+        consumes=["application/x-www-form-urlencoded"],  # <-- force Swagger form
+    )
     @action(detail=False, methods=["get"], url_path="next-workout-info")
     def next_workout_info(self, request):
         return Response(get_next_workout(request.user))
+
+    @swagger_auto_schema(
+        tags=["workout-logging"],
+        manual_parameters=[
+            openapi.Parameter("exercise_id", openapi.IN_QUERY, type=openapi.TYPE_INTEGER, required=True),
+        ],
+    )
+    @action(detail=False, methods=["get"], url_path="next-set-info")
+    def next_set_info(self, request):
+        raw = request.query_params.get("exercise_id")
+        if raw is None or str(raw).strip() == "":
+            raise ValidationError({"exercise_id": "This query parameter is required."})
+        try:
+            exercise_id = int(raw)
+        except ValueError:
+            raise ValidationError({"exercise_id": "Must be an integer."})
+        if not Exercises.objects.filter(pk=exercise_id).exists():
+            raise ValidationError({"exercise_id": "Exercise not found."})
+
+        info = get_next_workout(request.user)
+        workout_number = info["next_workout_number"]
+        next_set_number = get_next_set_number(request.user, exercise_id, workout_number)
+        return Response(
+            {
+                "exercise_id": exercise_id,
+                "workout_number": workout_number,
+                "next_set_number": next_set_number,
+            }
+        )
 
     @swagger_auto_schema(
         tags=["Core"],

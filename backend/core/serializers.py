@@ -1,6 +1,5 @@
 import datetime
 
-from django.db.models import Max
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -13,7 +12,7 @@ from .models import (
     Muscles,
     Workouts,
 )
-from .workout_validations import validate_workout_number
+from .workout_validations import get_next_set_number, get_next_workout, validate_workout_number
 
 
 class WorkoutSerializer(serializers.ModelSerializer):
@@ -74,20 +73,10 @@ class WorkoutSerializer(serializers.ModelSerializer):
         ]
 
     def validate_workout_number(self, value):
-        """
-        DRF calls this automatically for field-level validation.
-        On create: enforce no workout skipping or going backwards, must increment
-        after a set period of time (check the workout_validations.py file).
-        On update: corrections to historical rows are allowed, so only require the
-        number to stay within the user's existing sessions.
-        """
-        if self.instance is not None:
-            if value == self.instance.workout_number:
-                return value
-            agg = Workouts.objects.filter(user=self.instance.user).aggregate(Max("workout_number"))
-            max_num = agg["workout_number__max"] or 1
-            if value > max_num:
-                raise serializers.ValidationError(f"Workout number can't exceed your current max ({max_num}).")
+        """On create, workout_number is auto-computed in create(); skip strict checks."""
+        if self.instance is None:
+            return value
+        if value == self.instance.workout_number:
             return value
         user = self.context["request"].user
         return validate_workout_number(user, value)
@@ -117,10 +106,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
         validated_data["equipment"] = Equipment.objects.get(pk=pk)
 
     def create(self, validated_data):
-        """
-        Dimensions should be resolved by now
-        """
-
+        """Auto-compute workout_number, set_number, and session workout_split on create."""
         date_input = validated_data.pop("date", datetime.date.today())
         validated_data["date"] = self._resolve_calendar_entry(date_input)
 
@@ -128,32 +114,17 @@ class WorkoutSerializer(serializers.ModelSerializer):
         validated_data["user"] = user
         self._resolve_equipment(validated_data)
 
-        # Max set_number for this (user, exercise, workout_number); next allowed is max + 1
-        agg = Workouts.objects.filter(
-            user=user,
-            exercise=validated_data["exercise"],
-            workout_number=validated_data["workout_number"],
-        ).aggregate(Max("set_number"))
-        max_set = agg["set_number__max"] or 0
-        next_allowed = min(max_set + 1, 200)
+        info = get_next_workout(user)
+        validated_data["workout_number"] = info["next_workout_number"]
 
-        # Don't allow skipping sets
-        if validated_data["set_number"] > next_allowed:
-            raise serializers.ValidationError(
-                f"You can't skip sets. Next set number for this exercise in this workout is {next_allowed}."
-            )
+        if validated_data.get("workout_split") == PLACEHOLDER_DIMENSION_NAME and info.get("workout_split"):
+            validated_data["workout_split"] = info["workout_split"]
 
-        # Don't allow duplicate set numbers
-        existing = Workouts.objects.filter(
-            user=user,
-            exercise=validated_data["exercise"],
-            workout_number=validated_data["workout_number"],
-            set_number=validated_data["set_number"],
+        validated_data["set_number"] = get_next_set_number(
+            user,
+            validated_data["exercise"].pk,
+            validated_data["workout_number"],
         )
-        if existing.exists():
-            raise serializers.ValidationError(
-                f"This set number already exists for this exercise in this workout. Next set number is {next_allowed}."
-            )
 
         return super().create(validated_data)
 
