@@ -67,7 +67,7 @@
   gap: 6px;
   margin: 0 auto 18px;
   padding: 12px 16px;
-  max-width: 420px;
+  max-width: 480px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: var(--bg-elevated);
@@ -86,6 +86,37 @@
 .home-stat-accent {
   color: var(--accent-secondary);
   font-weight: 600;
+}
+
+.home-trend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.home-trend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-trend-arrow-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.home-trend-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
 
 .hero-badge {

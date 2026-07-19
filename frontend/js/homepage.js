@@ -15,6 +15,37 @@ function formatNumber(value) {
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(value);
 }
 
+const TREND_ARROW_PATHS = {
+  "is-up": `<line x1="4" y1="20" x2="20" y2="4" /><polyline points="10,4 20,4 20,14" />`,
+  "is-down": `<line x1="4" y1="4" x2="20" y2="20" /><polyline points="20,10 20,20 10,20" />`,
+  "is-flat": `<line x1="3" y1="12" x2="19" y2="12" /><polyline points="14,6 20,12 14,18" />`,
+};
+
+function renderTrendComparison(container, current, previous, periodLabel) {
+  const delta = current - previous;
+  const trendClass = delta > 0 ? "is-up" : delta < 0 ? "is-down" : "is-flat";
+  const sessionWord = (n) => (Math.abs(n) === 1 ? "session" : "sessions");
+
+  let sentence;
+  if (delta > 0) {
+    sentence = `${delta} more ${sessionWord(delta)} ${periodLabel} than last`;
+  } else if (delta < 0) {
+    sentence = `${Math.abs(delta)} fewer ${sessionWord(delta)} ${periodLabel} than last`;
+  } else {
+    sentence = `Same number of sessions ${periodLabel} as last`;
+  }
+
+  container.className = `home-trend-row ${trendClass}`;
+  container.setAttribute(
+    "aria-label",
+    `${current} sessions ${periodLabel}, ${previous} last ${periodLabel.replace("this ", "")}. ${sentence}.`,
+  );
+  container.innerHTML = `
+    <svg class="home-trend-arrow-icon" viewBox="0 0 24 24" aria-hidden="true">${TREND_ARROW_PATHS[trendClass]}</svg>
+    <p class="home-trend-text">${sentence}</p>
+  `;
+}
+
 function clearAuthTokens() {
   localStorage.removeItem("access_token");
   localStorage.removeItem("refresh_token");
@@ -35,6 +66,8 @@ async function loadHomeSummary() {
   const statsEl = document.getElementById("home-stats");
   const inactivityEl = document.getElementById("home-inactivity");
   const liftedEl = document.getElementById("home-total-lifted");
+  const weekTrendEl = document.getElementById("home-week-trend");
+  const monthTrendEl = document.getElementById("home-month-trend");
   const memberNameEl = document.getElementById("member-name");
   if (!token || !statsEl || !inactivityEl || !liftedEl) return;
 
@@ -77,7 +110,26 @@ async function loadHomeSummary() {
 
     const converted = convertKgToPreferred(data.total_volume_kg, unit);
     liftedEl.textContent = `${formatNumber(converted)} ${unitSuffix(unit)} lifted until now`;
+
+    if (weekTrendEl) {
+      renderTrendComparison(
+        weekTrendEl,
+        data.workouts_this_week ?? 0,
+        data.workouts_last_week ?? 0,
+        "this week",
+      );
+    }
+    if (monthTrendEl) {
+      renderTrendComparison(
+        monthTrendEl,
+        data.workouts_this_month ?? 0,
+        data.workouts_last_month ?? 0,
+        "this month",
+      );
+    }
+
     statsEl.hidden = false;
+    statsEl.classList.add("is-visible");
   } catch {
     statsEl.hidden = true;
   }
