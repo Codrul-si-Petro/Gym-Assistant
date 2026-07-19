@@ -144,52 +144,51 @@ def get_gym_weekdays(user_id: int, start_date: date | None, end_date: date | Non
     )
 
 
-def _week_bounds(today: date) -> tuple[date, date, date, date]:
-    """Monday–Sunday calendar week containing today, and the prior week."""
-    cur_week_start = today - timedelta(days=today.isoweekday() - 1)
-    cur_week_end = today
-    prev_week_end = cur_week_start - timedelta(days=1)
-    prev_week_start = prev_week_end - timedelta(days=6)
-    return cur_week_start, cur_week_end, prev_week_start, prev_week_end
+def _period_bounds(today: date, unit: str) -> dict[str, date]:
+    """Start/end dates for the current and prior Mon–Sun week or calendar month.
 
+    Current periods end "today" rather than the natural week/month end, since a
+    period isn't over yet — this keeps this-week/this-month counts from silently
+    including future dates that can't have workouts.
+    """
+    if unit == "week":
+        cur_start = today - timedelta(days=today.isoweekday() - 1)
+        cur_end = today
+    else:
+        cur_start = today.replace(day=1)
+        cur_end = today
 
-def _month_bounds(today: date) -> tuple[date, date, date, date]:
-    """Calendar month containing today, and the prior calendar month."""
-    cur_month_start = today.replace(day=1)
-    cur_month_end = today
-    prev_month_end = cur_month_start - timedelta(days=1)
-    prev_month_start = prev_month_end.replace(day=1)
-    return cur_month_start, cur_month_end, prev_month_start, prev_month_end
+    prev_end = cur_start - timedelta(days=1)
+    prev_start = prev_end - timedelta(days=6) if unit == "week" else prev_end.replace(day=1)
+    return {"cur_start": cur_start, "cur_end": cur_end, "prev_start": prev_start, "prev_end": prev_end}
 
 
 def get_workout_counts(user_id: int) -> dict[str, int]:
+    """Count distinct gym days (see `workout_sets_daily`) for this/last week and month."""
     today = timezone.localdate()
-    cur_week_start, cur_week_end, prev_week_start, prev_week_end = _week_bounds(today)
-    cur_month_start, cur_month_end, prev_month_start, prev_month_end = _month_bounds(today)
+    week = _period_bounds(today, "week")
+    month = _period_bounds(today, "month")
 
-    query_file = SQL_DIR / "get_workout_counts.sql"
-    query = query_file.read_text()
+    query = (SQL_DIR / "get_workout_counts.sql").read_text()
     rows = execute_sql(
         query,
         {
             "user_id": user_id,
-            "cur_week_start": cur_week_start,
-            "cur_week_end": cur_week_end,
-            "prev_week_start": prev_week_start,
-            "prev_week_end": prev_week_end,
-            "cur_month_start": cur_month_start,
-            "cur_month_end": cur_month_end,
-            "prev_month_start": prev_month_start,
-            "prev_month_end": prev_month_end,
+            "cur_week_start": week["cur_start"],
+            "cur_week_end": week["cur_end"],
+            "prev_week_start": week["prev_start"],
+            "prev_week_end": week["prev_end"],
+            "cur_month_start": month["cur_start"],
+            "cur_month_end": month["cur_end"],
+            "prev_month_start": month["prev_start"],
+            "prev_month_end": month["prev_end"],
         },
     )
 
     row = rows[0] if rows else {}
     return {
-        "workouts_this_week": int(row.get("workouts_this_week") or 0),
-        "workouts_last_week": int(row.get("workouts_last_week") or 0),
-        "workouts_this_month": int(row.get("workouts_this_month") or 0),
-        "workouts_last_month": int(row.get("workouts_last_month") or 0),
+        key: int(row.get(key) or 0)
+        for key in ("workouts_this_week", "workouts_last_week", "workouts_this_month", "workouts_last_month")
     }
 
 
@@ -197,6 +196,8 @@ def get_home_summary(user_id: int):
     query_file = SQL_DIR / "get_home_summary.sql"
     query = query_file.read_text()
     rows = execute_sql(query, {"user_id": user_id})
+    # Merged in regardless of whether `rows` is empty — a brand-new user with no
+    # lifetime volume can still have workout counts once seeded/backfilled data lands.
     workout_counts = get_workout_counts(user_id)
 
     if not rows:
