@@ -6,7 +6,7 @@ from playwright.sync_api import Page, expect
 from tests.e2e.helpers import click_metrics_tab, goto_core_page, prepare_dashboard_date_range, wait_for_volume_table
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(6)
 def test_dashboard_default_volume_tab_and_all_metric_views(page: Page, frontend_url: str, e2e_user_bootstrapped):
     goto_core_page(page, frontend_url, "dashboard.html")
     prepare_dashboard_date_range(page)
@@ -24,13 +24,14 @@ def test_dashboard_default_volume_tab_and_all_metric_views(page: Page, frontend_
     if rows.count() == 0:
         pytest.skip("No volume rows for this user/date range — cannot assert table data")
     expect(rows.first).to_be_visible()
+    expect(page.locator(".volume-period-chip.is-active")).to_have_text("All")
 
     spark = page.locator(".volume-minichart-placeholder").first
     if spark.count():
         spark.click()
         page.wait_for_load_state("networkidle")
         expect(page.locator("#volume-daily-chart-block")).to_be_visible()
-        page.locator("#volume-daily-close").click()
+        page.locator("#volume-daily-back").click()
         page.wait_for_load_state("networkidle")
 
     drill = page.locator(".volume-exercise-drill").first
@@ -68,7 +69,7 @@ def test_dashboard_default_volume_tab_and_all_metric_views(page: Page, frontend_
     expect(weekdays_list.locator(".stat-row").first).to_be_visible()
 
 
-@pytest.mark.order(6)
+@pytest.mark.order(7)
 def test_dashboard_mobile_viewport(page: Page, frontend_url: str, e2e_user_bootstrapped):
     page.set_viewport_size({"width": 414, "height": 896})
     goto_core_page(page, frontend_url, "dashboard.html")

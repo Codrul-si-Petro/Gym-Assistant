@@ -34,6 +34,7 @@ class Workouts(models.Model):
     set_type = models.TextField(default="Working set")
     comments = models.TextField(default="N/A")
     workout_split = models.TextField(max_length=50)
+    scenario = models.CharField(max_length=10, default="actuals")
     ta_created_at = models.DateTimeField(auto_now_add=True)
     ta_updated_at = models.DateTimeField(null=True)
 

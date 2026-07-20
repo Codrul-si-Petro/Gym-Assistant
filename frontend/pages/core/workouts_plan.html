@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log Workout</title>
+    <title>Plan Workout</title>
     <link rel="stylesheet" href="../../css/general-components/theme.css?v=7">
     <link rel="stylesheet" href="../../css/general-components/profile-menu.css?v=2">
-    <link rel="stylesheet" href="../../css/core/workouts_input.css?v=7">
-    <link rel="stylesheet" href="../../css/general-components/voice-input.css?v=3">
+    <link rel="stylesheet" href="../../css/core/workouts_input.css?v=9">
+    <link rel="stylesheet" href="../../css/core/workouts_plan.css?v=1">
     <link rel="stylesheet" href="../../css/general-components/info-popover.css?v=1">
     <link rel="stylesheet" href="../../css/general-components/navigation.css?v=2">
     <link rel="icon" href="../../assets/favicon.ico" sizes="any">
 </head>
-<body data-info-page="log">
+<body data-info-page="plan">
     <div class="nav">
       <button class="nav-toggle" aria-label="Toggle Menu" type="button">
         <svg class="nav-toggle-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -30,41 +30,27 @@
           <a href="dashboard.html">Metrics</a>
           <a href="explore.html">Glossary</a>
       </div>
-      <div id="nav-actions" class="nav-actions">
-      </div>
+      <div id="nav-actions" class="nav-actions"></div>
     </div>
 
-    <main class="workout-input">
-        <h1>Log workout</h1>
+    <main class="workout-input workout-plan">
+        <h1>Plan workout</h1>
+        <p class="plan-lead">Build one template set, then stamp it onto multiple future dates. Plans appear in Metrics as a forecast line.</p>
         <div id="message" class="message" role="alert" aria-live="polite"></div>
 
-        <form id="workout-form">
-            <div class="form-row form-auto-fields">
-                <div class="field field-auto">
-                    <label for="workout_number">Workout number</label>
-                    <input type="number" id="workout_number" name="workout_number" min="1" max="10000" value="1" readonly>
+        <form id="workout-plan-form">
+            <div class="field plan-dates-field">
+                <label for="plan_date_picker">Plan dates</label>
+                <div class="plan-dates-row">
+                    <input type="date" id="plan_date_picker">
+                    <button type="button" id="plan_date_add" class="plan-date-add">Add date</button>
                 </div>
-                <div class="field field-auto">
-                    <label for="set_number">Set</label>
-                    <input type="number" id="set_number" name="set_number" min="1" max="200" value="1" readonly required>
-                </div>
+                <ul id="plan_dates_list" class="plan-dates-list" aria-live="polite"></ul>
             </div>
 
-            <div class="form-row form-meta">
-                <div class="field">
-                    <label for="workout_split">Split</label>
-                    <input
-                        type="text"
-                        id="workout_split"
-                        name="workout_split"
-                        maxlength="50"
-                        placeholder="e.g. Push"
-                    >
-                </div>
-                <div class="field">
-                    <label for="date">Date</label>
-                    <input type="date" id="date" name="date" required>
-                </div>
+            <div class="field">
+                <label for="workout_split">Split</label>
+                <input type="text" id="workout_split" name="workout_split" maxlength="50" placeholder="e.g. Push">
             </div>
 
             <div class="field">
@@ -86,7 +72,7 @@
             <div class="form-row form-set-metrics">
                 <div class="field">
                     <label for="repetitions">Reps</label>
-                    <input type="number" id="repetitions" name="repetitions" min="0" max="1000" value="0" required>
+                    <input type="number" id="repetitions" name="repetitions" min="1" max="1000" value="8" required>
                 </div>
                 <div class="field">
                     <label for="load">Load</label>
@@ -111,51 +97,17 @@
             </div>
 
             <div class="form-actions">
-                <div id="voice-status" class="voice-status" aria-live="polite" hidden></div>
-                <div class="form-actions-row">
-                    <button type="submit" id="submit-btn">Submit</button>
-                    <button type="button" id="mic-btn" class="mic-btn" aria-label="Dictate workout" hidden>
-                        <svg class="mic-btn-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-                            <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V19H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-1.08A7 7 0 0 0 17 11Z"/>
-                        </svg>
-                    </button>
-                </div>
+                <button type="submit" id="submit-btn">Save plan</button>
             </div>
         </form>
-
-        <div class="delete-section">
-            <button type="button" id="delete-last-btn" class="btn-delete">Delete last entry</button>
-        </div>
     </main>
-
-    <div id="voice-overlay" class="voice-overlay" role="dialog" aria-modal="true" aria-label="Voice input" hidden>
-        <div class="voice-overlay-content">
-            <div class="voice-overlay-mic">
-                <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
-                    <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.92V19H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-1.08A7 7 0 0 0 17 11Z"/>
-                </svg>
-            </div>
-            <div class="voice-overlay-wave" aria-hidden="true">
-                <span></span><span></span><span></span><span></span><span></span>
-            </div>
-            <p class="voice-overlay-instructions">
-                Mention the exercise, the equipment and the attachment, plus reps and load.
-            </p>
-            <div id="voice-overlay-transcript" class="voice-overlay-transcript"></div>
-            <p id="voice-overlay-timer" class="voice-overlay-timer"></p>
-            <button type="button" id="voice-overlay-stop" class="voice-overlay-stop">Stop recording</button>
-        </div>
-    </div>
 
     <script type="module" src="../../js/general-components/theme.js?v=2"></script>
     <script type="module" src="../../js/general-components/profile-menu.js?v=2"></script>
     <script type="module" src="../../js/general-components/info-popover.js?v=2"></script>
     <script src="../../js/auth/require-auth.js?v=2"></script>
     <script src="../../js/core/dimension-picker.js?v=1"></script>
-    <script src="../../js/core/voice-transcript-parser.js?v=1"></script>
-    <script src="../../js/core/voice-input.js?v=3"></script>
-    <script src="../../js/core/workouts_input.js?v=9"></script>
+    <script src="../../js/core/workouts_plan.js?v=2"></script>
     <script src="../../js/general-components/navigation.js?v=2"></script>
-
 </body>
 </html>

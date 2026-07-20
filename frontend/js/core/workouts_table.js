@@ -101,6 +101,7 @@ function buildFilterQueryString() {
   if (activeFilters.workout_number) params.set("workout_number", activeFilters.workout_number);
   if (activeFilters.start_date) params.set("start_date", activeFilters.start_date);
   if (activeFilters.end_date) params.set("end_date", activeFilters.end_date);
+  if (activeFilters.scenario) params.set("scenario", activeFilters.scenario);
   return params.toString();
 }
 
@@ -455,6 +456,7 @@ function readFiltersFromForm() {
   const workoutNumber = document.getElementById("filter-workout-number")?.value || "";
   const startDate = document.getElementById("filter-start-date")?.value || "";
   const endDate = document.getElementById("filter-end-date")?.value || "";
+  const scenario = document.getElementById("filter-scenario")?.value || "actuals";
 
   const filters = {};
   if (exercise) filters.exercise_id = exercise;
@@ -463,6 +465,7 @@ function readFiltersFromForm() {
   if (workoutNumber) filters.workout_number = workoutNumber;
   if (startDate) filters.start_date = startDate;
   if (endDate) filters.end_date = endDate;
+  if (scenario && scenario !== "actuals") filters.scenario = scenario;
   return filters;
 }
 
@@ -478,6 +481,8 @@ function clearFilters() {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
+  const scenarioEl = document.getElementById("filter-scenario");
+  if (scenarioEl) scenarioEl.value = "actuals";
   ["filter-workout-number", "filter-start-date", "filter-end-date"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.value = "";

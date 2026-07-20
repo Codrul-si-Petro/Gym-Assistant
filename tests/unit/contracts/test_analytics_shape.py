@@ -22,7 +22,7 @@ def test_favourite_exercises_authenticated_shape(authenticated_client):
 
 
 def test_total_volume_authenticated_shape(authenticated_client):
-    response = authenticated_client.get("/api/v1/total-volume", format="json")
+    response = authenticated_client.get("/api/v1/total-volume", {"period": "ytd"}, format="json")
     assert response.status_code == status.HTTP_200_OK
     assert "results" in response.data
     for row in response.data["results"]:
@@ -30,6 +30,16 @@ def test_total_volume_authenticated_shape(authenticated_client):
             "exercise_id",
             "exercise_name",
             "is_leaf",
-            "total_volume_kg",
+            "total_volume",
+            "plan_volume",
+            "plan_week_full",
+            "plan_month_full",
+            "plan_year_full",
+            "previous_week",
+            "previous_week_to_date",
+            "previous_month",
+            "previous_month_to_date",
+            "previous_year",
+            "previous_year_to_date",
             "rank",
         }

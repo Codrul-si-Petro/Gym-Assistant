@@ -8,6 +8,7 @@ SELECT
   COUNT(DISTINCT w.date_id) FILTER (WHERE w.date_id BETWEEN %(prev_month_start)s AND %(prev_month_end)s) AS workouts_last_month
 FROM analytics.workout_sets_daily w
 WHERE w.user_id = %(user_id)s
+  AND w.scenario = 'actuals'
   -- prev_month_start is always the earliest bound of the 4 periods; this lets the
   -- (user_id, date_id) index skip everything older instead of scanning all history.
   AND w.date_id >= %(prev_month_start)s

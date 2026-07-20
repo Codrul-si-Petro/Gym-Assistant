@@ -1,5 +1,5 @@
 .metrics-extra-panel {
-  max-width: 900px;
+  max-width: min(1320px, 96vw);
   margin: 0 auto;
   width: 100%;
 }
@@ -14,31 +14,4 @@
 .metrics-pie-inner {
   min-height: 320px;
   max-height: 420px;
-}
-
-#chart-skeleton-splits.hidden,
-#chart-skeleton-weekdays.hidden {
-  display: none;
-}
-
-#chart-skeleton-splits,
-#chart-skeleton-weekdays {
-  padding: 16px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-#chart-skeleton-splits .skeleton-bar,
-#chart-skeleton-weekdays .skeleton-bar {
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border-subtle) 50%, var(--bg-hover) 75%);
-  background-size: 200% 100%;
-  animation: metrics-shimmer 1.5s ease-in-out infinite;
-}
-
-@keyframes metrics-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
 }

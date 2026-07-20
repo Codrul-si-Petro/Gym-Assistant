@@ -33,6 +33,33 @@ def test_workout_form_submit_then_delete(page: Page, frontend_url: str, e2e_user
 
 
 @pytest.mark.order(4)
+def test_plan_mode_stamps_future_dates(page: Page, frontend_url: str, e2e_user_bootstrapped):
+    if not os.getenv("DATABASE_URL"):
+        pytest.skip("DATABASE_URL must be set for plan form test")
+
+    goto_core_page(page, frontend_url, "workouts_plan.html")
+    page.wait_for_selector("#exercises_list option", state="attached", timeout=15000)
+
+    page.locator("#plan_date_picker").fill("2026-12-01")
+    page.locator("#plan_date_add").click()
+    page.locator("#plan_date_picker").fill("2026-12-08")
+    page.locator("#plan_date_add").click()
+
+    page.fill("#exercise_name", "Triceps extension")
+    page.fill("#repetitions", "12")
+    page.fill("#load", "35")
+    page.fill("#workout_split", E2E_DASHBOARD_WORKOUT_SPLIT)
+
+    with page.expect_response(
+        lambda res: "/api/workouts/plan-batch/" in res.url and res.request.method == "POST" and res.ok,
+        timeout=15000,
+    ):
+        page.locator("#submit-btn").click()
+
+    expect(page.locator("#message")).to_contain_text("Plan saved on 2 dates", timeout=10000)
+
+
+@pytest.mark.order(5)
 def test_workout_voice_input_fills_form(page: Page, frontend_url: str, e2e_user_bootstrapped):
     if not os.getenv("DATABASE_URL"):
         pytest.skip("DATABASE_URL must be set for workout voice input test")

@@ -51,6 +51,14 @@
       </div>
       <div class="filters-grid">
         <div class="field">
+          <label for="filter-scenario">Scenario</label>
+          <select id="filter-scenario">
+            <option value="actuals" selected>Actuals</option>
+            <option value="plan">Plan</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+        <div class="field">
           <label for="filter-exercise">Exercise</label>
           <select id="filter-exercise">
             <option value="">Any</option>
@@ -119,7 +127,7 @@
     <p id="loading-row" class="loading-row" hidden>Loading more workouts…</p>
     <script type="module" src="../../js/general-components/theme.js?v=2"></script>
     <script type="module" src="../../js/general-components/profile-menu.js?v=2"></script>
-    <script type="module" src="../../js/general-components/info-popover.js?v=1"></script>
+    <script type="module" src="../../js/general-components/info-popover.js?v=2"></script>
     <script src="../../js/auth/require-auth.js?v=2"></script>
     <script src="../../js/general-components/edit-sheet.js?v=1"></script>
     <script src="../../js/core/workouts_table.js?v=3"></script>

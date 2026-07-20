@@ -57,10 +57,10 @@ def rollup_exercise_total_volume(hierarchy_rows, volume_by_exercise_id, parent_i
                 "exercise_id": cid,
                 "exercise_name": r["current_name"],
                 "is_leaf": len(children.get(cid, [])) == 0,
-                "total_volume_kg": total,
+                "total_volume": total,
             }
         )
-    results.sort(key=lambda x: x["total_volume_kg"], reverse=True)
+    results.sort(key=lambda x: x["total_volume"], reverse=True)
     return results
 
 

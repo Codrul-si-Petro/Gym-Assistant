@@ -60,14 +60,12 @@ def goto_core_page(page: Page, frontend_url: str, filename: str) -> None:
 
 
 def prepare_dashboard_date_range(page: Page) -> None:
-    """Set a metrics window that includes the fixed E2E seed workout date."""
-    page.locator("#start_date").fill(E2E_SEED_WORKOUT_DATE)
-    page.locator("#end_date").fill(E2E_SEED_WORKOUT_DATE)
+    """Ensure the volume tab loads with the default All period (full history through today)."""
     with page.expect_response(
         lambda res: "/api/v1/total-volume" in res.url and res.request.method == "GET",
         timeout=20000,
     ):
-        page.locator("#end_date").dispatch_event("change")
+        page.locator(".volume-period-chip[data-period='all']").click()
 
 
 def click_metrics_tab(page: Page, tab: str) -> None:

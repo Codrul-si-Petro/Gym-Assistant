@@ -1,9 +1,16 @@
 import datetime
 
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from .dimension_utils import PLACEHOLDER_DIMENSION_ID, PLACEHOLDER_DIMENSION_NAME
+from .constants import (
+    PLACEHOLDER_DIMENSION_ID,
+    PLACEHOLDER_DIMENSION_NAME,
+    SCENARIO_ACTUALS,
+    SCENARIO_CHOICES,
+    SCENARIO_PLAN,
+)
 from .models import (
     Attachments,
     Calendar,
@@ -40,6 +47,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
         default=PLACEHOLDER_DIMENSION_NAME,
     )
     date = serializers.DateField(write_only=True)
+    scenario = serializers.ChoiceField(choices=SCENARIO_CHOICES, default=SCENARIO_ACTUALS)
     # expose the workout date on reads (the `date` field above is write-only)
     date_id = serializers.DateField(read_only=True)
 
@@ -59,6 +67,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
             "set_type",
             "comments",
             "workout_split",
+            "scenario",
             "date",
             "date_id",
             "ta_created_at",
@@ -82,7 +91,10 @@ class WorkoutSerializer(serializers.ModelSerializer):
         return validate_workout_number(user, value)
 
     def validate_date(self, value):
-        if value > datetime.date.today():
+        scenario = SCENARIO_ACTUALS
+        if self.initial_data.get("scenario") == SCENARIO_PLAN:
+            scenario = SCENARIO_PLAN
+        if scenario == SCENARIO_ACTUALS and value > datetime.date.today():
             raise serializers.ValidationError("Workout date cannot be in the future.")
         return value
 
@@ -114,17 +126,28 @@ class WorkoutSerializer(serializers.ModelSerializer):
         validated_data["user"] = user
         self._resolve_equipment(validated_data)
 
-        info = get_next_workout(user)
-        validated_data["workout_number"] = info["next_workout_number"]
+        scenario = validated_data.get("scenario", SCENARIO_ACTUALS)
+        if scenario == SCENARIO_PLAN:
+            validated_data["workout_number"] = 1
+            validated_data["set_number"] = get_next_set_number(
+                user,
+                validated_data["exercise"].pk,
+                1,
+                scenario=SCENARIO_PLAN,
+                date_id=date_input,
+            )
+        else:
+            info = get_next_workout(user)
+            validated_data["workout_number"] = info["next_workout_number"]
 
-        if validated_data.get("workout_split") == PLACEHOLDER_DIMENSION_NAME and info.get("workout_split"):
-            validated_data["workout_split"] = info["workout_split"]
+            if validated_data.get("workout_split") == PLACEHOLDER_DIMENSION_NAME and info.get("workout_split"):
+                validated_data["workout_split"] = info["workout_split"]
 
-        validated_data["set_number"] = get_next_set_number(
-            user,
-            validated_data["exercise"].pk,
-            validated_data["workout_number"],
-        )
+            validated_data["set_number"] = get_next_set_number(
+                user,
+                validated_data["exercise"].pk,
+                validated_data["workout_number"],
+            )
 
         return super().create(validated_data)
 
@@ -151,6 +174,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
                 exercise=exercise,
                 workout_number=workout_number,
                 set_number=set_number,
+                scenario=validated_data.get("scenario", instance.scenario),
             )
             .exclude(pk=instance.pk)
             .exists()
@@ -162,6 +186,73 @@ class WorkoutSerializer(serializers.ModelSerializer):
 
         validated_data["ta_updated_at"] = timezone.now()
         return super().update(instance, validated_data)
+
+
+class PlanBatchSerializer(serializers.Serializer):
+    """Stamp one set onto multiple plan dates in a single request."""
+
+    dates = serializers.ListField(child=serializers.DateField(), min_length=1, max_length=90)
+    exercise = serializers.PrimaryKeyRelatedField(queryset=Exercises.objects.all())
+    attachment = serializers.PrimaryKeyRelatedField(queryset=Attachments.objects.all(), required=False)
+    equipment = serializers.PrimaryKeyRelatedField(queryset=Equipment.objects.all(), required=False)
+    repetitions = serializers.IntegerField(min_value=1, max_value=1000)
+    load = serializers.FloatField(min_value=0, max_value=1500)
+    unit = serializers.ChoiceField(choices=["KG", "LBS"], default="KG")
+    set_type = serializers.CharField(min_length=1, default="Working set")
+    comments = serializers.CharField(required=False, default="None")
+    workout_split = serializers.CharField(
+        max_length=50, required=False, allow_blank=True, default=PLACEHOLDER_DIMENSION_NAME
+    )
+
+    def validate_dates(self, value):
+        unique_dates = sorted(set(value))
+        for d in unique_dates:
+            try:
+                Calendar.objects.get(date_id=d)
+            except Calendar.DoesNotExist:
+                raise serializers.ValidationError(f"Date {d} is outside the supported calendar range.")
+        return unique_dates
+
+    def create(self, validated_data):
+        dates = validated_data.pop("dates")
+        user = self.context["request"].user
+        equipment = validated_data.pop("equipment", None)
+        attachment = validated_data.pop("attachment", None)
+        if equipment is None:
+            equipment = Equipment.objects.get(pk=PLACEHOLDER_DIMENSION_ID)
+        if attachment is None:
+            attachment = Attachments.objects.get(pk=PLACEHOLDER_DIMENSION_ID)
+
+        split = validated_data.get("workout_split") or PLACEHOLDER_DIMENSION_NAME
+        if isinstance(split, str) and not split.strip():
+            split = PLACEHOLDER_DIMENSION_NAME
+
+        exercise = validated_data["exercise"]
+        rows = []
+        with transaction.atomic():
+            for date_val in dates:
+                calendar = Calendar.objects.get(date_id=date_val)
+                set_number = get_next_set_number(user, exercise.pk, 1, scenario=SCENARIO_PLAN, date_id=date_val)
+                rows.append(
+                    Workouts.objects.create(
+                        user=user,
+                        date=calendar,
+                        exercise=exercise,
+                        attachment=attachment,
+                        equipment=equipment,
+                        workout_number=1,
+                        set_number=set_number,
+                        repetitions=validated_data["repetitions"],
+                        load=validated_data["load"],
+                        unit=validated_data["unit"],
+                        set_type=validated_data.get("set_type", "Working set"),
+                        comments=validated_data.get("comments", "None"),
+                        workout_split=split.strip() if isinstance(split, str) else split,
+                        scenario=SCENARIO_PLAN,
+                    )
+                )
+
+        return rows
 
 
 class ExercisesSerializer(serializers.ModelSerializer):

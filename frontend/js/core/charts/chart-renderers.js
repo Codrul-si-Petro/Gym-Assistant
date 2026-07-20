@@ -2,6 +2,9 @@
 
 const chartInstances = new Map();
 
+/** Table-wide toggle for vs-column display: percent (default) or absolute kg/lbs diff. */
+let volumeDeltaDisplayMode = "percent";
+
 function getCanvasId(canvas) {
   return canvas?.id || "default";
 }
@@ -17,6 +20,15 @@ export function destroyChart(canvasId) {
   }
   chartInstances.forEach((instance) => instance.destroy());
   chartInstances.clear();
+}
+
+export function toggleVolumeDeltaDisplayMode() {
+  volumeDeltaDisplayMode = volumeDeltaDisplayMode === "percent" ? "absolute" : "percent";
+  return volumeDeltaDisplayMode;
+}
+
+export function resetVolumeDeltaDisplayMode() {
+  volumeDeltaDisplayMode = "percent";
 }
 
 function getCssVar(name, fallback) {
@@ -38,6 +50,52 @@ function toDisplayUnit(kgValue, unit) {
   return unit === "LBS" ? kg * 2.2046226218 : kg;
 }
 
+// "To date" comparisons: apples-to-apples vs the prior period *as far as it has run*
+// (e.g. this-month-so-far vs the same day-of-month last month).
+const PERIOD_DELTA_CONFIG = {
+  wtd: { key: "previous_week_to_date", label: "vs PW" },
+  mtd: { key: "previous_month_to_date", label: "vs PM" },
+  ytd: { key: "previous_year_to_date", label: "vs PY" },
+};
+
+// "Full" comparisons: vs the *complete* prior period, regardless of how far the
+// current one has run (e.g. this-month-so-far vs all of last month).
+const PERIOD_DELTA_FULL_CONFIG = {
+  wtd: { key: "previous_week", label: "vs Full PW" },
+  mtd: { key: "previous_month", label: "vs Full PM" },
+  ytd: { key: "previous_year", label: "vs Full PY" },
+};
+
+// Plan gets the same duality as the "vs FULL" columns above: plan_volume (always
+// shown, any period) is plan-to-date, an apples-to-apples "on pace" read; these are
+// the *entire* current week/month/year's plan — the actual target to hit.
+const PERIOD_PLAN_FULL_CONFIG = {
+  wtd: { key: "plan_week_full", label: "Plan full week" },
+  mtd: { key: "plan_month_full", label: "Plan full month" },
+  ytd: { key: "plan_year_full", label: "Plan full year" },
+};
+
+function setDeltaHeader(id, cfg) {
+  const th = document.getElementById(id);
+  if (!th) return;
+  if (!cfg) {
+    th.hidden = true;
+    return;
+  }
+  th.hidden = false;
+  th.textContent = cfg.label;
+}
+
+/**
+ * Show/hide and relabel the period-dependent comparison column headers for the
+ * active period (hidden entirely for period=all, which has no enclosing week/
+ * month/year to compare against).
+ */
+export function updateVolumeDeltaHeader(period) {
+  setDeltaHeader("volume-col-delta-header", PERIOD_DELTA_CONFIG[period]);
+  setDeltaHeader("volume-col-delta-full-header", PERIOD_DELTA_FULL_CONFIG[period]);
+  setDeltaHeader("volume-col-plan-full-header", PERIOD_PLAN_FULL_CONFIG[period]);
+}
 
 /**
  * Renders a modern ranked list with gradient progress bars.
@@ -81,7 +139,6 @@ function renderStatList(listId, items) {
     list.appendChild(li);
   }
 
-  // Two frames so the 0-width state paints first and the bars animate in.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       fills.forEach(([fill, pct]) => {
@@ -114,13 +171,64 @@ export function formatVolume(n, unit = "KG") {
   return new Intl.NumberFormat("en-US", opts).format(v);
 }
 
-export function renderVolumeTable(results, unit, handlers) {
+function formatDeltaPct(current, baseline) {
+  const cur = Number(current) || 0;
+  const base = Number(baseline) || 0;
+  if (base === 0 && cur === 0) return "—";
+  if (base === 0) return "+100%";
+  const pct = ((cur - base) / base) * 100;
+  const sign = pct >= 0 ? "+" : "";
+  return `${sign}${pct.toFixed(0)}%`;
+}
+
+function formatDeltaAbsolute(current, baseline, unit) {
+  const cur = Number(current) || 0;
+  const base = Number(baseline) || 0;
+  const diffKg = cur - base;
+  if (diffKg === 0) return "—";
+  const sign = diffKg > 0 ? "+" : "-";
+  // Unit lives in the table heading (kg/lbs) — don't repeat it in every vs cell.
+  return `${sign}${formatVolume(Math.abs(diffKg), unit)}`;
+}
+
+function deltaClass(current, baseline) {
+  const cur = Number(current) || 0;
+  const base = Number(baseline) || 0;
+  if (cur === base) return "volume-delta-neutral";
+  return cur > base ? "volume-delta-up" : "volume-delta-down";
+}
+
+function formatDeltaCell(current, baseline, unit) {
+  if (volumeDeltaDisplayMode === "absolute") {
+    return formatDeltaAbsolute(current, baseline, unit);
+  }
+  return formatDeltaPct(current, baseline);
+}
+
+/** One "vs X" cell: tabular %/absolute diff, click-to-toggle, color-coded by direction. */
+function makeDeltaCell(current, baseline, unit, onDeltaToggle) {
+  const td = document.createElement("td");
+  td.className = "volume-col-delta volume-col-delta-toggle " + deltaClass(current, baseline);
+  td.textContent = formatDeltaCell(current, baseline, unit);
+  td.title = "Tap to switch between % and absolute difference";
+  td.addEventListener("click", () => {
+    if (onDeltaToggle) onDeltaToggle();
+  });
+  return td;
+}
+
+export function renderVolumeTable(results, unit, period, handlers) {
   const tbody = document.getElementById("volume-table-body");
   if (!tbody) return;
 
   const onDrill = handlers?.onDrill;
   const onMinichart = handlers?.onMinichart;
+  const onDeltaToggle = handlers?.onDeltaToggle;
+  const deltaCfg = PERIOD_DELTA_CONFIG[period] || null;
+  const deltaFullCfg = PERIOD_DELTA_FULL_CONFIG[period] || null;
+  const planFullCfg = PERIOD_PLAN_FULL_CONFIG[period] || null;
 
+  updateVolumeDeltaHeader(period);
   tbody.replaceChildren();
 
   for (const row of results) {
@@ -160,7 +268,13 @@ export function renderVolumeTable(results, unit, handlers) {
       "aria-label",
       "Open volume chart for " + (row.exercise_name || "exercise")
     );
-    sparkBtn.textContent = "◇";
+    sparkBtn.innerHTML =
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<line x1="5" y1="20" x2="5" y2="14"></line>' +
+      '<line x1="12" y1="20" x2="12" y2="8"></line>' +
+      '<line x1="19" y1="20" x2="19" y2="4"></line>' +
+      "</svg>";
     sparkBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (onMinichart) onMinichart(row);
@@ -169,75 +283,140 @@ export function renderVolumeTable(results, unit, handlers) {
 
     const volTd = document.createElement("td");
     volTd.className = "volume-col-vol";
-    volTd.textContent = formatVolume(row.total_volume_kg, unit);
+    volTd.textContent = formatVolume(row.total_volume, unit);
 
     tr.append(rankTd, nameTd, sparkTd, volTd);
+
+    // vs prior period, to-date (apples-to-apples) — hidden for period=all.
+    if (deltaCfg) {
+      tr.appendChild(makeDeltaCell(row.total_volume, row[deltaCfg.key], unit, onDeltaToggle));
+    }
+
+    // vs prior period, full (complete prior week/month/year) — hidden for period=all.
+    if (deltaFullCfg) {
+      const cell = makeDeltaCell(row.total_volume, row[deltaFullCfg.key], unit, onDeltaToggle);
+      cell.classList.add("volume-col-delta-full");
+      tr.appendChild(cell);
+    }
+
+    // Actual vs planned volume, to-date — always shown, independent of the
+    // period-based columns above (those compare against a *prior* period; this
+    // compares against your own plan for the *same* window).
+    tr.appendChild(makeDeltaCell(row.total_volume, row.plan_volume, unit, onDeltaToggle));
+
+    // Actual (to-date) vs the *entire* current week/month/year's plan — the target
+    // to hit, not just plan-to-date. Hidden for period=all.
+    if (planFullCfg) {
+      const cell = makeDeltaCell(row.total_volume, row[planFullCfg.key], unit, onDeltaToggle);
+      cell.classList.add("volume-col-delta-full");
+      tr.appendChild(cell);
+    }
+
     tbody.appendChild(tr);
   }
 }
 
-export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, unit = "KG") {
+export function renderVolumeDailyTimeSeries(dailyRows, exerciseName, type, unit = "KG") {
   const canvas = document.getElementById("volume-daily-canvas");
   if (!canvas) return;
   destroyChart(getCanvasId(canvas));
 
+  // Collapse dates with nothing registered at all — only real data points get a
+  // slot on the axis, so bars/points for the dates in between sit right next to
+  // each other instead of leaving dead space for days with no actuals or plan.
+  const rows = dailyRows.filter(
+    (r) => (Number(r.actuals_volume) || 0) > 0 || (Number(r.plan_volume) || 0) > 0
+  );
+
+  const labels = rows.map((r) => String(r.date));
+  const actualsValues = rows.map((r) => Number(r.actuals_volume) || 0);
+  const planValues = rows.map((r) => Number(r.plan_volume) || 0);
+
+  const t = type || "line";
   const box = document.getElementById("volume-daily-chart-inner");
   const sizeEl = document.getElementById("volume-daily-chart-size");
   const scrollEl = document.getElementById("volume-daily-chart-scroll");
-  const minPxPerPoint = 14;
+  // Size the canvas from the point count alone (no forced stretch to fill the
+  // container) so sparse data doesn't get spread thin across the full width —
+  // that's what was making bars look far apart. Bars need more room per point
+  // than a line does, since two grouped bars (actuals + plan) share each slot.
+  const minPxPerPoint = t === "bar" ? 34 : 14;
 
   if (box) {
     box.style.display = "";
     box.style.height = "280px";
   }
   if (sizeEl && scrollEl && labels.length) {
-    const minW = Math.max(scrollEl.clientWidth || 400, labels.length * minPxPerPoint);
-    sizeEl.style.width = minW + "px";
+    const contentW = labels.length * minPxPerPoint;
+    // Bars: size to content only, so a handful of points don't get stretched
+    // across the whole container (that's what created the wide dead gaps).
+    // Line: keep filling the container for a smooth, non-cramped curve.
+    const width = t === "bar" ? Math.max(contentW, 120) : Math.max(scrollEl.clientWidth || 400, contentW);
+    sizeEl.style.width = width + "px";
     sizeEl.style.height = "280px";
   }
 
-  const t = type || "line";
   const plugins = typeof ChartDataLabels !== "undefined" ? [ChartDataLabels] : [];
-  const accent = getCssVar("--accent-secondary", "#a78bfa");
+  // Dedicated chart tokens (not --accent/--accent-secondary, which are both purple
+  // in this theme) so Actuals and Plan are always visually distinct colors.
+  // Actuals = purple, Plan = cyan.
+  const actualColor = getCssVar("--chart-actuals", "#a78bfa");
+  const planColor = getCssVar("--chart-plan", "#22d3ee");
   const textMuted = getCssVar("--text-muted", "#71717a");
+  const legendTextColor = getCssVar("--text-primary", "#f4f4f5");
+  const legendColors = [actualColor, planColor];
 
-  // Soft vertical gradient under the line / inside the bars
   const ctx = canvas.getContext("2d");
-  const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+  const actualGradient = ctx.createLinearGradient(0, 0, 0, 280);
   if (t === "line") {
-    gradient.addColorStop(0, "rgba(139, 92, 246, 0.35)");
-    gradient.addColorStop(1, "rgba(139, 92, 246, 0)");
+    actualGradient.addColorStop(0, "rgba(167, 139, 250, 0.35)");
+    actualGradient.addColorStop(1, "rgba(167, 139, 250, 0)");
   } else {
-    gradient.addColorStop(0, "rgba(167, 139, 250, 0.95)");
-    gradient.addColorStop(1, "rgba(124, 58, 237, 0.65)");
+    actualGradient.addColorStop(0, "rgba(167, 139, 250, 0.95)");
+    actualGradient.addColorStop(1, "rgba(124, 58, 237, 0.65)");
+  }
+
+  const planGradient = ctx.createLinearGradient(0, 0, 0, 280);
+  if (t === "line") {
+    planGradient.addColorStop(0, "rgba(34, 211, 238, 0.28)");
+    planGradient.addColorStop(1, "rgba(34, 211, 238, 0)");
+  } else {
+    planGradient.addColorStop(0, "rgba(34, 211, 238, 0.85)");
+    planGradient.addColorStop(1, "rgba(34, 211, 238, 0.55)");
   }
 
   const fmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
   const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+
+  const lineDataset = (label, values, color, gradient) => ({
+    label,
+    data: values.map((v) => toDisplayUnit(v, unit)),
+    borderColor: color,
+    backgroundColor: gradient,
+    fill: t === "line",
+    tension: 0.35,
+    borderWidth: t === "line" ? 2.5 : 0,
+    borderRadius: t === "bar" ? 6 : 0,
+    borderSkipped: false,
+    // Bars fill their whole slot (no category/bar gap) so consecutive points touch.
+    categoryPercentage: t === "bar" ? 1 : undefined,
+    barPercentage: t === "bar" ? 0.9 : undefined,
+    maxBarThickness: t === "bar" ? 40 : undefined,
+    pointRadius: 0,
+    pointHoverRadius: 5,
+    pointHoverBackgroundColor: color,
+    pointHoverBorderColor: "#fff",
+    pointHoverBorderWidth: 2,
+    hitRadius: 12,
+  });
 
   chartInstances.set(getCanvasId(canvas), new Chart(ctx, {
     type: t,
     data: {
       labels,
       datasets: [
-        {
-          label: exerciseName || "Volume",
-          data: values.map((v) => toDisplayUnit(v, unit)),
-          borderColor: accent,
-          backgroundColor: gradient,
-          fill: t === "line",
-          tension: 0.35,
-          borderWidth: t === "line" ? 2.5 : 0,
-          borderRadius: t === "bar" ? 8 : 0,
-          borderSkipped: false,
-          maxBarThickness: t === "bar" ? 24 : undefined,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: accent,
-          pointHoverBorderColor: "#fff",
-          pointHoverBorderWidth: 2,
-          hitRadius: 12,
-        },
+        lineDataset("Actuals", actualsValues, actualColor, actualGradient),
+        lineDataset("Plan", planValues, planColor, planGradient),
       ],
     },
     options: {
@@ -245,7 +424,36 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, 
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          position: "bottom",
+          labels: {
+            // --text-primary flips white/black with theme (unlike --text-secondary,
+            // which is a mid-gray too close to the dark background to read well).
+            color: legendTextColor,
+            usePointStyle: true,
+            pointStyle: "circle",
+            boxWidth: 8,
+            boxHeight: 8,
+            padding: 16,
+            generateLabels(chart) {
+              // Chart.js only fills in fontColor from labels.color inside its own
+              // default generateLabels — since we override it, each item needs its
+              // own fontColor or the legend text silently falls back to Chart.js's
+              // built-in dark-gray default (unreadable in dark mode).
+              return chart.data.datasets.map((ds, i) => ({
+                text: ds.label,
+                fillStyle: legendColors[i],
+                fontColor: legendTextColor,
+                strokeStyle: "transparent",
+                lineWidth: 0,
+                hidden: !chart.isDatasetVisible(i),
+                datasetIndex: i,
+                pointStyle: "circle",
+              }));
+            },
+          },
+        },
         tooltip: {
           backgroundColor: getCssVar("--bg-elevated", "#16161a"),
           borderColor: getCssVar("--border-subtle", "#2a2a2e"),
@@ -254,9 +462,9 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, 
           bodyColor: getCssVar("--text-secondary", "#a1a1aa"),
           padding: 12,
           cornerRadius: 10,
-          displayColors: false,
+          displayColors: true,
           callbacks: {
-            label: (c) => `${fmt.format(c.raw)} ${unitSuffix(unit)}`,
+            label: (c) => `${c.dataset.label}: ${fmt.format(c.raw)} ${unitSuffix(unit)}`,
           },
         },
         datalabels: { display: false },
