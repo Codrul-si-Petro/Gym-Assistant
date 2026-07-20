@@ -105,7 +105,7 @@
   gap: 8px;
 }
 
-.auth-links a {
+.auth-links:not(.auth-links--cta) a {
   padding: 10px 16px;
   border-radius: var(--radius-sm);
   background: var(--bg-hover);
@@ -116,9 +116,33 @@
   transition: background 0.2s, color 0.2s;
 }
 
-.auth-links a:hover {
+.auth-links:not(.auth-links--cta) a:hover {
   background: var(--accent-secondary);
   color: var(--bg-primary);
+}
+
+.auth-links--cta .cta-button {
+  display: inline-block;
+  width: auto;
+  min-height: auto;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  background: var(--accent-gradient);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+
+.auth-links--cta .cta-button--ghost {
+  background: transparent;
+  color: var(--accent-secondary);
+  border: 1px solid var(--accent);
+  box-shadow: none;
+}
+
+.auth-links--cta .cta-button--ghost:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  filter: none;
+  transform: translateY(-2px);
 }
 
 /* Mobile-first: bottom sheet style dropdown on small screens */
@@ -137,7 +161,13 @@
     justify-content: flex-end;
   }
 
-  .auth-links a {
+  .auth-links:not(.auth-links--cta) a {
+    min-height: var(--touch-target);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .auth-links--cta .cta-button {
     min-height: var(--touch-target);
     display: inline-flex;
     align-items: center;

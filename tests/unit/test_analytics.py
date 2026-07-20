@@ -68,7 +68,19 @@ def test_home_summary_returns_200(authenticated_client):
         "days_since_last_workout",
         "total_volume_kg",
         "total_volume_lbs",
+        "workouts_this_week",
+        "workouts_last_week",
+        "workouts_this_month",
+        "workouts_last_month",
     }
+    for key in (
+        "workouts_this_week",
+        "workouts_last_week",
+        "workouts_this_month",
+        "workouts_last_month",
+    ):
+        assert isinstance(response.data[key], int)
+        assert response.data[key] >= 0
 
 
 def test_total_volume_with_parent_id_returns_results(authenticated_client):

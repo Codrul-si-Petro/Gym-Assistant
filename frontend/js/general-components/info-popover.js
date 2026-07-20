@@ -96,6 +96,7 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+  if (!localStorage.getItem("access_token")) return;
   const pageKey = resolvePageKey();
   if (!pageKey) return;
   const text = PAGE_INFO[pageKey];

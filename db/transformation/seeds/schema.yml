@@ -12,6 +12,18 @@ seeds:
       - name: exercise_name
         tests:
           - not_null
+      - name: exercise_movement_type
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Compound', 'Isolated', 'N/A']
+      - name: exercise_parent_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('seed_exercises')
+                field: exercise_id
 
   - name: seed_muscles 
     description: "Existing dimension for muscles"
@@ -24,6 +36,12 @@ seeds:
       tests:
         - not_null
         - unique
+    - name: muscle_parent_id
+      tests:
+        - relationships:
+            arguments:
+              to: ref('seed_muscles')
+              field: muscle_id
 
   - name: seed_attachments
     description: "Existing dimension for attachments"
@@ -51,6 +69,31 @@ seeds:
 
   - name: seed_exercise_muscle
     description: "Bridge table to link muscles with exercises"
+    columns:
+      - name: id
+        tests:
+          - not_null
+          - unique
+      - name: exercise_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('seed_exercises')
+                field: exercise_id
+      - name: muscle_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('seed_muscles')
+                field: muscle_id
+      - name: muscle_role
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Primary', 'Secondary']
 
   - name: seed_exercise_media
     description: "Glossary of demo videos"

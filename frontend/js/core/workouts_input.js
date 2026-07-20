@@ -1,3 +1,9 @@
+// Log Workout page — form wiring, API calls, and session helpers for fast gym-floor entry.
+//
+// Workout # and set # are read-only (filled from the API). Attachment/equipment are
+// remembered per exercise name in sessionStorage for superset logging. Editable fields
+// clear on focus so you can re-type without backspacing.
+
 // Use localhost/127/::1 if running locally, otherwise use current host
 if (
     window.location.hostname === "localhost" ||
@@ -16,6 +22,27 @@ var equipmentMap = {};
 /** Sentinel FK for optional attachment/equipment (matches backend PLACEHOLDER_DIMENSION_ID). */
 var PLACEHOLDER_DIMENSION_ID = -1;
 
+/** sessionStorage key: { [exerciseName]: { attachment_name, equipment_name } } */
+var STICKY_STORAGE_KEY = "gym_sticky_by_exercise";
+
+/** Last exercise name in the form; used to save gear before switching exercises. */
+var activeExerciseName = "";
+
+/**
+ * Editable fields that clear on focus. emptyDefault is restored on blur when left blank.
+ * Read-only, date, and select fields are intentionally excluded.
+ */
+var CLEAR_ON_FOCUS_FIELDS = {
+    exercise_name: {},
+    attachment_name: {},
+    equipment_name: {},
+    workout_split: {},
+    repetitions: { emptyDefault: "0" },
+    load: { emptyDefault: "0" },
+    set_type: { emptyDefault: "Working set" },
+    comments: {},
+};
+
 /** Default time before success messages fade (ms). */
 var DEFAULT_SUCCESS_MS = 3500;
 /** Delete-last confirmation: keep visible longer (5–10s range). */
@@ -26,6 +53,8 @@ var MESSAGE_MIN_MS = 1000;
 /** Cleared when a new success message is shown so old timers do not clear the new text. */
 var successHideTimer = null;
 var successFadeTimer = null;
+
+// --- Auth & user feedback ---
 
 function getAuthHeaders() {
     var token = localStorage.getItem("access_token");
@@ -157,6 +186,8 @@ function formatApiErrors(data) {
     return parts.length ? parts.join(" ") : "Something went wrong.";
 }
 
+// --- Dimension datalists (exercise, attachment, equipment) ---
+
 function fillDimensionList(id, items, nameKey, idKey, map) {
     var list = document.getElementById(id);
     if (!list) return;
@@ -196,7 +227,112 @@ function loadOptions() {
         });
 }
 
+// --- Per-exercise sticky attachment/equipment (sessionStorage) ---
+
+function loadStickyMap() {
+    try {
+        var raw = sessionStorage.getItem(STICKY_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function saveStickyMap(map) {
+    try {
+        sessionStorage.setItem(STICKY_STORAGE_KEY, JSON.stringify(map));
+    } catch (e) {}
+}
+
+/** Prefill attachment/equipment from session memory for the given exercise. */
+function applyStickyForExercise(exerciseName) {
+    var attachmentInput = document.getElementById("attachment_name");
+    var equipmentInput = document.getElementById("equipment_name");
+    if (!attachmentInput || !equipmentInput) return;
+
+    var sticky = loadStickyMap()[exerciseName];
+    if (sticky) {
+        attachmentInput.value =
+            sticky.attachment_name && sticky.attachment_name !== "None" ? sticky.attachment_name : "";
+        equipmentInput.value =
+            sticky.equipment_name && sticky.equipment_name !== "None" ? sticky.equipment_name : "";
+    } else {
+        attachmentInput.value = "";
+        equipmentInput.value = "";
+    }
+}
+
+/** Persist the current form's attachment/equipment under the active exercise name. */
+function saveStickyForCurrentExercise() {
+    var exerciseName = (document.getElementById("exercise_name").value || "").trim();
+    if (!exerciseName) return;
+    var attachmentName = (document.getElementById("attachment_name").value || "").trim() || "None";
+    var equipmentName = (document.getElementById("equipment_name").value || "").trim() || "None";
+    saveStickyForExercise(exerciseName, attachmentName, equipmentName);
+}
+
+/** Before switching exercises, store gear for the exercise we're leaving. */
+function saveStickyBeforeExerciseSwitch(nextExerciseName) {
+    if (!activeExerciseName || activeExerciseName === nextExerciseName) return;
+    var attachmentName = (document.getElementById("attachment_name").value || "").trim() || "None";
+    var equipmentName = (document.getElementById("equipment_name").value || "").trim() || "None";
+    saveStickyForExercise(activeExerciseName, attachmentName, equipmentName);
+}
+
+function saveStickyForExercise(exerciseName, attachmentName, equipmentName) {
+    if (!exerciseName) return;
+    var map = loadStickyMap();
+    map[exerciseName] = {
+        attachment_name: attachmentName || "None",
+        equipment_name: equipmentName || "None",
+    };
+    saveStickyMap(map);
+}
+
+// --- Auto workout #, set #, and session split (API) ---
+
+function resolveExerciseIdFromInput() {
+    var exerciseName = (document.getElementById("exercise_name").value || "").trim();
+    return exerciseMap[exerciseName] || null;
+}
+
+/** Fetch and display the next set # (and workout #) for the selected exercise. */
+function loadNextSetNumber(exerciseId) {
+    var headers = getAuthHeaders();
+    var setInput = document.getElementById("set_number");
+    if (!headers || !exerciseId || !setInput) return;
+
+    fetch(API_BASE + "/api/workouts/next-set-info/?exercise_id=" + encodeURIComponent(exerciseId), {
+        headers: headers,
+    })
+        .then(function (res) {
+            return res.ok ? res.json() : null;
+        })
+        .then(function (data) {
+            if (!data) return;
+            setInput.value = data.next_set_number;
+            var workoutInput = document.getElementById("workout_number");
+            if (workoutInput && data.workout_number != null) {
+                workoutInput.value = data.workout_number;
+            }
+        })
+        .catch(function () {});
+}
+
+/** Exercise change: save previous exercise gear, restore this exercise's gear, refresh set #. */
+function onExerciseFieldChange() {
+    var exerciseName = (document.getElementById("exercise_name").value || "").trim();
+    saveStickyBeforeExerciseSwitch(exerciseName);
+    activeExerciseName = exerciseName;
+    applyStickyForExercise(exerciseName);
+    var exerciseId = resolveExerciseIdFromInput();
+    if (exerciseId) {
+        loadNextSetNumber(exerciseId);
+    }
+}
+
 /**
+ * Load workout # from the API and soft-default split from the current session.
  * @param {{ silent?: boolean }} [options]
  *   silent: if true, only updates workout number input — no "6 hours elapsed" toast.
  */
@@ -213,6 +349,16 @@ function loadWorkoutNumber(options) {
             if (!data) return;
             var input = document.getElementById("workout_number");
             if (input) input.value = data.next_workout_number;
+
+            var splitInput = document.getElementById("workout_split");
+            if (
+                splitInput &&
+                !(splitInput.value || "").trim() &&
+                data.workout_split &&
+                data.workout_split !== "None"
+            ) {
+                splitInput.value = data.workout_split;
+            }
 
             if (!silent && data.hour_elapsed) {
                 showMessage(
@@ -240,6 +386,8 @@ function setDefaultDate() {
     }
 }
 
+// --- Form payload & submit ---
+
 function getPayload() {
     var dateVal = document.getElementById("date").value;
     var today = new Date().toISOString().slice(0, 10);
@@ -255,14 +403,13 @@ function getPayload() {
         exercise: exerciseMap[exerciseName] || null,
         attachment: dimensionIdFromName(attachmentMap, attachmentName),
         equipment: dimensionIdFromName(equipmentMap, equipmentName),
-        workout_number: parseInt(document.getElementById("workout_number").value, 10) || 1,
         set_number: parseInt(document.getElementById("set_number").value, 10) || 1,
         repetitions: parseInt(document.getElementById("repetitions").value, 10) || 0,
         load: parseFloat(document.getElementById("load").value) || 0,
         unit: document.getElementById("unit").value || "KG",
         set_type: (document.getElementById("set_type").value || "").trim() || "Working set",
         comments: (document.getElementById("comments").value || "").trim() || "None",
-        workout_split: (document.getElementById("workout_split").value || "").trim(),
+        workout_split: (document.getElementById("workout_split").value || "").trim() || "None",
         date: dateVal || new Date().toISOString().slice(0, 10),
     };
 }
@@ -273,11 +420,6 @@ function onSubmit(e) {
     var headers = getAuthHeaders();
     if (!headers) {
         showMessage("Please log in to log workouts.", "error");
-        return;
-    }
-    var split = (document.getElementById("workout_split").value || "").trim();
-    if (!split) {
-        showMessage("Please enter a workout split before submitting.", "error");
         return;
     }
     var payload = getPayload();
@@ -297,9 +439,29 @@ function onSubmit(e) {
         })
         .then(function (result) {
             if (result.status >= 200 && result.status < 300) {
-                showMessage("Workout saved.", "success");
-                document.getElementById("set_number").value =
-                    (parseInt(document.getElementById("set_number").value, 10) || 1) + 1;
+                var exerciseName = (document.getElementById("exercise_name").value || "").trim();
+                var attachmentName =
+                    (document.getElementById("attachment_name").value || "").trim() || "None";
+                var equipmentName =
+                    (document.getElementById("equipment_name").value || "").trim() || "None";
+                saveStickyForExercise(exerciseName, attachmentName, equipmentName);
+                activeExerciseName = exerciseName;
+
+                var saved = result.data || {};
+                var workoutNum = saved.workout_number != null ? saved.workout_number : "?";
+                var setNum = saved.set_number != null ? saved.set_number : "?";
+                showMessage(
+                    "Saved: " + exerciseName + " — Workout #" + workoutNum + ", Set " + setNum + ".",
+                    "success"
+                );
+
+                if (saved.workout_number != null) {
+                    document.getElementById("workout_number").value = saved.workout_number;
+                }
+                if (saved.exercise) {
+                    loadNextSetNumber(saved.exercise);
+                }
+
                 document.getElementById("repetitions").value = "0";
                 document.getElementById("load").value = "0";
                 document.getElementById("comments").value = "";
@@ -343,6 +505,10 @@ function onDeleteLast() {
                 } else {
                     loadWorkoutNumber({ silent: true });
                 }
+                var exerciseId = resolveExerciseIdFromInput();
+                if (exerciseId) {
+                    loadNextSetNumber(exerciseId);
+                }
                 return;
             }
             if (result.status === 404) {
@@ -362,39 +528,116 @@ function onDeleteLast() {
         });
 }
 
-function initNumberInputs() {
-    var ids = ["set_number", "repetitions", "load"];
-    ids.forEach(function (id) {
+// --- Form UX: clear-on-focus, exercise/gear handlers ---
+
+function initClearOnFocus() {
+    Object.keys(CLEAR_ON_FOCUS_FIELDS).forEach(function (id) {
         var input = document.getElementById(id);
         if (!input) return;
+        var cfg = CLEAR_ON_FOCUS_FIELDS[id];
+
         input.addEventListener("focus", function () {
-            if (this.value === "0" || this.value === "0.0") this.value = "";
-        });
-        input.addEventListener("blur", function () {
-            if (this.value === "" || this.value == null) {
-                var min = parseInt(this.getAttribute("min"), 10);
-                this.value = isNaN(min) ? "0" : String(min);
+            if ((this.value || "").trim() !== "") {
+                this.value = "";
             }
         });
+
+        if (cfg.emptyDefault != null) {
+            input.addEventListener("blur", function () {
+                if ((this.value || "").trim() === "") {
+                    this.value = cfg.emptyDefault;
+                }
+            });
+        }
     });
 }
 
-function initExerciseChangeResetSet() {
+function initExerciseChangeHandlers() {
     var exerciseInput = document.getElementById("exercise_name");
-    var setInput = document.getElementById("set_number");
-    if (exerciseInput && setInput) {
-        exerciseInput.addEventListener("change", function () {
-            setInput.value = "1";
-        });
+    if (!exerciseInput) return;
+    exerciseInput.addEventListener("change", onExerciseFieldChange);
+    exerciseInput.addEventListener("blur", onExerciseFieldChange);
+}
+
+/** Keep sticky map in sync when attachment/equipment are edited in place. */
+function initGearStickyHandlers() {
+    ["attachment_name", "equipment_name"].forEach(function (id) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        input.addEventListener("change", saveStickyForCurrentExercise);
+        input.addEventListener("blur", saveStickyForCurrentExercise);
+    });
+}
+
+function applyVoiceResult(parsed) {
+    var exerciseInput = document.getElementById("exercise_name");
+    var attachmentInput = document.getElementById("attachment_name");
+    var equipmentInput = document.getElementById("equipment_name");
+    var repsInput = document.getElementById("repetitions");
+    var loadInput = document.getElementById("load");
+    var unitInput = document.getElementById("unit");
+
+    // Only touch the exercise field (and its sticky/next-set side effects) when this
+    // dictation actually mentioned an exercise. Otherwise leave it — and the gear it
+    // carries via sticky memory — untouched (e.g. "20 reps 30 kilos" for the next set
+    // of the exercise already in the form shouldn't clear exercise/equipment/attachment).
+    var newExerciseName = parsed.exercise || parsed.exerciseRaw || "";
+    if (newExerciseName && exerciseInput) {
+        exerciseInput.value = newExerciseName;
+        onExerciseFieldChange();
     }
+
+    if (equipmentInput) {
+        if (parsed.equipmentForceClear) {
+            equipmentInput.value = "";
+        } else if (parsed.equipment) {
+            equipmentInput.value = parsed.equipment;
+        }
+    }
+
+    if (attachmentInput) {
+        if (parsed.attachmentForceClear) {
+            attachmentInput.value = "";
+        } else if (parsed.attachment) {
+            attachmentInput.value = parsed.attachment;
+        }
+    }
+
+    if (repsInput && parsed.repetitions != null) {
+        repsInput.value = String(parsed.repetitions);
+    }
+    if (loadInput && parsed.load != null) {
+        loadInput.value = String(parsed.load);
+    }
+    if (unitInput && parsed.unit) {
+        unitInput.value = parsed.unit;
+    }
+
+    saveStickyForCurrentExercise();
 }
 
 document.addEventListener("DOMContentLoaded", function () {
     setDefaultDate();
     loadOptions();
     loadWorkoutNumber();
-    initNumberInputs();
-    initExerciseChangeResetSet();
+    initClearOnFocus();
+    initExerciseChangeHandlers();
+    initGearStickyHandlers();
+    if (window.GymVoiceInput) {
+        GymVoiceInput.init({
+            getMaps: function () {
+                return {
+                    exerciseMap: exerciseMap,
+                    equipmentMap: equipmentMap,
+                    attachmentMap: attachmentMap,
+                };
+            },
+            onParsed: applyVoiceResult,
+            showError: function (message) {
+                showMessage(message, "error");
+            },
+        });
+    }
     document.getElementById("workout-form").addEventListener("submit", onSubmit);
     document.getElementById("delete-last-btn").addEventListener("click", onDeleteLast);
 });

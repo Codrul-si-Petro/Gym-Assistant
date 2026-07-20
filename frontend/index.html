@@ -8,9 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/general-components/theme.css?v=7">
-  <link rel="stylesheet" href="css/general-components/profile-menu.css?v=6">
+  <link rel="stylesheet" href="css/general-components/profile-menu.css?v=7">
   <link rel="stylesheet" href="css/general-components/info-popover.css?v=1">
-  <link rel="stylesheet" href="css/homepage.css?v=6">
+  <link rel="stylesheet" href="css/homepage.css?v=17">
+  <link rel="stylesheet" href="css/core/workout-count-card.css?v=3">
   <link rel="icon" href="./assets/favicon.ico" sizes="any">
 </head>
 <body class="home-page" data-info-page="home">
@@ -24,7 +25,8 @@
 </header>
 
 <main>
-  <section class="hero hero-animate">
+  <!-- Logged-in: quick return for returning lifters -->
+  <section id="member-hero" class="hero hero-animate member-only" hidden>
     <div class="hero-brand reveal">
       <p class="hero-brand-name">Gym Assistant</p>
     </div>
@@ -33,46 +35,203 @@
       <p class="home-stats-label">Your summary</p>
       <p id="home-inactivity" class="home-stat-line"></p>
       <p id="home-total-lifted" class="home-stat-line home-stat-accent"></p>
+      <div class="home-trend-list">
+        <div id="home-week-trend" class="home-trend-row" role="img"></div>
+        <div id="home-month-trend" class="home-trend-row" role="img"></div>
+      </div>
+    </div>
+
+    <div id="workout-count-card" class="workout-count-card reveal reveal-delay-2" hidden>
+      <div class="workout-count-item">
+        <span id="workout-count-week" class="workout-count-value">0</span>
+        <span class="workout-count-label">Workouts this week</span>
+      </div>
+      <div class="workout-count-item">
+        <span id="workout-count-month" class="workout-count-value">0</span>
+        <span class="workout-count-label">Workouts this month</span>
+      </div>
     </div>
 
     <p class="hero-badge reveal reveal-delay-1">Track. Learn. Progress.</p>
-    <h1 class="hero-title reveal reveal-delay-2">Find your <span id="word" class="hero-accent">motivation.</span></h1>
-    <p class="hero-subtitle reveal reveal-delay-3">A calm, focused space to log workouts, browse the glossary, and understand your training.</p>
+    <h1 class="hero-title reveal reveal-delay-2">Welcome back, <span id="member-name" class="hero-accent">athlete</span>.</h1>
+    <p class="hero-subtitle reveal reveal-delay-3">Pick up where you left off — log today's session or review your numbers.</p>
 
-    <div id="authenticated-links" class="hero-ctas reveal reveal-delay-4" style="display: none">
-      <a href="pages/core/workouts_input.html" class="cta-button">Start logging</a>
+    <div id="authenticated-links" class="hero-ctas reveal reveal-delay-4">
+      <a href="pages/core/workouts_input.html" class="cta-button">Log your next workout</a>
       <a href="pages/core/workouts_table.html" class="cta-button cta-button--ghost">View history</a>
       <a href="pages/core/dashboard.html" class="cta-button cta-button--ghost">Metrics</a>
       <a href="pages/core/explore.html" class="cta-button cta-button--ghost">Glossary</a>
     </div>
   </section>
 
-  <section class="features">
-    <article class="feature-card card reveal">
-      <h3>Log with clarity</h3>
-      <p>Record sets, reps, and load in a clean workflow built for the gym floor.</p>
-    </article>
-    <article class="feature-card card reveal reveal-delay-1">
-      <h3>See your progress</h3>
-      <p>Charts and history help you spot trends in volume and favourite movements.</p>
-    </article>
-    <article class="feature-card card reveal reveal-delay-2">
-      <h3>Learn the movements</h3>
-      <p>Browse the exercise glossary with cues and demo videos when you need a refresher.</p>
-    </article>
-  </section>
+  <!-- Logged-out: marketing landing -->
+  <div id="guest-landing" class="guest-only">
+    <section class="hero hero-animate">
+      <div class="hero-brand reveal">
+        <p class="hero-brand-name">Gym Assistant</p>
+      </div>
+
+      <p class="hero-badge reveal reveal-delay-1">Track. Learn. Progress.</p>
+      <h1 class="hero-title reveal reveal-delay-2">Find your <span id="word" class="hero-accent">motivation.</span></h1>
+      <p class="hero-subtitle reveal reveal-delay-3">
+        Can you remember what you lifted last week? What about last month?
+        Gym Assistant keeps every workout, every set, and every personal record in one place
+        so you can focus on training instead of spreadsheets and notebooks.
+      </p>
+
+      <div class="hero-ctas reveal reveal-delay-4">
+        <a href="pages/auth/signup.html" class="cta-button">Log your first workout</a>
+      </div>
+    </section>
+
+    <section class="product-preview landing-section">
+      <div class="landing-section-inner">
+        <header class="landing-section-header reveal">
+          <h2>Built for lifters</h2>
+          <p>Everything you need to track training in one place — no fluff, just the numbers.</p>
+        </header>
+
+        <div class="preview-showcase reveal reveal-delay-1">
+          <figure class="preview-device preview-device--phone">
+            <img src="assets/previews/log-workout-mobile.png" alt="Logging a Romanian deadlift session on mobile" width="460" height="860" loading="eager">
+          </figure>
+          <figure class="preview-device preview-device--desktop">
+            <img src="assets/previews/volume-by-day-chart.png" alt="Volume by day chart showing training trends" width="1788" height="470" loading="eager">
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="why-track landing-section">
+      <div class="landing-section-inner">
+        <header class="landing-section-header reveal">
+          <h2>Why track?</h2>
+          <p>Progressive overload only works when you remember your training sessions.</p>
+        </header>
+
+        <div class="why-track-grid reveal reveal-delay-1">
+          <div class="why-track-col card">
+            <h3>Without tracking</h3>
+            <ul class="why-list why-list--negative">
+              <li>Forgot last week's weight</li>
+              <li>No clear progression</li>
+              <li>Hard to predict plateaus</li>
+            </ul>
+          </div>
+          <div class="why-track-col card">
+            <h3>With Gym Assistant</h3>
+            <ul class="why-list why-list--positive">
+              <li>Know exactly what to lift today</li>
+              <li>See strength trends</li>
+              <li>Track volume over time</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="features landing-section">
+      <div class="landing-section-inner features">
+        <article class="feature-card card reveal">
+          <h3>Log with clarity</h3>
+          <p>Record sets, reps, and load in a clean workflow built for the gym floor.</p>
+        </article>
+        <article class="feature-card card reveal reveal-delay-1">
+          <h3>See your progress</h3>
+          <p>Charts and history help you spot trends in volume and favourite movements.</p>
+        </article>
+        <article class="feature-card card reveal reveal-delay-2">
+          <h3>Learn the movements</h3>
+          <p>Browse the exercise glossary with cues and demo videos when you need a refresher.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="workout-day landing-section">
+      <div class="landing-section-inner">
+        <header class="landing-section-header reveal">
+          <h2>A typical workout day</h2>
+          <p>Four steps. No spreadsheets. No guesswork.</p>
+        </header>
+
+        <ol class="workout-day-steps reveal reveal-delay-1">
+          <li class="card"><span class="step-num">1</span> Open Gym Assistant</li>
+          <li class="card"><span class="step-num">2</span> Load your previous session</li>
+          <li class="card"><span class="step-num">3</span> Analyze your metrics</li>
+          <li class="card"><span class="step-num">4</span> Leave stronger than last time</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="stats-teaser landing-section">
+      <div class="landing-section-inner">
+        <header class="landing-section-header reveal">
+          <h2>What you'll track</h2>
+          <p>The numbers that actually matter for getting stronger.</p>
+        </header>
+
+        <div class="stats-teaser-grid reveal reveal-delay-1">
+          <div class="stats-teaser-item card">
+            <span class="stats-teaser-icon" aria-hidden="true">🏋️</span>
+            <h3>Total weight lifted</h3>
+            <p> Volume lifted across every session you've logged.</p>
+          </div>
+          <div class="stats-teaser-item card">
+            <span class="stats-teaser-icon" aria-hidden="true">📈</span>
+            <h3>Training volume</h3>
+            <p>Per-exercise volume trends so you can dial in progressive overload.</p>
+          </div>
+          <div class="stats-teaser-item card">
+            <span class="stats-teaser-icon" aria-hidden="true">🔥</span>
+            <h3>Workout frequency</h3>
+            <p>Stay consistent — see how often you're actually showing up.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="social-proof landing-section">
+      <div class="landing-section-inner reveal">
+        <blockquote class="social-proof-quote card">
+          <p>Built by a lifter, for lifters, because spreadsheets are annoying.</p>
+          <footer>Used to track 1,000+ sets and counting.</footer>
+        </blockquote>
+      </div>
+    </section>
+
+    <section class="personal-note landing-section">
+      <div class="landing-section-inner reveal">
+        <div class="personal-note-card card">
+          <p>If you are here, you probably know me in real life.</p>
+          <p>Please let us know if you find any issues using the app.</p>
+          <p>You can contact me at <a href="mailto:gym-assistant@outlook.com">gym-assistant@outlook.com</a>.</p>
+          <p>We are eager to receive contributions at <a href="https://github.com/Codrul-si-Petro/Gym-Assistant" target="_blank" rel="noopener noreferrer">github.com/Codrul-si-Petro/Gym-Assistant</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta landing-section">
+      <div class="landing-section-inner reveal">
+        <h2>Ready to stop guessing?</h2>
+        <p>Your next PR is one logged set away.</p>
+        <div class="hero-ctas">
+          <a href="pages/auth/signup.html" class="cta-button">Log your first workout</a>
+        </div>
+      </div>
+    </section>
+  </div>
 </main>
 
-<footer class="site-footer reveal">
-  <p>Gym Assistant is for personal fitness tracking. Always consult a professional before starting a new program.</p>
-  <p>Questions or suggestions? <a id="support-link" href="mailto:support@gym-assistant.app?subject=Gym%20Assistant%20Feedback">Email us</a></p>
+<footer id="site-footer" class="site-footer reveal member-only" hidden>
+  <p>Questions or suggestions? <a id="support-link" href="mailto:gym-assistant@outlook.com?subject=Gym%20Assistant%20Feedback">Email us</a></p>
 </footer>
 
 <script src="js/auth/store-jwt.js?v=2"></script>
 <script type="module" src="js/general-components/theme.js?v=2"></script>
 <script type="module" src="js/general-components/profile-menu.js?v=2"></script>
-<script type="module" src="js/general-components/info-popover.js?v=1"></script>
+<script type="module" src="js/general-components/info-popover.js?v=2"></script>
 <script type="module" src="js/general-components/animations.js?v=2"></script>
-<script type="module" src="js/homepage.js?v=2"></script>
+<script type="module" src="js/homepage.js?v=10"></script>
+<script type="module" src="js/core/workout-count-card.js?v=1"></script>
 </body>
 </html>
