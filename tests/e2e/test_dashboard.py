@@ -31,7 +31,7 @@ def test_dashboard_default_volume_tab_and_all_metric_views(page: Page, frontend_
         spark.click()
         page.wait_for_load_state("networkidle")
         expect(page.locator("#volume-daily-chart-block")).to_be_visible()
-        page.locator("#volume-daily-close").click()
+        page.locator("#volume-daily-back").click()
         page.wait_for_load_state("networkidle")
 
     drill = page.locator(".volume-exercise-drill").first
