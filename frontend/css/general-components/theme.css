@@ -17,6 +17,11 @@
   --accent-glow: rgba(139, 92, 246, 0.35);
   --danger: #f87171;
   --success: #4ade80;
+  /* Dedicated chart series colors — kept distinct from --accent (both of which are
+     purple in this theme) so Actuals vs Plan lines are visually distinguishable.
+     Actuals = purple, Plan = cyan. */
+  --chart-actuals: #a78bfa;
+  --chart-plan: #22d3ee;
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
   --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.35);
   --radius-sm: 8px;
@@ -45,6 +50,8 @@
   --accent-glow: rgba(124, 58, 237, 0.2);
   --danger: #dc2626;
   --success: #16a34a;
+  --chart-actuals: #8b5cf6;
+  --chart-plan: #0891b2;
   --shadow-lg: 0 8px 32px rgba(15, 23, 42, 0.12);
   --shadow-md: 0 4px 24px rgba(15, 23, 42, 0.08);
 }

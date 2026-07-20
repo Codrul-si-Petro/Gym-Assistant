@@ -1,0 +1,82 @@
+/* Period chips, comparison columns, and responsive table tweaks for the volume tab. */
+
+.volume-period-chips {
+  display: inline-flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.volume-period-chip {
+  border: 1px solid var(--border-subtle, #2a2a2e);
+  background: var(--bg-elevated, #16161a);
+  color: var(--text-secondary, #a1a1aa);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.volume-period-chip.is-active {
+  background: var(--accent-secondary, #a78bfa);
+  border-color: transparent;
+  color: var(--bg-primary, #0a0a0b);
+  font-weight: 600;
+}
+
+.volume-col-delta {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.volume-table tbody td.volume-delta-up {
+  color: var(--success, #4ade80);
+}
+
+.volume-table tbody td.volume-delta-down {
+  color: var(--danger, #f87171);
+}
+
+.volume-table tbody td.volume-delta-neutral {
+  color: var(--accent-secondary, #a78bfa);
+}
+
+.volume-col-delta-toggle {
+  cursor: pointer;
+}
+
+.volume-col-delta-toggle:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .volume-table thead th,
+  .volume-table tbody td {
+    padding: 8px 5px;
+  }
+
+  .volume-col-chart-label {
+    display: none;
+  }
+
+  .volume-col-rank {
+    width: 1.4rem;
+  }
+
+  .volume-col-chart {
+    width: 2.6rem;
+  }
+
+  .volume-minichart-placeholder {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0 4px;
+  }
+
+  .volume-col-delta {
+    font-size: 11px;
+  }
+}

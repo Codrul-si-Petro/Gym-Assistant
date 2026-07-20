@@ -6,11 +6,19 @@ export const PAGE_INFO = {
   home:
     "Your summary is here to motivate you and the links on this page are to navigate to pages where you can log workout sets, browse history, view metrics, or open the glossary.",
   log:
-    "Log one set at a time. Workout number refers to the individual workout session; set numbers must follow the order you log for each exercise.",
+    "Log one set at a time for workouts you actually performed. Workout number refers to the session; set numbers follow the order you log for each exercise. To schedule future workouts, use Plan workouts instead.",
+  plan:
+    "Build a template set and stamp it onto one or more future dates. Plans do not affect workout numbering or delete-last on the log page. In Metrics, plan volume appears as a purple forecast line alongside your actual logged volume.",
   history:
-    "Every row is one exercise set you logged. Tap the edit button on a row to access the edit sheet where you can fix mistakes. You can use the filters at the top if you're looking for something specific.",
-  metrics:
-    "Metrics are based on data you logged in the app. Total Volumes ranks exercises by weight × reps; remember that if you see a small arrow to the right you can drill down; there is also a button in the Total Volumes table where you can click to access the chart. Favourite Exercises shows your most-logged movements calculated simply by the number of sets you have logged. Workout Splits shows you which training split you are biased to. Gym Days ranks weekdays you train most often.",
+    "Every row is one exercise set. Use the Actuals / Plan filter to separate logged workouts from scheduled plans. Tap edit on a row to fix mistakes, or use the filters at the top to narrow the list.",
+  "metrics-volume":
+    "Total Volumes ranks exercises by weight × reps, using your logged actuals unless noted. Use All with the From/To dates for a custom range (leave From empty for all history), or pick WTD, MTD, or YTD to snap the range and compare against the prior week, month, or year (vs PW / PM / PY and vs Full PW / PM / PY). Plan to date compares against your plan for the same window so far; Plan full week/month/year compares against the entire period’s plan target. Drill into parent exercises with the arrow; open the chart button next to a row for its daily actuals vs plan.",
+  "metrics-favourites":
+    "Favourite Exercises counts how many sets you've logged for each exercise over the selected date range, ranked from most to least performed.",
+  "metrics-splits":
+    "Workout Splits groups your logged actual sets by split (e.g. push, pull, legs) over the selected date range, so you can see where your training time is going.",
+  "metrics-weekdays":
+    "Gym Days shows which days of the week you actually train on, based on your logged actual workouts over the selected date range.",
   explore:
     "Browse exercises, attachments, and equipment. Please contact us if you find the information shown in the videos as incorrect/incomplete and we will evaluate and act accordingly.",
   profile:
