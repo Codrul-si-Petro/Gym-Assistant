@@ -2,6 +2,10 @@
 
 import { API_BASE, BASE, TODAY, getAuthHeaders, syncDateFilters } from "../../utils.js";
 import { convertKgToPreferred, getPreferredUnit, setPreferredUnit, unitSuffix } from "../../user-preferences.js";
+// The ?v= on these two imports is a manual cache-buster — bump it whenever
+// chart-renderers.js/data-fetch.js change. They aren't covered by the ?v= on
+// the <script> tag that loads this file, so edits here can silently keep
+// serving a stale cached copy even after a normal refresh.
 import {
   renderFavExercisesChart,
   shortLabel,
@@ -12,8 +16,8 @@ import {
   renderGymWeekdaysChart,
   toggleVolumeDeltaDisplayMode,
   resetVolumeDeltaDisplayMode,
-} from "./chart-renderers.js";
-import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSplits } from "./data-fetch.js";
+} from "./chart-renderers.js?v=7";
+import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSplits } from "./data-fetch.js?v=2";
 
 let volumeParentId = null;
 const volumeParentStack = [];

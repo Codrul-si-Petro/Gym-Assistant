@@ -1,4 +1,5 @@
-import { PAGE_INFO } from "./info-content.js";
+// ?v= is a manual cache-buster for this internal import — bump when info-content.js changes.
+import { PAGE_INFO } from "./info-content.js?v=3";
 
 const SEEN_PREFIX = "gym_assistant_info_seen_";
 
@@ -8,7 +9,8 @@ const PATH_PAGE_KEYS = [
   [/workouts_input\.html$/, "log"],
   [/workouts_plan\.html$/, "plan"],
   [/workouts_table\.html$/, "history"],
-  [/dashboard\.html$/, "metrics"],
+  // dashboard.html has no single page-level key — it's split into per-tab
+  // [data-info-area] areas instead (see mountAreaInfo below).
   [/explore\.html$/, "explore"],
   [/profile\.html$/, "profile"],
   [/account\.html$/, "account"],
@@ -96,8 +98,46 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeAll(null);
 });
 
+/**
+ * Pages like the dashboard have several tabbed "focus areas" (Total Volumes,
+ * Favourite Exercises, ...) each with their own info blurb. Elements marked
+ * with [data-info-area] opt into this: whichever one currently has the
+ * "active" class drives which info button (and PAGE_INFO key / seen-state)
+ * is shown, swapping in place as the user switches tabs.
+ */
+function getActiveAreaKey(areaEls) {
+  for (const el of areaEls) {
+    if (el.classList.contains("active")) return el.dataset.infoArea;
+  }
+  return areaEls[0]?.dataset.infoArea || null;
+}
+
+function mountAreaInfo(areaEls) {
+  let currentKey = null;
+
+  function sync() {
+    const key = getActiveAreaKey(areaEls);
+    if (!key || key === currentKey) return;
+    currentKey = key;
+    document.querySelector(".info-fab-wrap")?.remove();
+    const text = PAGE_INFO[key];
+    if (text) mountPageInfo(key, text);
+  }
+
+  sync();
+  const observer = new MutationObserver(sync);
+  areaEls.forEach((el) => observer.observe(el, { attributes: true, attributeFilter: ["class"] }));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   if (!localStorage.getItem("access_token")) return;
+
+  const areaEls = document.querySelectorAll("[data-info-area]");
+  if (areaEls.length > 0) {
+    mountAreaInfo(areaEls);
+    return;
+  }
+
   const pageKey = resolvePageKey();
   if (!pageKey) return;
   const text = PAGE_INFO[pageKey];

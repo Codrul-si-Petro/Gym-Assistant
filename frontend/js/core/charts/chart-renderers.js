@@ -50,25 +50,51 @@ function toDisplayUnit(kgValue, unit) {
   return unit === "LBS" ? kg * 2.2046226218 : kg;
 }
 
+// "To date" comparisons: apples-to-apples vs the prior period *as far as it has run*
+// (e.g. this-month-so-far vs the same day-of-month last month).
 const PERIOD_DELTA_CONFIG = {
-  wtd: { key: "prev_week_volume_kg", label: "vs W" },
-  mtd: { key: "prev_month_volume_kg", label: "vs M" },
-  ytd: { key: "prev_year_volume_kg", label: "vs Y" },
+  wtd: { key: "prev_week_to_date_volume_kg", label: "vs PW" },
+  mtd: { key: "prev_month_to_date_volume_kg", label: "vs PM" },
+  ytd: { key: "prev_year_to_date_volume_kg", label: "vs PY" },
 };
 
-/**
- * Show/hide and relabel the single comparison column header for the active period.
- */
-export function updateVolumeDeltaHeader(period) {
-  const th = document.getElementById("volume-col-delta-header");
+// "Full" comparisons: vs the *complete* prior period, regardless of how far the
+// current one has run (e.g. this-month-so-far vs all of last month).
+const PERIOD_DELTA_FULL_CONFIG = {
+  wtd: { key: "prev_week_volume_kg", label: "vs Full PW" },
+  mtd: { key: "prev_month_volume_kg", label: "vs Full PM" },
+  ytd: { key: "prev_year_volume_kg", label: "vs Full PY" },
+};
+
+// Plan gets the same duality as the "vs FULL" columns above: plan_volume_kg (always
+// shown, any period) is plan-to-date, an apples-to-apples "on pace" read; these are
+// the *entire* current week/month/year's plan — the actual target to hit.
+const PERIOD_PLAN_FULL_CONFIG = {
+  wtd: { key: "plan_week_full_volume_kg", label: "Plan full week" },
+  mtd: { key: "plan_month_full_volume_kg", label: "Plan full month" },
+  ytd: { key: "plan_year_full_volume_kg", label: "Plan full year" },
+};
+
+function setDeltaHeader(id, cfg) {
+  const th = document.getElementById(id);
   if (!th) return;
-  const cfg = PERIOD_DELTA_CONFIG[period];
   if (!cfg) {
     th.hidden = true;
     return;
   }
   th.hidden = false;
   th.textContent = cfg.label;
+}
+
+/**
+ * Show/hide and relabel the period-dependent comparison column headers for the
+ * active period (hidden entirely for period=all, which has no enclosing week/
+ * month/year to compare against).
+ */
+export function updateVolumeDeltaHeader(period) {
+  setDeltaHeader("volume-col-delta-header", PERIOD_DELTA_CONFIG[period]);
+  setDeltaHeader("volume-col-delta-full-header", PERIOD_DELTA_FULL_CONFIG[period]);
+  setDeltaHeader("volume-col-plan-full-header", PERIOD_PLAN_FULL_CONFIG[period]);
 }
 
 /**
@@ -161,7 +187,8 @@ function formatDeltaAbsolute(current, baseline, unit) {
   const diffKg = cur - base;
   if (diffKg === 0) return "—";
   const sign = diffKg > 0 ? "+" : "-";
-  return `${sign}${formatVolume(Math.abs(diffKg), unit)} ${unitSuffix(unit)}`;
+  // Unit lives in the table heading (kg/lbs) — don't repeat it in every vs cell.
+  return `${sign}${formatVolume(Math.abs(diffKg), unit)}`;
 }
 
 function deltaClass(current, baseline) {
@@ -178,6 +205,18 @@ function formatDeltaCell(current, baseline, unit) {
   return formatDeltaPct(current, baseline);
 }
 
+/** One "vs X" cell: tabular %/absolute diff, click-to-toggle, color-coded by direction. */
+function makeDeltaCell(current, baseline, unit, onDeltaToggle) {
+  const td = document.createElement("td");
+  td.className = "volume-col-delta volume-col-delta-toggle " + deltaClass(current, baseline);
+  td.textContent = formatDeltaCell(current, baseline, unit);
+  td.title = "Tap to switch between % and absolute difference";
+  td.addEventListener("click", () => {
+    if (onDeltaToggle) onDeltaToggle();
+  });
+  return td;
+}
+
 export function renderVolumeTable(results, unit, period, handlers) {
   const tbody = document.getElementById("volume-table-body");
   if (!tbody) return;
@@ -186,6 +225,8 @@ export function renderVolumeTable(results, unit, period, handlers) {
   const onMinichart = handlers?.onMinichart;
   const onDeltaToggle = handlers?.onDeltaToggle;
   const deltaCfg = PERIOD_DELTA_CONFIG[period] || null;
+  const deltaFullCfg = PERIOD_DELTA_FULL_CONFIG[period] || null;
+  const planFullCfg = PERIOD_PLAN_FULL_CONFIG[period] || null;
 
   updateVolumeDeltaHeader(period);
   tbody.replaceChildren();
@@ -246,34 +287,30 @@ export function renderVolumeTable(results, unit, period, handlers) {
 
     tr.append(rankTd, nameTd, sparkTd, volTd);
 
+    // vs prior period, to-date (apples-to-apples) — hidden for period=all.
     if (deltaCfg) {
-      const baseline = row[deltaCfg.key];
-      const vsTd = document.createElement("td");
-      vsTd.className =
-        "volume-col-delta volume-col-delta-toggle " +
-        deltaClass(row.total_volume_kg, baseline);
-      vsTd.textContent = formatDeltaCell(row.total_volume_kg, baseline, unit);
-      vsTd.title = "Tap to switch between % and absolute difference";
-      vsTd.addEventListener("click", () => {
-        if (onDeltaToggle) onDeltaToggle();
-      });
-      tr.appendChild(vsTd);
+      tr.appendChild(makeDeltaCell(row.total_volume_kg, row[deltaCfg.key], unit, onDeltaToggle));
     }
 
-    // Actual vs planned volume — always shown, independent of the period-based
-    // vs W/M/Y column above (that one compares against a *prior* period; this
+    // vs prior period, full (complete prior week/month/year) — hidden for period=all.
+    if (deltaFullCfg) {
+      const cell = makeDeltaCell(row.total_volume_kg, row[deltaFullCfg.key], unit, onDeltaToggle);
+      cell.classList.add("volume-col-delta-full");
+      tr.appendChild(cell);
+    }
+
+    // Actual vs planned volume, to-date — always shown, independent of the
+    // period-based columns above (those compare against a *prior* period; this
     // compares against your own plan for the *same* window).
-    const planTd = document.createElement("td");
-    const planBaseline = row.plan_volume_kg;
-    planTd.className =
-      "volume-col-delta volume-col-delta-toggle " +
-      deltaClass(row.total_volume_kg, planBaseline);
-    planTd.textContent = formatDeltaCell(row.total_volume_kg, planBaseline, unit);
-    planTd.title = "Tap to switch between % and absolute difference";
-    planTd.addEventListener("click", () => {
-      if (onDeltaToggle) onDeltaToggle();
-    });
-    tr.appendChild(planTd);
+    tr.appendChild(makeDeltaCell(row.total_volume_kg, row.plan_volume_kg, unit, onDeltaToggle));
+
+    // Actual (to-date) vs the *entire* current week/month/year's plan — the target
+    // to hit, not just plan-to-date. Hidden for period=all.
+    if (planFullCfg) {
+      const cell = makeDeltaCell(row.total_volume_kg, row[planFullCfg.key], unit, onDeltaToggle);
+      cell.classList.add("volume-col-delta-full");
+      tr.appendChild(cell);
+    }
 
     tbody.appendChild(tr);
   }
@@ -326,6 +363,7 @@ export function renderVolumeDailyTimeSeries(dailyRows, exerciseName, type, unit 
   const actualColor = getCssVar("--chart-actuals", "#a78bfa");
   const planColor = getCssVar("--chart-plan", "#22d3ee");
   const textMuted = getCssVar("--text-muted", "#71717a");
+  const legendTextColor = getCssVar("--text-primary", "#f4f4f5");
   const legendColors = [actualColor, planColor];
 
   const ctx = canvas.getContext("2d");
@@ -390,16 +428,23 @@ export function renderVolumeDailyTimeSeries(dailyRows, exerciseName, type, unit 
           display: true,
           position: "bottom",
           labels: {
-            color: getCssVar("--text-secondary", "#a1a1aa"),
+            // --text-primary flips white/black with theme (unlike --text-secondary,
+            // which is a mid-gray too close to the dark background to read well).
+            color: legendTextColor,
             usePointStyle: true,
             pointStyle: "circle",
             boxWidth: 8,
             boxHeight: 8,
             padding: 16,
             generateLabels(chart) {
+              // Chart.js only fills in fontColor from labels.color inside its own
+              // default generateLabels — since we override it, each item needs its
+              // own fontColor or the legend text silently falls back to Chart.js's
+              // built-in dark-gray default (unreadable in dark mode).
               return chart.data.datasets.map((ds, i) => ({
                 text: ds.label,
                 fillStyle: legendColors[i],
+                fontColor: legendTextColor,
                 strokeStyle: "transparent",
                 lineWidth: 0,
                 hidden: !chart.isDatasetVisible(i),
