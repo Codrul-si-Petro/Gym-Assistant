@@ -34,14 +34,20 @@
   margin-bottom: 12px;
 }
 
-/* Primary control to go up one level in the hierarchy. */
+/* Primary control to go up one level in the hierarchy — icon-only, compact. */
 .volume-back-btn {
-  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
   background: var(--bg-elevated);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 1;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
@@ -233,9 +239,12 @@
   background: var(--bg-card);
   color: var(--accent-secondary);
   cursor: pointer;
-  font-size: 18px;
   line-height: 1;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.volume-minichart-placeholder svg {
+  display: block;
 }
 
 .volume-minichart-placeholder:hover {
@@ -332,33 +341,58 @@
   white-space: nowrap;
 }
 
-.volume-delta-up {
-  color: #4ade80;
+/* Specificity must beat ".volume-table tbody td { color: var(--text-primary); }"
+   (0,1,2) so these actually win — plain single-class rules were losing silently. */
+.volume-table tbody td.volume-delta-up {
+  color: var(--success, #4ade80);
 }
 
-.volume-delta-down {
-  color: #f87171;
+.volume-table tbody td.volume-delta-down {
+  color: var(--danger, #f87171);
 }
 
-.volume-delta-neutral {
-  color: var(--text-muted, #71717a);
+.volume-table tbody td.volume-delta-neutral {
+  color: var(--accent-secondary, #a78bfa);
+}
+
+.volume-col-delta-toggle {
+  cursor: pointer;
+}
+
+.volume-col-delta-toggle:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* -----------------------------------------------------------------------------
-   Narrow screens — tighter padding; hide “Chart” header label to save space.
+   Narrow screens — tighter padding/columns so the table fits without spilling
+   past the viewport (it was overflowing and getting clipped at the edge).
    ----------------------------------------------------------------------------- */
 @media (max-width: 480px) {
   .volume-table thead th,
   .volume-table tbody td {
-    padding: 10px 8px;
+    padding: 8px 5px;
   }
 
   .volume-col-chart-label {
     display: none;
   }
 
-  .volume-col-delta:nth-child(6),
-  .volume-col-delta:nth-child(7) {
-    display: none;
+  .volume-col-rank {
+    width: 1.4rem;
+  }
+
+  .volume-col-chart {
+    width: 2.6rem;
+  }
+
+  .volume-minichart-placeholder {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0 4px;
+  }
+
+  .volume-col-delta {
+    font-size: 11px;
   }
 }

@@ -15,7 +15,7 @@ from backend.core.workout_constants import (
 )
 
 ANALYTICS_SQL_DIR = Path(__file__).resolve().parents[2] / "backend" / "core" / "analytics" / "sql"
-DBT_ANALYTICS_DIR = Path(__file__).resolve().parents[2] / "db" / "transformation" / "models" / "analytics"
+DBT_VOLUMES_DIR = Path(__file__).resolve().parents[2] / "db" / "transformation" / "models" / "analytics" / "volumes"
 
 
 def test_scenario_constants():
@@ -43,25 +43,28 @@ def test_time_filter_prev_slices_are_stable():
 def test_prev_period_slices_are_separate_dbt_models():
     """Each comparison period is its own model chained with ref() — not one monolith."""
     for model_name in ("volume_prev_week", "volume_prev_month", "volume_prev_year"):
-        model_path = DBT_ANALYTICS_DIR / f"{model_name}.sql"
+        model_path = DBT_VOLUMES_DIR / f"{model_name}.sql"
         assert model_path.exists(), f"missing dbt model {model_path}"
         model_sql = model_path.read_text()
         assert "ref('total_daily_volume')" in model_sql
         assert "GROUP BY" in model_sql
 
 
-def test_volume_to_date_model_is_dated_with_current_period_flags():
-    """ALL and X-to-date live in dated fact tables, not pre-summed single rows."""
-    model_sql = (DBT_ANALYTICS_DIR / "volume_to_date.sql").read_text()
+def test_volume_to_date_model_uses_time_filter_column():
+    """X-to-date slices use a time_filter column (WTD/MTD/YTD), not boolean flags."""
+    model_sql = (DBT_VOLUMES_DIR / "volume_to_date.sql").read_text()
     assert "date_id" in model_sql
     assert "ref('total_daily_volume')" in model_sql
+    assert "time_filter" in model_sql
+    for slice_name in ("WTD", "MTD", "YTD"):
+        assert f"'{slice_name}'" in model_sql
     for flag in ("is_wtd", "is_mtd", "is_ytd"):
-        assert flag in model_sql
+        assert flag not in model_sql
 
 
 def test_total_daily_volume_is_dated_and_backs_the_all_period():
     """'all' reads real per-date rows — no precomputed 'all' aggregate slice."""
-    model_sql = (DBT_ANALYTICS_DIR / "total_daily_volume.sql").read_text()
+    model_sql = (DBT_VOLUMES_DIR / "total_daily_volume.sql").read_text()
     assert "date_id" in model_sql
 
 
@@ -71,8 +74,7 @@ def test_total_volume_extract_reads_dated_facts_only():
     assert "volume_prev_week" in sql
     assert "volume_prev_month" in sql
     assert "volume_prev_year" in sql
-    assert "%(time_filter)s" in sql
-    # No request-time period window math (no calendar arithmetic in the extract)
+    assert "time_filter = UPPER(%(time_filter)s)" in sql
     assert "date_trunc" not in sql
     assert "INTERVAL" not in sql
 

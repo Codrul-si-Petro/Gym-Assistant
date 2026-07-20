@@ -113,6 +113,7 @@ def test_total_volume_with_parent_id_returns_results(authenticated_client):
             "exercise_name",
             "is_leaf",
             "total_volume_kg",
+            "plan_volume_kg",
             "prev_week_volume_kg",
             "prev_month_volume_kg",
             "prev_year_volume_kg",

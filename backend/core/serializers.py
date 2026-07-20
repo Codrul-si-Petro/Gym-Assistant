@@ -195,7 +195,9 @@ class PlanBatchSerializer(serializers.Serializer):
     unit = serializers.ChoiceField(choices=["KG", "LBS"], default="KG")
     set_type = serializers.CharField(min_length=1, default="Working set")
     comments = serializers.CharField(required=False, default="None")
-    workout_split = serializers.CharField(max_length=50, required=False, allow_blank=True, default=PLACEHOLDER_DIMENSION_NAME)
+    workout_split = serializers.CharField(
+        max_length=50, required=False, allow_blank=True, default=PLACEHOLDER_DIMENSION_NAME
+    )
 
     def validate_dates(self, value):
         unique_dates = sorted(set(value))
@@ -225,9 +227,7 @@ class PlanBatchSerializer(serializers.Serializer):
         with transaction.atomic():
             for date_val in dates:
                 calendar = Calendar.objects.get(date_id=date_val)
-                set_number = get_next_set_number(
-                    user, exercise.pk, 1, scenario=SCENARIO_PLAN, date_id=date_val
-                )
+                set_number = get_next_set_number(user, exercise.pk, 1, scenario=SCENARIO_PLAN, date_id=date_val)
                 rows.append(
                     Workouts.objects.create(
                         user=user,

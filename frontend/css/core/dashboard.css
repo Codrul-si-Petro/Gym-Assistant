@@ -110,6 +110,14 @@ body {
   min-width: 0;
   flex: 1 1 0;
   width: 100%;
+  /* Some browsers only pick up dark rendering for the native date text/picker
+     when color-scheme is set on the control itself, not just an ancestor —
+     without this the digits render in UA-drawn black, unreadable on dark bg. */
+  color-scheme: dark;
+}
+
+[data-theme="light"] .chart-date {
+  color-scheme: light;
 }
 
 .chart-date::-webkit-calendar-picker-indicator {

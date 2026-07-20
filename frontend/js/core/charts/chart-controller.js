@@ -10,6 +10,8 @@ import {
   renderVolumeDailyTimeSeries,
   renderWorkoutSplitsChart,
   renderGymWeekdaysChart,
+  toggleVolumeDeltaDisplayMode,
+  resetVolumeDeltaDisplayMode,
 } from "./chart-renderers.js";
 import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSplits } from "./data-fetch.js";
 
@@ -23,6 +25,8 @@ let dateChangeFromChip = false;
 let volumeDailySelection = null; // { exerciseId: number, exerciseName: string } | null
 let volumeDailyChartType = "line"; // "line" | "bar"
 let preferredUnit = getPreferredUnit();
+/** Cached for click-to-toggle delta display without refetching. */
+let lastVolumeTableResults = [];
 
 const dateFrom = document.getElementById("start_date");
 const dateTo = document.getElementById("end_date");
@@ -54,14 +58,18 @@ function setActivePeriodChip(period) {
 function applyPeriodChip(period) {
   volumePeriod = period || "all";
   setActivePeriodChip(volumePeriod);
-  if (volumePeriod !== "all") {
+  resetVolumeDeltaDisplayMode();
+  dateChangeFromChip = true;
+  if (volumePeriod === "all") {
+    if (dateFrom) dateFrom.value = "";
+    if (dateTo) dateTo.value = TODAY;
+  } else {
     const { start, end } = getPeriodDateRange(volumePeriod);
-    dateChangeFromChip = true;
     if (dateFrom) dateFrom.value = start;
     if (dateTo) dateTo.value = end;
-    syncDateFilters();
-    dateChangeFromChip = false;
   }
+  syncDateFilters();
+  dateChangeFromChip = false;
   void loadVolumeTable();
   if (volumeDailySelection) void reloadVolumeDailyChart();
 }
@@ -76,7 +84,9 @@ function getDateRange() {
 function updateVolumeHeadingUnit() {
   const heading = document.querySelector(".volume-col-vol");
   if (!heading) return;
-  heading.textContent = `Total volume (${unitSuffix(preferredUnit)})`;
+  // Just the unit — "Total volume (kg)" was wide enough to push the table out
+  // of bounds on narrow screens.
+  heading.textContent = unitSuffix(preferredUnit);
 }
 
 async function loadPreferredUnit() {
@@ -149,15 +159,18 @@ function setVolumeTableVisible(visible) {
 function setVolumeMainView(mode) {
   const scrollWrap = document.querySelector("#tab-volume .chart-scroll-wrap");
   const chartBlock = document.getElementById("volume-daily-chart-block");
+  const periodChips = document.querySelector(".volume-period-chips");
   if (!scrollWrap || !chartBlock) return;
 
   if (mode === "chart") {
     scrollWrap.classList.add("volume-mode-chart");
     chartBlock.hidden = false;
-    setVolumeTableVisible(false); // hide table by JS so swap works without relying on CSS alone
+    if (periodChips) periodChips.hidden = true;
+    setVolumeTableVisible(false);
   } else {
     scrollWrap.classList.remove("volume-mode-chart");
     chartBlock.hidden = true;
+    if (periodChips) periodChips.hidden = false;
   }
 }
 
@@ -196,12 +209,94 @@ function showVolumeChartComingSoonToast() {
   }, VOLUME_CHART_TOAST_MS);
 }
 
+function closeVolumeDailyChart() {
+  const b = document.getElementById("volume-daily-chart-block");
+  if (b) b.hidden = true;
+  document.getElementById("chart-skeleton-volume-daily")?.classList.add("hidden");
+  const inner = document.getElementById("volume-daily-chart-inner");
+  if (inner) inner.style.display = "none";
+  const msg = document.getElementById("volume-daily-chart-msg");
+  if (msg) msg.textContent = "";
+  destroyChart("volume-daily-canvas");
+  volumeDailySelection = null;
+  setVolumeMainView("table");
+  const tableInner = document.getElementById("volume-table-inner");
+  if (tableInner) tableInner.style.display = "";
+}
+
+function buildVolumeTableHandlers() {
+  return {
+    onDrill: (row) => {
+      volumeParentStack.push(volumeParentId);
+      volumeParentId = row.exercise_id;
+      loadVolumeTable();
+    },
+    onMinichart: (row) => openVolumeDailyChart(row),
+    onDeltaToggle: () => {
+      toggleVolumeDeltaDisplayMode();
+      renderVolumeTable(lastVolumeTableResults, preferredUnit, volumePeriod, buildVolumeTableHandlers());
+    },
+  };
+}
+
+async function openVolumeDailyChart(row) {
+  const block = document.getElementById("volume-daily-chart-block");
+  const skel = document.getElementById("chart-skeleton-volume-daily");
+  const inner = document.getElementById("volume-daily-chart-inner");
+  const vmsg = document.getElementById("volume-daily-chart-msg");
+  const vtitle = document.getElementById("volume-daily-title");
+
+  if (block) {
+    block.hidden = false;
+    setVolumeMainView("chart");
+  }
+
+  if (vtitle) {
+    vtitle.textContent = row.exercise_name || "Volume";
+  }
+  if (vmsg) vmsg.textContent = "";
+
+  skel?.classList.remove("hidden");
+  if (inner) inner.style.display = "none";
+  destroyChart("volume-daily-canvas");
+
+  try {
+    const { start, end } = getDateRange();
+    const { results: daily = [] } = await fetchTotalVolumeDaily(row.exercise_id, start, end);
+    skel?.classList.add("hidden");
+
+    if (!daily.length) {
+      if (vmsg) vmsg.textContent = "No day-by-day volume in this range.";
+      if (inner) inner.style.display = "none";
+      volumeDailySelection = null;
+      return;
+    }
+
+    volumeDailySelection = {
+      exerciseId: row.exercise_id,
+      exerciseName: row.exercise_name || "",
+    };
+
+    renderVolumeDailyTimeSeries(daily, row.exercise_name, volumeDailyChartType, preferredUnit);
+  } catch (e) {
+    skel?.classList.add("hidden");
+    if (vmsg) vmsg.textContent = "Failed to load daily volume.";
+    destroyChart("volume-daily-canvas");
+    volumeDailySelection = null;
+    if (inner) inner.style.display = "none";
+    if (String(e.message || "").includes("401")) {
+      window.location.replace(BASE + "/pages/auth/login.html");
+    }
+  }
+}
+
 function onDateChange() {
   syncDateFilters();
   const active = document.querySelector(".chart-tab.active")?.dataset.tab;
   if (active === "volume" && !dateChangeFromChip) {
     volumePeriod = "all";
     setActivePeriodChip("all");
+    resetVolumeDeltaDisplayMode();
   }
   if (active === "favourites") loadFavExercisesChart();
   if (active === "volume") {
@@ -349,79 +444,8 @@ async function loadVolumeTable() {
     if (msg) msg.textContent = "";
     if (skeleton) skeleton.classList.add("hidden");
 
-    renderVolumeTable(results, preferredUnit, {
-      onDrill: (row) => {
-        volumeParentStack.push(volumeParentId);
-        volumeParentId = row.exercise_id;
-        loadVolumeTable();
-      },
-      onMinichart: async (row) => {
-        // DOM for daily chart panel, loading skeleton, canvas wrapper, messages, title
-        const block = document.getElementById("volume-daily-chart-block");
-        const skel = document.getElementById("chart-skeleton-volume-daily");
-        const inner = document.getElementById("volume-daily-chart-inner");
-        const vmsg = document.getElementById("volume-daily-chart-msg");
-        const vtitle = document.getElementById("volume-daily-title");
-
-        // Show chart panel and swap layout: table hidden, chart block visible (CSS .volume-mode-chart)
-        if (block) {
-          block.hidden = false;
-          setVolumeMainView("chart");
-        }
-
-        if (vtitle) {
-          vtitle.textContent = row.exercise_name
-            ? "Volume by day: " + row.exercise_name
-            : "Volume by day";
-        }
-        if (vmsg) vmsg.textContent = "";
-
-        // Daily skeleton while API loads; hide canvas until we have data
-        skel?.classList.remove("hidden");
-        if (inner) inner.style.display = "none";
-        destroyChart("volume-daily-canvas");
-
-        try {
-          const { start, end } = getDateRange();
-          const { results: daily = [] } = await fetchTotalVolumeDaily(
-            row.exercise_id,
-            start,
-            end
-          );
-          skel?.classList.add("hidden");
-
-          if (!daily.length) {
-            if (vmsg) {
-              vmsg.textContent = "No day-by-day volume in this range.";
-            }
-            if (inner) inner.style.display = "none";
-              volumeDailySelection = null;
-            return;
-          }
-
-          volumeDailySelection = {
-            exerciseId: row.exercise_id,
-            exerciseName: row.exercise_name || "",
-          };
-
-          renderVolumeDailyTimeSeries(
-            daily,
-            row.exercise_name,
-            volumeDailyChartType,
-            preferredUnit
-          );
-        } catch (e) {
-          skel?.classList.add("hidden");
-          if (vmsg) vmsg.textContent = "Failed to load daily volume.";
-          destroyChart("volume-daily-canvas");
-          volumeDailySelection = null;
-          if (inner) inner.style.display = "none";
-          if (String(e.message || "").includes("401")) {
-            window.location.replace(BASE + "/pages/auth/login.html");
-          }
-        }
-      },
-    });
+    lastVolumeTableResults = results;
+    renderVolumeTable(results, preferredUnit, volumePeriod, buildVolumeTableHandlers());
 
     setVolumeTableVisible(!volumeDailySelection);
   } catch (err) {
@@ -529,20 +553,7 @@ if (volumeBackBtn) {
   });
 }
 
-document.getElementById("volume-daily-close")?.addEventListener("click", () => {
-  const b = document.getElementById("volume-daily-chart-block");
-  if (b) b.hidden = true;
-  document.getElementById("chart-skeleton-volume-daily")?.classList.add("hidden");
-  const inner = document.getElementById("volume-daily-chart-inner");
-  if (inner) inner.style.display = "none";
-  document.getElementById("volume-daily-chart-msg") &&
-    (document.getElementById("volume-daily-chart-msg").textContent = "");
-  destroyChart("volume-daily-canvas");
-  volumeDailySelection = null;
-  setVolumeMainView("table");
-  const tableInner = document.getElementById("volume-table-inner");
-  if (tableInner) tableInner.style.display = "";
-});
+document.getElementById("volume-daily-back")?.addEventListener("click", closeVolumeDailyChart);
 document.getElementById("volume-daily-type-line")?.addEventListener("click", () => {
   volumeDailyChartType = "line";
   document.getElementById("volume-daily-type-line")?.classList.add("is-active");

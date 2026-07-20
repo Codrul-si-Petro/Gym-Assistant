@@ -1,7 +1,20 @@
 from datetime import date, datetime
 from typing import ClassVar
 
-from sqlalchemy import DATE, INTEGER, NUMERIC, SMALLINT, TIMESTAMP, VARCHAR, Column, Enum, ForeignKey, Index, MetaData, text
+from sqlalchemy import (
+    DATE,
+    INTEGER,
+    NUMERIC,
+    SMALLINT,
+    TIMESTAMP,
+    VARCHAR,
+    Column,
+    Enum,
+    ForeignKey,
+    Index,
+    MetaData,
+    text,
+)
 from sqlalchemy.dialects.postgresql import TEXT
 from sqlmodel import Field, SQLModel
 

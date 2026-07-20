@@ -30,9 +30,7 @@ def get_next_workout(user):
             "workout_split": None,
         }
 
-    last_created = (
-        _actuals_qs(user).order_by("-ta_created_at").values_list("ta_created_at", flat=True).first()
-    )
+    last_created = _actuals_qs(user).order_by("-ta_created_at").values_list("ta_created_at", flat=True).first()
     hour_elapsed = False
     if last_created:
         hour_elapsed = (timezone.now() - last_created) > timedelta(hours=6)
@@ -41,12 +39,7 @@ def get_next_workout(user):
 
     workout_split = None
     if not hour_elapsed:
-        workout_split = (
-            _actuals_qs(user)
-            .order_by("-ta_created_at")
-            .values_list("workout_split", flat=True)
-            .first()
-        )
+        workout_split = _actuals_qs(user).order_by("-ta_created_at").values_list("workout_split", flat=True).first()
 
     return {
         "max_workout_number": max_num,

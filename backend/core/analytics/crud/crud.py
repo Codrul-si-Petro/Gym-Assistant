@@ -25,6 +25,7 @@ _VOLUME_METRIC_KEYS = (
     "prev_week_volume_kg",
     "prev_month_volume_kg",
     "prev_year_volume_kg",
+    "plan_volume_kg",
 )
 
 
@@ -72,6 +73,7 @@ def _rollup_volume_rows(volume_rows, parent_id):
         row["prev_week_volume_kg"] = rolled["prev_week_volume_kg"].get(eid, 0)
         row["prev_month_volume_kg"] = rolled["prev_month_volume_kg"].get(eid, 0)
         row["prev_year_volume_kg"] = rolled["prev_year_volume_kg"].get(eid, 0)
+        row["plan_volume_kg"] = rolled["plan_volume_kg"].get(eid, 0)
 
     return current
 
@@ -117,6 +119,7 @@ def get_total_volume(
                     "prev_week_volume_kg": prev.get("prev_week_volume_kg") or 0,
                     "prev_month_volume_kg": prev.get("prev_month_volume_kg") or 0,
                     "prev_year_volume_kg": prev.get("prev_year_volume_kg") or 0,
+                    "plan_volume_kg": cur.get("plan_volume_kg") or 0,
                 }
             )
         return _rollup_volume_rows(volume_rows, parent_id)
@@ -157,9 +160,7 @@ def get_total_volume_per_day(
         cache,
     )
 
-    volume_by_date: defaultdict[date, dict[str, dict[int, float]]] = defaultdict(
-        lambda: {"actuals": {}, "plan": {}}
-    )
+    volume_by_date: defaultdict[date, dict[str, dict[int, float]]] = defaultdict(lambda: {"actuals": {}, "plan": {}})
     for row in rows:
         d = row["date_id"]
         eid = row["exercise_id"]
