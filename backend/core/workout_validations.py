@@ -9,8 +9,8 @@ from django.db.models import Max
 from django.utils import timezone
 from rest_framework import serializers
 
+from .constants import SCENARIO_ACTUALS
 from .models import Workouts
-from .workout_constants import SCENARIO_ACTUALS
 
 
 def _actuals_qs(user):

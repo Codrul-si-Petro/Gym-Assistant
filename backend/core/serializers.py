@@ -4,7 +4,13 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from .dimension_utils import PLACEHOLDER_DIMENSION_ID, PLACEHOLDER_DIMENSION_NAME
+from .constants import (
+    PLACEHOLDER_DIMENSION_ID,
+    PLACEHOLDER_DIMENSION_NAME,
+    SCENARIO_ACTUALS,
+    SCENARIO_CHOICES,
+    SCENARIO_PLAN,
+)
 from .models import (
     Attachments,
     Calendar,
@@ -13,7 +19,6 @@ from .models import (
     Muscles,
     Workouts,
 )
-from .workout_constants import SCENARIO_ACTUALS, SCENARIO_CHOICES, SCENARIO_PLAN
 from .workout_validations import get_next_set_number, get_next_workout, validate_workout_number
 
 

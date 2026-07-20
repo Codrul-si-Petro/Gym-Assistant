@@ -14,6 +14,7 @@ from backend.core.workout_validations import get_next_set_number, get_next_worko
 
 from .analytics.cache_utils import invalidate_user_analytics
 from .api_throttle import EndpointThrottle
+from .constants import SCENARIO_ACTUALS, SCENARIO_PLAN
 from .dimension_utils import exclude_placeholder_dimensions
 from .glossary.crud.crud import get_exercise_glossary, get_exercise_glossary_list
 from .models import AttachmentMedia, Attachments, Equipment, EquipmentMedia, Exercises, Muscles, Workouts
@@ -27,7 +28,6 @@ from .serializers import (
     PlanBatchSerializer,
     WorkoutSerializer,
 )
-from .workout_constants import SCENARIO_ACTUALS, SCENARIO_PLAN
 
 WORKOUT_LIST_FILTER_PARAMS = [
     openapi.Parameter("exercise_id", openapi.IN_QUERY, type=openapi.TYPE_INTEGER),

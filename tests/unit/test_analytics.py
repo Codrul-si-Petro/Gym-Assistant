@@ -59,8 +59,8 @@ def test_total_volume_daily_returns_200(authenticated_client):
     assert isinstance(response.data["results"], list)
     if response.data["results"]:
         row = response.data["results"][0]
-        assert "actuals_volume_kg" in row
-        assert "plan_volume_kg" in row
+        assert "actuals_volume" in row
+        assert "plan_volume" in row
 
 
 def test_workout_splits_returns_200(authenticated_client):
@@ -112,16 +112,16 @@ def test_total_volume_with_parent_id_returns_results(authenticated_client):
             "exercise_id",
             "exercise_name",
             "is_leaf",
-            "total_volume_kg",
-            "plan_volume_kg",
-            "plan_week_full_volume_kg",
-            "plan_month_full_volume_kg",
-            "plan_year_full_volume_kg",
-            "prev_week_volume_kg",
-            "prev_week_to_date_volume_kg",
-            "prev_month_volume_kg",
-            "prev_month_to_date_volume_kg",
-            "prev_year_volume_kg",
-            "prev_year_to_date_volume_kg",
+            "total_volume",
+            "plan_volume",
+            "plan_week_full",
+            "plan_month_full",
+            "plan_year_full",
+            "previous_week",
+            "previous_week_to_date",
+            "previous_month",
+            "previous_month_to_date",
+            "previous_year",
+            "previous_year_to_date",
             "rank",
         }

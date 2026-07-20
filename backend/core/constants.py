@@ -1,4 +1,7 @@
-"""Workout fact scenario and analytics time-filter values."""
+"""Shared backend constants for workouts, dimensions, and analytics time filters."""
+
+PLACEHOLDER_DIMENSION_ID = -1
+PLACEHOLDER_DIMENSION_NAME = "None"
 
 SCENARIO_ACTUALS = "actuals"
 SCENARIO_PLAN = "plan"

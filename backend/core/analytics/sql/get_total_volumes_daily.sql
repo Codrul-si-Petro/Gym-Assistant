@@ -2,7 +2,7 @@ SELECT
   date_id,
   exercise_id,
   scenario,
-  SUM(volume) AS total_volume_kg
+  SUM(volume) AS total_volume
 FROM analytics.total_daily_volume
 WHERE user_id = %(user_id)s
   AND (%(start_date)s IS NULL OR date_id >= %(start_date)s::date)

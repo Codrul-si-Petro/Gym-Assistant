@@ -8,7 +8,7 @@ from pathlib import Path
 
 from django.utils import timezone
 
-from backend.core.workout_constants import TIME_FILTER_ALL, TIME_FILTER_CURRENT
+from backend.core.constants import TIME_FILTER_ALL, TIME_FILTER_CURRENT
 
 from .common import (
     _build_children,
@@ -21,19 +21,19 @@ from .common import (
 SQL_DIR = Path(__file__).resolve().parent.parent / "sql"
 
 _VOLUME_METRIC_KEYS = (
-    "total_volume_kg",
-    "prev_week_volume_kg",
-    "prev_week_to_date_volume_kg",
-    "prev_month_volume_kg",
-    "prev_month_to_date_volume_kg",
-    "prev_year_volume_kg",
-    "prev_year_to_date_volume_kg",
-    "plan_volume_kg",
+    "total_volume",
+    "previous_week",
+    "previous_week_to_date",
+    "previous_month",
+    "previous_month_to_date",
+    "previous_year",
+    "previous_year_to_date",
+    "plan_volume",
     # Full-period (not just to-date) plan targets — only meaningful for period=wtd/mtd/ytd;
     # the "all"/custom-range path has no enclosing week/month/year, so these are always 0 there.
-    "plan_week_full_volume_kg",
-    "plan_month_full_volume_kg",
-    "plan_year_full_volume_kg",
+    "plan_week_full",
+    "plan_month_full",
+    "plan_year_full",
 )
 
 
@@ -67,10 +67,10 @@ def _rollup_volume_rows(volume_rows, parent_id):
     hierarchy_rows = get_dimension_hierarchies("exercise")
     by_metric = {key: {row["exercise_id"]: row[key] or 0 for row in volume_rows} for key in _VOLUME_METRIC_KEYS}
 
-    current = rollup_exercise_total_volume(hierarchy_rows, by_metric["total_volume_kg"], parent_id)
+    current = rollup_exercise_total_volume(hierarchy_rows, by_metric["total_volume"], parent_id)
     rolled = {
         key: {
-            row["exercise_id"]: row["total_volume_kg"]
+            row["exercise_id"]: row["total_volume"]
             for row in rollup_exercise_total_volume(hierarchy_rows, by_metric[key], parent_id)
         }
         for key in _VOLUME_METRIC_KEYS[1:]
@@ -98,7 +98,7 @@ def get_total_volume(
     - prev week/month/year  → always their own dbt models (ref() chained from
       total_daily_volume), regardless of which current period was requested. Each has
       a "full" (complete prior period) and a "to date" (capped at today's relative day)
-      variant, e.g. prev_month_volume_kg vs prev_month_to_date_volume_kg.
+      variant, e.g. previous_month vs previous_month_to_date.
     """
     time_filter = (period or TIME_FILTER_ALL).lower()
     if time_filter not in TIME_FILTER_CURRENT:
@@ -123,18 +123,18 @@ def get_total_volume(
             volume_rows.append(
                 {
                     "exercise_id": eid,
-                    "total_volume_kg": cur.get("total_volume_kg") or 0,
-                    "prev_week_volume_kg": prev.get("prev_week_volume_kg") or 0,
-                    "prev_week_to_date_volume_kg": prev.get("prev_week_to_date_volume_kg") or 0,
-                    "prev_month_volume_kg": prev.get("prev_month_volume_kg") or 0,
-                    "prev_month_to_date_volume_kg": prev.get("prev_month_to_date_volume_kg") or 0,
-                    "prev_year_volume_kg": prev.get("prev_year_volume_kg") or 0,
-                    "prev_year_to_date_volume_kg": prev.get("prev_year_to_date_volume_kg") or 0,
-                    "plan_volume_kg": cur.get("plan_volume_kg") or 0,
+                    "total_volume": cur.get("total_volume") or 0,
+                    "previous_week": prev.get("previous_week") or 0,
+                    "previous_week_to_date": prev.get("previous_week_to_date") or 0,
+                    "previous_month": prev.get("previous_month") or 0,
+                    "previous_month_to_date": prev.get("previous_month_to_date") or 0,
+                    "previous_year": prev.get("previous_year") or 0,
+                    "previous_year_to_date": prev.get("previous_year_to_date") or 0,
+                    "plan_volume": cur.get("plan_volume") or 0,
                     # No enclosing week/month/year for a custom range.
-                    "plan_week_full_volume_kg": 0,
-                    "plan_month_full_volume_kg": 0,
-                    "plan_year_full_volume_kg": 0,
+                    "plan_week_full": 0,
+                    "plan_month_full": 0,
+                    "plan_year_full": 0,
                 }
             )
         return _rollup_volume_rows(volume_rows, parent_id)
@@ -181,7 +181,7 @@ def get_total_volume_per_day(
         eid = row["exercise_id"]
         scenario = row.get("scenario") or "actuals"
         bucket = "plan" if scenario == "plan" else "actuals"
-        volume_by_date[d][bucket][eid] = row["total_volume_kg"] or 0
+        volume_by_date[d][bucket][eid] = row["total_volume"] or 0
 
     results = []
     for d, buckets in volume_by_date.items():
@@ -193,8 +193,8 @@ def get_total_volume_per_day(
         results.append(
             {
                 "date": d,
-                "actuals_volume_kg": actuals_total,
-                "plan_volume_kg": plan_total,
+                "actuals_volume": actuals_total,
+                "plan_volume": plan_total,
             }
         )
 

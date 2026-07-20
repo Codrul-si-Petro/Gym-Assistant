@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from backend.core.workout_constants import (
+from backend.core.constants import (
     SCENARIO_ACTUALS,
     SCENARIO_PLAN,
     TIME_FILTER_ALL,

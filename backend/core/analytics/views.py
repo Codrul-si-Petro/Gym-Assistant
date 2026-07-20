@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from backend.core.workout_constants import TIME_FILTER_CURRENT
+from backend.core.constants import TIME_FILTER_CURRENT
 
 from .cache_utils import get_cached_analytics
 from .crud.crud import (

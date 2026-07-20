@@ -4,11 +4,11 @@
 -- "full" complete-prior-period variant and a "to date" variant capped at the same
 -- relative day as today, so the UI can show both vs the *complete* prior period and
 -- an apples-to-apples vs the prior period *as far as it has run so far*.
--- Plan gets the same duality: plan_volume_kg is plan-to-date (same window as
--- current_volume, for an apples-to-apples "on pace" read), while plan_*_full_volume_kg
+-- Plan gets the same duality: plan_volume is plan-to-date (same window as
+-- current_volume, for an apples-to-apples "on pace" read), while plan_*_full
 -- is the *entire* current week/month/year's plan (the actual target to hit).
 WITH current_volume AS (
-  SELECT exercise_id, SUM(volume) AS total_volume_kg
+  SELECT exercise_id, SUM(volume) AS total_volume
   FROM analytics.volume_to_date
   WHERE user_id = %(user_id)s
     AND scenario = 'actuals'
@@ -17,7 +17,7 @@ WITH current_volume AS (
 ),
 current_plan AS (
   -- Same window as current_volume, scenario='plan' — backs the "vs Plan" column.
-  SELECT exercise_id, SUM(volume) AS plan_volume_kg
+  SELECT exercise_id, SUM(volume) AS plan_volume
   FROM analytics.volume_to_date
   WHERE user_id = %(user_id)s
     AND scenario = 'plan'
@@ -25,47 +25,47 @@ current_plan AS (
   GROUP BY exercise_id
 ),
 prev_week AS (
-  SELECT exercise_id, volume AS prev_week_volume_kg
+  SELECT exercise_id, volume AS previous_week
   FROM analytics.volume_prev_week
   WHERE user_id = %(user_id)s AND scenario = 'actuals'
 ),
 prev_week_td AS (
-  SELECT exercise_id, volume AS prev_week_to_date_volume_kg
+  SELECT exercise_id, volume AS previous_week_to_date
   FROM analytics.volume_prev_week_to_date
   WHERE user_id = %(user_id)s AND scenario = 'actuals'
 ),
 prev_month AS (
-  SELECT exercise_id, volume AS prev_month_volume_kg
+  SELECT exercise_id, volume AS previous_month
   FROM analytics.volume_prev_month
   WHERE user_id = %(user_id)s AND scenario = 'actuals'
 ),
 prev_month_td AS (
-  SELECT exercise_id, volume AS prev_month_to_date_volume_kg
+  SELECT exercise_id, volume AS previous_month_to_date
   FROM analytics.volume_prev_month_to_date
   WHERE user_id = %(user_id)s AND scenario = 'actuals'
 ),
 prev_year AS (
-  SELECT exercise_id, volume AS prev_year_volume_kg
+  SELECT exercise_id, volume AS previous_year
   FROM analytics.volume_prev_year
   WHERE user_id = %(user_id)s AND scenario = 'actuals'
 ),
 prev_year_td AS (
-  SELECT exercise_id, volume AS prev_year_to_date_volume_kg
+  SELECT exercise_id, volume AS previous_year_to_date
   FROM analytics.volume_prev_year_to_date
   WHERE user_id = %(user_id)s AND scenario = 'actuals'
 ),
 plan_week_full AS (
-  SELECT exercise_id, volume AS plan_week_full_volume_kg
+  SELECT exercise_id, volume AS plan_week_full
   FROM analytics.volume_current_week_full
   WHERE user_id = %(user_id)s AND scenario = 'plan'
 ),
 plan_month_full AS (
-  SELECT exercise_id, volume AS plan_month_full_volume_kg
+  SELECT exercise_id, volume AS plan_month_full
   FROM analytics.volume_current_month_full
   WHERE user_id = %(user_id)s AND scenario = 'plan'
 ),
 plan_year_full AS (
-  SELECT exercise_id, volume AS plan_year_full_volume_kg
+  SELECT exercise_id, volume AS plan_year_full
   FROM analytics.volume_current_year_full
   WHERE user_id = %(user_id)s AND scenario = 'plan'
 ),
@@ -94,17 +94,17 @@ exercise_ids AS (
 )
 SELECT
   e.exercise_id,
-  COALESCE(c.total_volume_kg, 0) AS total_volume_kg,
-  COALESCE(p.plan_volume_kg, 0) AS plan_volume_kg,
-  COALESCE(w.prev_week_volume_kg, 0) AS prev_week_volume_kg,
-  COALESCE(wt.prev_week_to_date_volume_kg, 0) AS prev_week_to_date_volume_kg,
-  COALESCE(m.prev_month_volume_kg, 0) AS prev_month_volume_kg,
-  COALESCE(mt.prev_month_to_date_volume_kg, 0) AS prev_month_to_date_volume_kg,
-  COALESCE(y.prev_year_volume_kg, 0) AS prev_year_volume_kg,
-  COALESCE(yt.prev_year_to_date_volume_kg, 0) AS prev_year_to_date_volume_kg,
-  COALESCE(pwf.plan_week_full_volume_kg, 0) AS plan_week_full_volume_kg,
-  COALESCE(pmf.plan_month_full_volume_kg, 0) AS plan_month_full_volume_kg,
-  COALESCE(pyf.plan_year_full_volume_kg, 0) AS plan_year_full_volume_kg
+  COALESCE(c.total_volume, 0) AS total_volume,
+  COALESCE(p.plan_volume, 0) AS plan_volume,
+  COALESCE(w.previous_week, 0) AS previous_week,
+  COALESCE(wt.previous_week_to_date, 0) AS previous_week_to_date,
+  COALESCE(m.previous_month, 0) AS previous_month,
+  COALESCE(mt.previous_month_to_date, 0) AS previous_month_to_date,
+  COALESCE(y.previous_year, 0) AS previous_year,
+  COALESCE(yt.previous_year_to_date, 0) AS previous_year_to_date,
+  COALESCE(pwf.plan_week_full, 0) AS plan_week_full,
+  COALESCE(pmf.plan_month_full, 0) AS plan_month_full,
+  COALESCE(pyf.plan_year_full, 0) AS plan_year_full
 FROM exercise_ids e
 LEFT JOIN current_volume c USING (exercise_id)
 LEFT JOIN current_plan p USING (exercise_id)

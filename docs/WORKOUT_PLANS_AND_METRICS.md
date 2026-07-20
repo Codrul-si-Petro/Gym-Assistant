@@ -26,7 +26,7 @@ Handoff document for LLMs and contributors. Describes the **plan vs actuals** sp
 
 ### Constants
 
-`backend/core/workout_constants.py`:
+`backend/core/constants.py`:
 
 - Scenarios: `SCENARIO_ACTUALS`, `SCENARIO_PLAN`
 - Time filters: `TIME_FILTER_CURRENT` = `all|wtd|mtd|ytd`, `TIME_FILTER_PREV` = `prev_week|prev_month|prev_year`
@@ -97,11 +97,11 @@ Row shape (all periods; unused fields are `0` rather than omitted):
 
 | Field | Meaning |
 |-------|---------|
-| `total_volume_kg` | Current window's actuals (WTD/MTD/YTD-to-date, or custom range for `all`) |
-| `plan_volume_kg` | Plan for the *same* current window (to-date) |
-| `plan_{week,month,year}_full_volume_kg` | Plan for the *entire* current week/month/year (0 for `all`) |
-| `prev_{week,month,year}_volume_kg` | Complete prior week/month/year, actuals |
-| `prev_{week,month,year}_to_date_volume_kg` | Prior week/month/year capped at the same relative day, actuals |
+| `total_volume` | Current window's actuals (WTD/MTD/YTD-to-date, or custom range for `all`) |
+| `plan_volume` | Plan for the *same* current window (to-date) |
+| `plan_{week,month,year}_full` | Plan for the *entire* current week/month/year (0 for `all`) |
+| `previous_{week,month,year}` | Complete prior week/month/year, actuals |
+| `previous_{week,month,year}_to_date` | Prior week/month/year capped at the same relative day, actuals |
 
 Frontend: `fetchTotalVolume({ period, parentId, startDate, endDate })` — options object only.
 
@@ -143,7 +143,7 @@ Frontend: `fetchTotalVolume({ period, parentId, startDate, endDate })` — optio
 | Extract SQL | `backend/core/analytics/sql/get_total_volume_periods.sql`, `get_total_volume_custom_range.sql`, `get_volume_prev_periods.sql` |
 | CRUD | `backend/core/analytics/crud/crud.py` |
 | Dashboard JS | `frontend/js/core/charts/chart-controller.js`, `chart-renderers.js`, `data-fetch.js` |
-| Dashboard CSS | `total-volume-dashboard.css`, `total-volume-chart.css` |
+| Dashboard CSS | `total-volume-dashboard.css`, `total-volume-table.css`, `total-volume-chart.css` |
 
 ---
 

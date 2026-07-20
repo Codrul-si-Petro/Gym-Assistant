@@ -4,23 +4,9 @@
 // remembered per exercise name in sessionStorage for superset logging. Editable fields
 // clear on focus so you can re-type without backspacing.
 
-// Use localhost/127/::1 if running locally, otherwise use current host
-if (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "::1"
-) {
-    API_BASE = "http://127.0.0.1:8000";
-} else {
-    API_BASE = "https://api.gym-assistant.app";
-}
-
 var exerciseMap = {};
 var attachmentMap = {};
 var equipmentMap = {};
-
-/** Sentinel FK for optional attachment/equipment (matches backend PLACEHOLDER_DIMENSION_ID). */
-var PLACEHOLDER_DIMENSION_ID = -1;
 
 /** sessionStorage key: { [exerciseName]: { attachment_name, equipment_name } } */
 var STICKY_STORAGE_KEY = "gym_sticky_by_exercise";
@@ -55,16 +41,6 @@ var successHideTimer = null;
 var successFadeTimer = null;
 
 // --- Auth & user feedback ---
-
-function getAuthHeaders() {
-    var token = localStorage.getItem("access_token");
-    if (!token) return null;
-    return {
-        Authorization: "Bearer " + token,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-    };
-}
 
 function cancelSuccessTimers() {
     if (successHideTimer !== null) {
@@ -188,43 +164,14 @@ function formatApiErrors(data) {
 
 // --- Dimension datalists (exercise, attachment, equipment) ---
 
-function fillDimensionList(id, items, nameKey, idKey, map) {
-    var list = document.getElementById(id);
-    if (!list) return;
-    list.innerHTML = "";
-    (items || []).forEach(function (item) {
-        var opt = document.createElement("option");
-        opt.value = item[nameKey];
-        list.appendChild(opt);
-        if (map) map[item[nameKey]] = item[idKey];
-    });
-}
-
 function loadOptions() {
-    var headers = getAuthHeaders();
-    if (!headers) {
-        showMessage("Please log in to log workouts.", "error");
-        return;
-    }
-    Promise.all([
-        fetch(API_BASE + "/api/exercises/", { headers: headers }).then(function (r) {
-            return r.ok ? r.json() : [];
-        }),
-        fetch(API_BASE + "/api/attachments/", { headers: headers }).then(function (r) {
-            return r.ok ? r.json() : [];
-        }),
-        fetch(API_BASE + "/api/equipment/", { headers: headers }).then(function (r) {
-            return r.ok ? r.json() : [];
-        }),
-    ])
-        .then(function (results) {
-            fillDimensionList("exercises_list", results[0], "exercise_name", "exercise_id", exerciseMap);
-            fillDimensionList("attachments_list", results[1], "attachment_name", "attachment_id", attachmentMap);
-            fillDimensionList("equipment_list", results[2], "equipment_name", "equipment_id", equipmentMap);
-        })
-        .catch(function () {
-            showMessage("Could not load exercise/attachment/equipment lists.", "error");
-        });
+    loadDimensionOptions(
+        { exerciseMap: exerciseMap, attachmentMap: attachmentMap, equipmentMap: equipmentMap },
+        {
+            loginMessage: "Please log in to log workouts.",
+            loadErrorMessage: "Could not load exercise/attachment/equipment lists.",
+        }
+    );
 }
 
 // --- Per-exercise sticky attachment/equipment (sessionStorage) ---
@@ -368,12 +315,6 @@ function loadWorkoutNumber(options) {
             }
         })
         .catch(function () {});
-}
-
-function dimensionIdFromName(map, name) {
-    if (map[name] != null) return map[name];
-    if (name === "None") return PLACEHOLDER_DIMENSION_ID;
-    return null;
 }
 
 function setDefaultDate() {

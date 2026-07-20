@@ -53,26 +53,26 @@ function toDisplayUnit(kgValue, unit) {
 // "To date" comparisons: apples-to-apples vs the prior period *as far as it has run*
 // (e.g. this-month-so-far vs the same day-of-month last month).
 const PERIOD_DELTA_CONFIG = {
-  wtd: { key: "prev_week_to_date_volume_kg", label: "vs PW" },
-  mtd: { key: "prev_month_to_date_volume_kg", label: "vs PM" },
-  ytd: { key: "prev_year_to_date_volume_kg", label: "vs PY" },
+  wtd: { key: "previous_week_to_date", label: "vs PW" },
+  mtd: { key: "previous_month_to_date", label: "vs PM" },
+  ytd: { key: "previous_year_to_date", label: "vs PY" },
 };
 
 // "Full" comparisons: vs the *complete* prior period, regardless of how far the
 // current one has run (e.g. this-month-so-far vs all of last month).
 const PERIOD_DELTA_FULL_CONFIG = {
-  wtd: { key: "prev_week_volume_kg", label: "vs Full PW" },
-  mtd: { key: "prev_month_volume_kg", label: "vs Full PM" },
-  ytd: { key: "prev_year_volume_kg", label: "vs Full PY" },
+  wtd: { key: "previous_week", label: "vs Full PW" },
+  mtd: { key: "previous_month", label: "vs Full PM" },
+  ytd: { key: "previous_year", label: "vs Full PY" },
 };
 
-// Plan gets the same duality as the "vs FULL" columns above: plan_volume_kg (always
+// Plan gets the same duality as the "vs FULL" columns above: plan_volume (always
 // shown, any period) is plan-to-date, an apples-to-apples "on pace" read; these are
 // the *entire* current week/month/year's plan — the actual target to hit.
 const PERIOD_PLAN_FULL_CONFIG = {
-  wtd: { key: "plan_week_full_volume_kg", label: "Plan full week" },
-  mtd: { key: "plan_month_full_volume_kg", label: "Plan full month" },
-  ytd: { key: "plan_year_full_volume_kg", label: "Plan full year" },
+  wtd: { key: "plan_week_full", label: "Plan full week" },
+  mtd: { key: "plan_month_full", label: "Plan full month" },
+  ytd: { key: "plan_year_full", label: "Plan full year" },
 };
 
 function setDeltaHeader(id, cfg) {
@@ -283,18 +283,18 @@ export function renderVolumeTable(results, unit, period, handlers) {
 
     const volTd = document.createElement("td");
     volTd.className = "volume-col-vol";
-    volTd.textContent = formatVolume(row.total_volume_kg, unit);
+    volTd.textContent = formatVolume(row.total_volume, unit);
 
     tr.append(rankTd, nameTd, sparkTd, volTd);
 
     // vs prior period, to-date (apples-to-apples) — hidden for period=all.
     if (deltaCfg) {
-      tr.appendChild(makeDeltaCell(row.total_volume_kg, row[deltaCfg.key], unit, onDeltaToggle));
+      tr.appendChild(makeDeltaCell(row.total_volume, row[deltaCfg.key], unit, onDeltaToggle));
     }
 
     // vs prior period, full (complete prior week/month/year) — hidden for period=all.
     if (deltaFullCfg) {
-      const cell = makeDeltaCell(row.total_volume_kg, row[deltaFullCfg.key], unit, onDeltaToggle);
+      const cell = makeDeltaCell(row.total_volume, row[deltaFullCfg.key], unit, onDeltaToggle);
       cell.classList.add("volume-col-delta-full");
       tr.appendChild(cell);
     }
@@ -302,12 +302,12 @@ export function renderVolumeTable(results, unit, period, handlers) {
     // Actual vs planned volume, to-date — always shown, independent of the
     // period-based columns above (those compare against a *prior* period; this
     // compares against your own plan for the *same* window).
-    tr.appendChild(makeDeltaCell(row.total_volume_kg, row.plan_volume_kg, unit, onDeltaToggle));
+    tr.appendChild(makeDeltaCell(row.total_volume, row.plan_volume, unit, onDeltaToggle));
 
     // Actual (to-date) vs the *entire* current week/month/year's plan — the target
     // to hit, not just plan-to-date. Hidden for period=all.
     if (planFullCfg) {
-      const cell = makeDeltaCell(row.total_volume_kg, row[planFullCfg.key], unit, onDeltaToggle);
+      const cell = makeDeltaCell(row.total_volume, row[planFullCfg.key], unit, onDeltaToggle);
       cell.classList.add("volume-col-delta-full");
       tr.appendChild(cell);
     }
@@ -325,12 +325,12 @@ export function renderVolumeDailyTimeSeries(dailyRows, exerciseName, type, unit 
   // slot on the axis, so bars/points for the dates in between sit right next to
   // each other instead of leaving dead space for days with no actuals or plan.
   const rows = dailyRows.filter(
-    (r) => (Number(r.actuals_volume_kg) || 0) > 0 || (Number(r.plan_volume_kg) || 0) > 0
+    (r) => (Number(r.actuals_volume) || 0) > 0 || (Number(r.plan_volume) || 0) > 0
   );
 
   const labels = rows.map((r) => String(r.date));
-  const actualsValues = rows.map((r) => Number(r.actuals_volume_kg) || 0);
-  const planValues = rows.map((r) => Number(r.plan_volume_kg) || 0);
+  const actualsValues = rows.map((r) => Number(r.actuals_volume) || 0);
+  const planValues = rows.map((r) => Number(r.plan_volume) || 0);
 
   const t = type || "line";
   const box = document.getElementById("volume-daily-chart-inner");
