@@ -6,6 +6,7 @@ const PATH_PAGE_KEYS = [
   [/index\.html$/, "home"],
   [/\/$/, "home"],
   [/workouts_input\.html$/, "log"],
+  [/workouts_plan\.html$/, "plan"],
   [/workouts_table\.html$/, "history"],
   [/dashboard\.html$/, "metrics"],
   [/explore\.html$/, "explore"],

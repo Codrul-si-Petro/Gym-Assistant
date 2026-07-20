@@ -386,8 +386,6 @@ function setDefaultDate() {
     }
 }
 
-// --- Form payload & submit ---
-
 function getPayload() {
     var dateVal = document.getElementById("date").value;
     var today = new Date().toISOString().slice(0, 10);
@@ -398,9 +396,13 @@ function getPayload() {
     var exerciseName = (document.getElementById("exercise_name").value || "").trim();
     var attachmentName = (document.getElementById("attachment_name").value || "").trim() || "None";
     var equipmentName = (document.getElementById("equipment_name").value || "").trim() || "None";
+    if (!exerciseMap[exerciseName]) {
+        showMessage("Pick a valid exercise from the list.", "error");
+        return null;
+    }
 
     return {
-        exercise: exerciseMap[exerciseName] || null,
+        exercise: exerciseMap[exerciseName],
         attachment: dimensionIdFromName(attachmentMap, attachmentName),
         equipment: dimensionIdFromName(equipmentMap, equipmentName),
         set_number: parseInt(document.getElementById("set_number").value, 10) || 1,
@@ -410,9 +412,11 @@ function getPayload() {
         set_type: (document.getElementById("set_type").value || "").trim() || "Working set",
         comments: (document.getElementById("comments").value || "").trim() || "None",
         workout_split: (document.getElementById("workout_split").value || "").trim() || "None",
-        date: dateVal || new Date().toISOString().slice(0, 10),
+        date: dateVal || today,
     };
 }
+
+// --- Form payload & submit ---
 
 function onSubmit(e) {
     e.preventDefault();
@@ -569,53 +573,6 @@ function initGearStickyHandlers() {
     });
 }
 
-function applyVoiceResult(parsed) {
-    var exerciseInput = document.getElementById("exercise_name");
-    var attachmentInput = document.getElementById("attachment_name");
-    var equipmentInput = document.getElementById("equipment_name");
-    var repsInput = document.getElementById("repetitions");
-    var loadInput = document.getElementById("load");
-    var unitInput = document.getElementById("unit");
-
-    // Only touch the exercise field (and its sticky/next-set side effects) when this
-    // dictation actually mentioned an exercise. Otherwise leave it — and the gear it
-    // carries via sticky memory — untouched (e.g. "20 reps 30 kilos" for the next set
-    // of the exercise already in the form shouldn't clear exercise/equipment/attachment).
-    var newExerciseName = parsed.exercise || parsed.exerciseRaw || "";
-    if (newExerciseName && exerciseInput) {
-        exerciseInput.value = newExerciseName;
-        onExerciseFieldChange();
-    }
-
-    if (equipmentInput) {
-        if (parsed.equipmentForceClear) {
-            equipmentInput.value = "";
-        } else if (parsed.equipment) {
-            equipmentInput.value = parsed.equipment;
-        }
-    }
-
-    if (attachmentInput) {
-        if (parsed.attachmentForceClear) {
-            attachmentInput.value = "";
-        } else if (parsed.attachment) {
-            attachmentInput.value = parsed.attachment;
-        }
-    }
-
-    if (repsInput && parsed.repetitions != null) {
-        repsInput.value = String(parsed.repetitions);
-    }
-    if (loadInput && parsed.load != null) {
-        loadInput.value = String(parsed.load);
-    }
-    if (unitInput && parsed.unit) {
-        unitInput.value = parsed.unit;
-    }
-
-    saveStickyForCurrentExercise();
-}
-
 document.addEventListener("DOMContentLoaded", function () {
     setDefaultDate();
     loadOptions();
@@ -623,21 +580,6 @@ document.addEventListener("DOMContentLoaded", function () {
     initClearOnFocus();
     initExerciseChangeHandlers();
     initGearStickyHandlers();
-    if (window.GymVoiceInput) {
-        GymVoiceInput.init({
-            getMaps: function () {
-                return {
-                    exerciseMap: exerciseMap,
-                    equipmentMap: equipmentMap,
-                    attachmentMap: attachmentMap,
-                };
-            },
-            onParsed: applyVoiceResult,
-            showError: function (message) {
-                showMessage(message, "error");
-            },
-        });
-    }
     document.getElementById("workout-form").addEventListener("submit", onSubmit);
     document.getElementById("delete-last-btn").addEventListener("click", onDeleteLast);
 });

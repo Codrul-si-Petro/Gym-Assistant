@@ -114,6 +114,22 @@ export function formatVolume(n, unit = "KG") {
   return new Intl.NumberFormat("en-US", opts).format(v);
 }
 
+function formatDeltaPct(current, baseline) {
+  const cur = Number(current) || 0;
+  const base = Number(baseline) || 0;
+  if (base === 0) return cur === 0 ? "—" : "+100%";
+  const pct = ((cur - base) / base) * 100;
+  const sign = pct >= 0 ? "+" : "";
+  return `${sign}${pct.toFixed(0)}%`;
+}
+
+function deltaClass(current, baseline) {
+  const cur = Number(current) || 0;
+  const base = Number(baseline) || 0;
+  if (cur === base) return "volume-delta-neutral";
+  return cur > base ? "volume-delta-up" : "volume-delta-down";
+}
+
 export function renderVolumeTable(results, unit, handlers) {
   const tbody = document.getElementById("volume-table-body");
   if (!tbody) return;
@@ -171,15 +187,31 @@ export function renderVolumeTable(results, unit, handlers) {
     volTd.className = "volume-col-vol";
     volTd.textContent = formatVolume(row.total_volume_kg, unit);
 
-    tr.append(rankTd, nameTd, sparkTd, volTd);
+    const vsWeekTd = document.createElement("td");
+    vsWeekTd.className = "volume-col-delta " + deltaClass(row.total_volume_kg, row.prev_week_volume_kg);
+    vsWeekTd.textContent = formatDeltaPct(row.total_volume_kg, row.prev_week_volume_kg);
+
+    const vsMonthTd = document.createElement("td");
+    vsMonthTd.className = "volume-col-delta " + deltaClass(row.total_volume_kg, row.prev_month_volume_kg);
+    vsMonthTd.textContent = formatDeltaPct(row.total_volume_kg, row.prev_month_volume_kg);
+
+    const vsYearTd = document.createElement("td");
+    vsYearTd.className = "volume-col-delta " + deltaClass(row.total_volume_kg, row.prev_year_volume_kg);
+    vsYearTd.textContent = formatDeltaPct(row.total_volume_kg, row.prev_year_volume_kg);
+
+    tr.append(rankTd, nameTd, sparkTd, volTd, vsWeekTd, vsMonthTd, vsYearTd);
     tbody.appendChild(tr);
   }
 }
 
-export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, unit = "KG") {
+export function renderVolumeDailyTimeSeries(dailyRows, exerciseName, type, unit = "KG") {
   const canvas = document.getElementById("volume-daily-canvas");
   if (!canvas) return;
   destroyChart(getCanvasId(canvas));
+
+  const labels = dailyRows.map((r) => String(r.date));
+  const actualsValues = dailyRows.map((r) => Number(r.actuals_volume_kg) || 0);
+  const planValues = dailyRows.map((r) => Number(r.plan_volume_kg) || 0);
 
   const box = document.getElementById("volume-daily-chart-inner");
   const sizeEl = document.getElementById("volume-daily-chart-size");
@@ -198,46 +230,58 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, 
 
   const t = type || "line";
   const plugins = typeof ChartDataLabels !== "undefined" ? [ChartDataLabels] : [];
-  const accent = getCssVar("--accent-secondary", "#a78bfa");
+  const actualColor = getCssVar("--accent", "#22d3ee");
+  const planColor = getCssVar("--accent-secondary", "#a78bfa");
   const textMuted = getCssVar("--text-muted", "#71717a");
 
-  // Soft vertical gradient under the line / inside the bars
   const ctx = canvas.getContext("2d");
-  const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+  const actualGradient = ctx.createLinearGradient(0, 0, 0, 280);
   if (t === "line") {
-    gradient.addColorStop(0, "rgba(139, 92, 246, 0.35)");
-    gradient.addColorStop(1, "rgba(139, 92, 246, 0)");
+    actualGradient.addColorStop(0, "rgba(34, 211, 238, 0.28)");
+    actualGradient.addColorStop(1, "rgba(34, 211, 238, 0)");
   } else {
-    gradient.addColorStop(0, "rgba(167, 139, 250, 0.95)");
-    gradient.addColorStop(1, "rgba(124, 58, 237, 0.65)");
+    actualGradient.addColorStop(0, "rgba(34, 211, 238, 0.85)");
+    actualGradient.addColorStop(1, "rgba(34, 211, 238, 0.55)");
+  }
+
+  const planGradient = ctx.createLinearGradient(0, 0, 0, 280);
+  if (t === "line") {
+    planGradient.addColorStop(0, "rgba(139, 92, 246, 0.35)");
+    planGradient.addColorStop(1, "rgba(139, 92, 246, 0)");
+  } else {
+    planGradient.addColorStop(0, "rgba(167, 139, 250, 0.95)");
+    planGradient.addColorStop(1, "rgba(124, 58, 237, 0.65)");
   }
 
   const fmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
   const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+
+  const lineDataset = (label, values, color, gradient) => ({
+    label,
+    data: values.map((v) => toDisplayUnit(v, unit)),
+    borderColor: color,
+    backgroundColor: gradient,
+    fill: t === "line",
+    tension: 0.35,
+    borderWidth: t === "line" ? 2.5 : 0,
+    borderRadius: t === "bar" ? 8 : 0,
+    borderSkipped: false,
+    maxBarThickness: t === "bar" ? 24 : undefined,
+    pointRadius: 0,
+    pointHoverRadius: 5,
+    pointHoverBackgroundColor: color,
+    pointHoverBorderColor: "#fff",
+    pointHoverBorderWidth: 2,
+    hitRadius: 12,
+  });
 
   chartInstances.set(getCanvasId(canvas), new Chart(ctx, {
     type: t,
     data: {
       labels,
       datasets: [
-        {
-          label: exerciseName || "Volume",
-          data: values.map((v) => toDisplayUnit(v, unit)),
-          borderColor: accent,
-          backgroundColor: gradient,
-          fill: t === "line",
-          tension: 0.35,
-          borderWidth: t === "line" ? 2.5 : 0,
-          borderRadius: t === "bar" ? 8 : 0,
-          borderSkipped: false,
-          maxBarThickness: t === "bar" ? 24 : undefined,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: accent,
-          pointHoverBorderColor: "#fff",
-          pointHoverBorderWidth: 2,
-          hitRadius: 12,
-        },
+        lineDataset("Actuals", actualsValues, actualColor, actualGradient),
+        lineDataset("Plan", planValues, planColor, planGradient),
       ],
     },
     options: {
@@ -245,7 +289,10 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, 
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          labels: { color: getCssVar("--text-secondary", "#a1a1aa"), boxWidth: 12 },
+        },
         tooltip: {
           backgroundColor: getCssVar("--bg-elevated", "#16161a"),
           borderColor: getCssVar("--border-subtle", "#2a2a2e"),
@@ -254,9 +301,9 @@ export function renderVolumeDailyTimeSeries(labels, values, exerciseName, type, 
           bodyColor: getCssVar("--text-secondary", "#a1a1aa"),
           padding: 12,
           cornerRadius: 10,
-          displayColors: false,
+          displayColors: true,
           callbacks: {
-            label: (c) => `${fmt.format(c.raw)} ${unitSuffix(unit)}`,
+            label: (c) => `${c.dataset.label}: ${fmt.format(c.raw)} ${unitSuffix(unit)}`,
           },
         },
         datalabels: { display: false },

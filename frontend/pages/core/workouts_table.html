@@ -27,6 +27,7 @@
       <div class="nav-links">
           <a href="../../index.html">Home</a>
           <a href="workouts_input.html">Log workouts</a>
+          <a href="workouts_plan.html">Plan workouts</a>
           <a href="workouts_table.html">Workout history</a>
           <a href="dashboard.html">Metrics</a>
           <a href="explore.html">Glossary</a>
@@ -50,6 +51,14 @@
         <span class="filters-panel-title">Filter sets</span>
       </div>
       <div class="filters-grid">
+        <div class="field">
+          <label for="filter-scenario">Scenario</label>
+          <select id="filter-scenario">
+            <option value="actuals" selected>Actuals</option>
+            <option value="plan">Plan</option>
+            <option value="all">All</option>
+          </select>
+        </div>
         <div class="field">
           <label for="filter-exercise">Exercise</label>
           <select id="filter-exercise">

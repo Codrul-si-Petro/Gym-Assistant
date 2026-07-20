@@ -273,3 +273,49 @@ def test_delete_last_workout_returns_200(authenticated_client, dims):
     # nothing left to delete
     response = authenticated_client.delete(f"{BASE_URL}last/", format="json")
     assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_plan_batch_stamps_multiple_dates(authenticated_client, dims):
+    payload = {
+        "dates": ["2026-08-01", "2026-08-02"],
+        "exercise": dims["exercise"],
+        "equipment": dims["equipment"],
+        "attachment": dims["attachment"],
+        "repetitions": 8,
+        "load": 40,
+        "unit": "KG",
+        "set_type": "Working set",
+        "comments": "plan row",
+        "workout_split": "Pytest Plan",
+    }
+    response = authenticated_client.post(f"{BASE_URL}plan-batch/", payload, format="json")
+    assert response.status_code == status.HTTP_201_CREATED, response.data
+    assert response.data["count"] == 2
+
+    list_resp = authenticated_client.get(BASE_URL, {"scenario": "plan"}, format="json")
+    assert list_resp.status_code == status.HTTP_200_OK
+    plan_rows = [r for r in list_resp.data["results"] if r.get("comments") == "plan row"]
+    assert len(plan_rows) >= 2
+
+
+def test_workouts_list_defaults_to_actuals(authenticated_client, dims):
+    _create(authenticated_client, dims, comments="actual-only")
+    plan_payload = {
+        "dates": ["2026-08-03"],
+        "exercise": dims["exercise"],
+        "equipment": dims["equipment"],
+        "attachment": dims["attachment"],
+        "repetitions": 5,
+        "load": 20,
+        "unit": "KG",
+        "workout_split": "Pytest Plan",
+    }
+    authenticated_client.post(f"{BASE_URL}plan-batch/", plan_payload, format="json")
+
+    actuals = authenticated_client.get(BASE_URL, format="json")
+    assert all(row.get("scenario", "actuals") == "actuals" for row in actuals.data["results"])
+
+    all_rows = authenticated_client.get(BASE_URL, {"scenario": "all"}, format="json")
+    scenarios = {row.get("scenario", "actuals") for row in all_rows.data["results"]}
+    assert "actuals" in scenarios
+    assert "plan" in scenarios

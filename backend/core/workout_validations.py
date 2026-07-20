@@ -10,11 +10,16 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Workouts
+from .workout_constants import SCENARIO_ACTUALS
+
+
+def _actuals_qs(user):
+    return Workouts.objects.filter(user=user, scenario=SCENARIO_ACTUALS)
 
 
 def get_next_workout(user):
     """Return the user's current max workout number and whether a new session should start."""
-    agg = Workouts.objects.filter(user=user).aggregate(Max("workout_number"))
+    agg = _actuals_qs(user).aggregate(Max("workout_number"))
     max_num = agg["workout_number__max"]
 
     if max_num is None:
@@ -26,7 +31,7 @@ def get_next_workout(user):
         }
 
     last_created = (
-        Workouts.objects.filter(user=user).order_by("-ta_created_at").values_list("ta_created_at", flat=True).first()
+        _actuals_qs(user).order_by("-ta_created_at").values_list("ta_created_at", flat=True).first()
     )
     hour_elapsed = False
     if last_created:
@@ -37,7 +42,7 @@ def get_next_workout(user):
     workout_split = None
     if not hour_elapsed:
         workout_split = (
-            Workouts.objects.filter(user=user)
+            _actuals_qs(user)
             .order_by("-ta_created_at")
             .values_list("workout_split", flat=True)
             .first()
@@ -51,13 +56,17 @@ def get_next_workout(user):
     }
 
 
-def get_next_set_number(user, exercise_id, workout_number):
+def get_next_set_number(user, exercise_id, workout_number, scenario=SCENARIO_ACTUALS, date_id=None):
     """Return the next set number for (user, exercise, workout_number), capped at 200."""
-    agg = Workouts.objects.filter(
-        user=user,
-        exercise_id=exercise_id,
-        workout_number=workout_number,
-    ).aggregate(Max("set_number"))
+    filters = {
+        "user": user,
+        "exercise_id": exercise_id,
+        "workout_number": workout_number,
+        "scenario": scenario,
+    }
+    if date_id is not None:
+        filters["date_id"] = date_id
+    agg = Workouts.objects.filter(**filters).aggregate(Max("set_number"))
     max_set = agg["set_number__max"] or 0
     return min(max_set + 1, 200)
 

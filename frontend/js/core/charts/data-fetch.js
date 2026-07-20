@@ -12,12 +12,22 @@ export async function fetchFavExercises(startDate, endDate) {
   return res.json();
 }
 
-export async function fetchTotalVolume(startDate, endDate, parentID) {
+/**
+ * Total volume hierarchy table.
+ * @param {{ period?: string, parentId?: number|null, startDate?: string, endDate?: string }} opts
+ */
+export async function fetchTotalVolume(opts = {}) {
+  const periodKey = (opts.period || "all").toLowerCase();
   const url = new URL(API_BASE + "/api/v1/total-volume");
-  if (startDate) url.searchParams.set("start_date", startDate);
-  if (endDate) url.searchParams.set("end_date", endDate);
-  if (parentID != null && parentID !== "") {
-    url.searchParams.set("parent_id", String(parentID));
+  url.searchParams.set("period", periodKey);
+
+  if (periodKey === "all") {
+    if (opts.startDate) url.searchParams.set("start_date", opts.startDate);
+    if (opts.endDate) url.searchParams.set("end_date", opts.endDate);
+  }
+
+  if (opts.parentId != null && opts.parentId !== "") {
+    url.searchParams.set("parent_id", String(opts.parentId));
   }
 
   const headers = getAuthHeaders();

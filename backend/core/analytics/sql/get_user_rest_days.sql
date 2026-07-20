@@ -2,6 +2,7 @@ WITH workout_dates AS (
   SELECT DISTINCT date_id
   FROM analytics.workout_sets_daily
   WHERE user_id = %(user_id)s
+    AND scenario = 'actuals'
 ),
 date_bounds AS (
   SELECT MIN(date_id) AS min_date, MAX(date_id) AS max_date

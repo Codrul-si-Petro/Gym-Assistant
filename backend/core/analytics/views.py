@@ -6,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from backend.core.workout_constants import TIME_FILTER_CURRENT
+
 from .cache_utils import get_cached_analytics
 from .crud.crud import (
     get_favourite_exercises,
@@ -91,6 +93,12 @@ class TotalVolumeView(APIView):
     @swagger_auto_schema(
         tags=["Analytics"],
         manual_parameters=[
+            openapi.Parameter(
+                "period",
+                openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                enum=list(TIME_FILTER_CURRENT),
+            ),
             openapi.Parameter("start_date", openapi.IN_QUERY, type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
             openapi.Parameter("end_date", openapi.IN_QUERY, type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
             openapi.Parameter("parent_id", openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
@@ -98,6 +106,13 @@ class TotalVolumeView(APIView):
     )
     def get(self, request):
         user_id = request.user.id
+        period = (request.query_params.get("period") or "all").lower()
+        if period not in TIME_FILTER_CURRENT:
+            return Response(
+                {"detail": f"period must be one of: {', '.join(TIME_FILTER_CURRENT)}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         start_date_parsed, end_date_parsed, error = _parse_date_range(request)
         if error:
             return error
@@ -111,8 +126,9 @@ class TotalVolumeView(APIView):
                 return Response({"detail": "parent_id must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
 
         cache_params = {
-            "start_date": start_date_parsed,
-            "end_date": end_date_parsed,
+            "period": period,
+            "start_date": start_date_parsed if period == "all" else None,
+            "end_date": end_date_parsed if period == "all" else None,
             "parent_id": parent_id,
         }
         try:
@@ -122,9 +138,10 @@ class TotalVolumeView(APIView):
                 cache_params,
                 lambda: get_total_volume(
                     user_id,
-                    start_date=start_date_parsed,
-                    end_date=end_date_parsed,
                     parent_id=parent_id,
+                    period=period,
+                    start_date=start_date_parsed if period == "all" else None,
+                    end_date=end_date_parsed if period == "all" else None,
                 ),
             )
             for i, row in enumerate(results, 1):
@@ -132,7 +149,7 @@ class TotalVolumeView(APIView):
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response({"results": results})
+        return Response({"results": results, "period": period})
 
 
 class TotalVolumePerDayView(APIView):

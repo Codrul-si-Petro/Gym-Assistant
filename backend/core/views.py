@@ -24,8 +24,10 @@ from .serializers import (
     ExerciseGlossarySerializer,
     ExercisesSerializer,
     MusclesSerializer,
+    PlanBatchSerializer,
     WorkoutSerializer,
 )
+from .workout_constants import SCENARIO_ACTUALS, SCENARIO_PLAN
 
 WORKOUT_LIST_FILTER_PARAMS = [
     openapi.Parameter("exercise_id", openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
@@ -35,6 +37,13 @@ WORKOUT_LIST_FILTER_PARAMS = [
     openapi.Parameter("set_type", openapi.IN_QUERY, type=openapi.TYPE_STRING),
     openapi.Parameter("start_date", openapi.IN_QUERY, type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
     openapi.Parameter("end_date", openapi.IN_QUERY, type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
+    openapi.Parameter(
+        "scenario",
+        openapi.IN_QUERY,
+        type=openapi.TYPE_STRING,
+        enum=[SCENARIO_ACTUALS, SCENARIO_PLAN, "all"],
+        description="Filter by scenario; defaults to actuals.",
+    ),
 ]
 
 
@@ -95,6 +104,15 @@ class WorkoutsViewSet(
             qs = qs.filter(date_id__gte=start_date)
         if end_date:
             qs = qs.filter(date_id__lte=end_date)
+
+        scenario_raw = params.get("scenario")
+        if scenario_raw is None or str(scenario_raw).strip() == "":
+            qs = qs.filter(scenario=SCENARIO_ACTUALS)
+        elif str(scenario_raw).strip().lower() != "all":
+            scenario_val = str(scenario_raw).strip().lower()
+            if scenario_val not in (SCENARIO_ACTUALS, SCENARIO_PLAN):
+                raise ValidationError({"scenario": f"Must be one of: {SCENARIO_ACTUALS}, {SCENARIO_PLAN}, all."})
+            qs = qs.filter(scenario=scenario_val)
 
         return qs
 
@@ -183,7 +201,9 @@ class WorkoutsViewSet(
     )
     @action(detail=False, methods=["delete"], url_path="last")
     def delete_last(self, request):
-        qs = Workouts.objects.filter(user=request.user).order_by("-ta_created_at", "-workout_id")
+        qs = Workouts.objects.filter(user=request.user, scenario=SCENARIO_ACTUALS).order_by(
+            "-ta_created_at", "-workout_id"
+        )
         row = qs.first()
         if row is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -202,6 +222,20 @@ class WorkoutsViewSet(
             },
             status=status.HTTP_200_OK,
         )
+
+    @swagger_auto_schema(
+        tags=["workout-logging"],
+        request_body=PlanBatchSerializer,
+        operation_description="Stamp one planned set onto multiple calendar dates.",
+        responses={201: "Created"},
+    )
+    @action(detail=False, methods=["post"], url_path="plan-batch")
+    def plan_batch(self, request):
+        serializer = PlanBatchSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        rows = serializer.save()
+        invalidate_user_analytics(request.user.id)
+        return Response({"count": len(rows)}, status=status.HTTP_201_CREATED)
 
 
 class ExercisesViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):

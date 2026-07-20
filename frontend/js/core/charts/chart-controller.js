@@ -15,6 +15,9 @@ import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolume
 
 let volumeParentId = null;
 const volumeParentStack = [];
+let volumePeriod = "all";
+/** Skip resetting to All when date inputs are updated by a period chip. */
+let dateChangeFromChip = false;
 
 /** While the daily chart panel is open, refetch daily volume on date change. */
 let volumeDailySelection = null; // { exerciseId: number, exerciseName: string } | null
@@ -23,6 +26,45 @@ let preferredUnit = getPreferredUnit();
 
 const dateFrom = document.getElementById("start_date");
 const dateTo = document.getElementById("end_date");
+
+function getPeriodDateRange(period) {
+  const today = new Date();
+  const end = TODAY;
+  if (period === "wtd") {
+    const monday = new Date(today);
+    const isoDay = monday.getDay() === 0 ? 7 : monday.getDay();
+    monday.setDate(monday.getDate() - (isoDay - 1));
+    return { start: monday.toISOString().slice(0, 10), end };
+  }
+  if (period === "mtd") {
+    return { start: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`, end };
+  }
+  if (period === "ytd") {
+    return { start: `${today.getFullYear()}-01-01`, end };
+  }
+  return { start: "", end };
+}
+
+function setActivePeriodChip(period) {
+  document.querySelectorAll(".volume-period-chip").forEach((el) => {
+    el.classList.toggle("is-active", el.dataset.period === period);
+  });
+}
+
+function applyPeriodChip(period) {
+  volumePeriod = period || "all";
+  setActivePeriodChip(volumePeriod);
+  if (volumePeriod !== "all") {
+    const { start, end } = getPeriodDateRange(volumePeriod);
+    dateChangeFromChip = true;
+    if (dateFrom) dateFrom.value = start;
+    if (dateTo) dateTo.value = end;
+    syncDateFilters();
+    dateChangeFromChip = false;
+  }
+  void loadVolumeTable();
+  if (volumeDailySelection) void reloadVolumeDailyChart();
+}
 
 function getDateRange() {
   return {
@@ -64,8 +106,8 @@ async function reloadVolumeDailyChart() {
   if (inner) inner.style.display = "none";
   destroyChart("volume-daily-canvas");
   if (vmsg) vmsg.textContent = "";
-  const { start, end } = getDateRange();
   try {
+    const { start, end } = getDateRange();
     const { results: daily = [] } = await fetchTotalVolumeDaily(
       volumeDailySelection.exerciseId,
       start,
@@ -78,8 +120,7 @@ async function reloadVolumeDailyChart() {
       return;
     }
     renderVolumeDailyTimeSeries(
-      daily.map((r) => String(r.date)),
-      daily.map((r) => Number(r.total_volume_kg) || 0),
+      daily,
       volumeDailySelection.exerciseName,
       volumeDailyChartType,
       preferredUnit
@@ -158,12 +199,17 @@ function showVolumeChartComingSoonToast() {
 function onDateChange() {
   syncDateFilters();
   const active = document.querySelector(".chart-tab.active")?.dataset.tab;
+  if (active === "volume" && !dateChangeFromChip) {
+    volumePeriod = "all";
+    setActivePeriodChip("all");
+  }
   if (active === "favourites") loadFavExercisesChart();
   if (active === "volume") {
     void (async () => {
       await loadVolumeTable();
       if (volumeDailySelection) await reloadVolumeDailyChart();
     })();
+    return;
   }
   if (active === "splits") loadWorkoutSplitsChart();
   if (active === "weekdays") loadGymWeekdaysChart();
@@ -283,18 +329,19 @@ async function loadVolumeTable() {
   setVolumeTableVisible(false);
 
   updateVolumeToolbar();
-  const { start, end } = getDateRange();
 
   try {
-    const data = await fetchTotalVolume(
-      start,
-      end,
-      volumeParentId
-    );
+    const { start, end } = getDateRange();
+    const data = await fetchTotalVolume({
+      period: volumePeriod,
+      parentId: volumeParentId,
+      startDate: start,
+      endDate: end,
+    });
     const results = data?.results || [];
 
     if (results.length === 0) {
-      if (msg) msg.textContent = "No volume data for this range.";
+      if (msg) msg.textContent = "No volume data for this period.";
       if (skeleton) skeleton.classList.add("hidden");
       return;
     }
@@ -335,6 +382,7 @@ async function loadVolumeTable() {
         destroyChart("volume-daily-canvas");
 
         try {
+          const { start, end } = getDateRange();
           const { results: daily = [] } = await fetchTotalVolumeDaily(
             row.exercise_id,
             start,
@@ -357,8 +405,7 @@ async function loadVolumeTable() {
           };
 
           renderVolumeDailyTimeSeries(
-            daily.map((r) => String(r.date)),
-            daily.map((r) => Number(r.total_volume_kg) || 0),
+            daily,
             row.exercise_name,
             volumeDailyChartType,
             preferredUnit
@@ -467,6 +514,12 @@ if (dateTo) {
 }
 if (dateTo && !dateTo.value) dateTo.value = TODAY;
 
+document.querySelectorAll(".volume-period-chip").forEach((chip) => {
+  chip.addEventListener("click", () => {
+    applyPeriodChip(chip.dataset.period || "all");
+  });
+});
+
 const volumeBackBtn = document.getElementById("volume-back-btn");
 if (volumeBackBtn) {
   volumeBackBtn.addEventListener("click", () => {
@@ -531,5 +584,6 @@ window.addEventListener("preferred-unit-changed", async () => {
 const initialTab = getTabFromLocation();
 void (async () => {
   await loadPreferredUnit();
+  setActivePeriodChip(volumePeriod);
   loadTabData(initialTab);
 })();

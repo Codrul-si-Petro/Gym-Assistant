@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metrics</title>
     <link rel="stylesheet" href="../../css/general-components/data-surface.css?v=2">
-    <link rel="stylesheet" href="../../css/core/dashboard.css?v=3">
-    <link rel="stylesheet" href="../../css/core/charts/total-volume-dashboard.css?v=3">
+    <link rel="stylesheet" href="../../css/core/dashboard.css?v=4">
+    <link rel="stylesheet" href="../../css/core/charts/total-volume-dashboard.css?v=5">
     <link rel="stylesheet" href="../../css/core/charts/total-volume-chart.css?v=3">
     <link rel="stylesheet" href="../../css/core/charts/fav-exercises-dashboard.css?v=3">
     <link rel="stylesheet" href="../../css/core/charts/metrics-extra.css?v=2">
@@ -32,6 +32,7 @@
       <div class="nav-links">
           <a href="../../index.html">Home</a>
           <a href="workouts_input.html">Log workouts</a>
+          <a href="workouts_plan.html">Plan workouts</a>
           <a href="workouts_table.html">Workout history</a>
           <a href="dashboard.html">Metrics</a>
           <a href="explore.html">Glossary</a>
@@ -84,6 +85,12 @@
         <div class="chart-panel active" id="tab-volume">
             <div class="total-volume-dashboard">
                 <h1>Total volume per exercises</h1>
+                <div class="volume-period-chips" role="group" aria-label="Volume period">
+                    <button type="button" class="volume-period-chip is-active" data-period="all">All</button>
+                    <button type="button" class="volume-period-chip" data-period="wtd">WTD</button>
+                    <button type="button" class="volume-period-chip" data-period="mtd">MTD</button>
+                    <button type="button" class="volume-period-chip" data-period="ytd">YTD</button>
+                </div>
                 <div class="volume-toolbar" id="volume-toolbar" hidden>
                     <button type="button" class="volume-back-btn" id="volume-back-btn" aria-label="Back up one level">← Back</button>
                 </div>
@@ -106,6 +113,9 @@
                                 <span class="volume-col-chart-label" aria-hidden="true">Chart</span>
                               </th>
                               <th scope="col" class="volume-col-vol">Total volume</th>
+                              <th scope="col" class="volume-col-delta">vs W</th>
+                              <th scope="col" class="volume-col-delta">vs M</th>
+                              <th scope="col" class="volume-col-delta">vs Y</th>
                             </tr>
                           </thead>
                             <tbody id="volume-table-body"></tbody>
@@ -182,7 +192,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-    <script type="module" src="../../js/core/charts/chart-controller.js?v=4"></script>
+    <script type="module" src="../../js/core/charts/chart-controller.js?v=7"></script>
 
 </body>
 </html>

@@ -23,9 +23,21 @@ def test_favourite_exercise_returns_200(authenticated_client):
 
 
 def test_total_volume_authenticated_returns_200(authenticated_client):
-    response = authenticated_client.get("/api/v1/total-volume", format="json")
+    response = authenticated_client.get("/api/v1/total-volume", {"period": "ytd"}, format="json")
     assert response.status_code == status.HTTP_200_OK
     assert "results" in response.data
+    assert response.data.get("period") == "ytd"
+
+
+def test_total_volume_defaults_to_all(authenticated_client):
+    response = authenticated_client.get("/api/v1/total-volume", format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data.get("period") == "all"
+
+
+def test_total_volume_invalid_period_returns_400(authenticated_client):
+    response = authenticated_client.get("/api/v1/total-volume", {"period": "bad"}, format="json")
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 def test_rest_days_authenticated_returns_200(authenticated_client):
@@ -45,6 +57,10 @@ def test_total_volume_daily_returns_200(authenticated_client):
     assert response.status_code == status.HTTP_200_OK
     assert "results" in response.data
     assert isinstance(response.data["results"], list)
+    if response.data["results"]:
+        row = response.data["results"][0]
+        assert "actuals_volume_kg" in row
+        assert "plan_volume_kg" in row
 
 
 def test_workout_splits_returns_200(authenticated_client):
@@ -86,8 +102,8 @@ def test_home_summary_returns_200(authenticated_client):
 def test_total_volume_with_parent_id_returns_results(authenticated_client):
     response = authenticated_client.get(
         "/api/v1/total-volume",
-        {"parent_id": 48},  # hardcoded because this uses the long-lived E2E test user with bootstrapped
-        format="json",  # seeded data which should not change. if this fails, check seeded data
+        {"parent_id": 48, "period": "ytd"},
+        format="json",
     )
     assert response.status_code == status.HTTP_200_OK
     assert "results" in response.data
@@ -97,5 +113,8 @@ def test_total_volume_with_parent_id_returns_results(authenticated_client):
             "exercise_name",
             "is_leaf",
             "total_volume_kg",
+            "prev_week_volume_kg",
+            "prev_month_volume_kg",
+            "prev_year_volume_kg",
             "rank",
         }

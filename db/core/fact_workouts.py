@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import ClassVar
 
-from sqlalchemy import DATE, INTEGER, NUMERIC, SMALLINT, TIMESTAMP, VARCHAR, Column, ForeignKey, Index, MetaData, text
+from sqlalchemy import DATE, INTEGER, NUMERIC, SMALLINT, TIMESTAMP, VARCHAR, Column, Enum, ForeignKey, Index, MetaData, text
 from sqlalchemy.dialects.postgresql import TEXT
 from sqlmodel import Field, SQLModel
 
@@ -15,11 +15,15 @@ class CoreTable(SQLModel):
     metadata = MetaData(schema="core")
 
 
+WORKOUT_SCENARIO = Enum("actuals", "plan", name="workout_scenario", schema="core")
+
+
 class FactWorkouts(CoreTable, table=True):
     __tablename__: ClassVar[str] = "fact_workouts"
-    __table_args__: tuple[Index, Index, dict[str, str]] = (
+    __table_args__: tuple[Index, Index, Index, dict[str, str]] = (
         Index("ix_fact_workout_user_date", "user_id", "date_id"),
         Index("ix_fact_workout_user_id", "user_id"),
+        Index("ix_fact_workout_user_scenario_date", "user_id", "scenario", "date_id"),
         {"comment": "Fact table where users log their workouts."},
     )
     workout_id: int = Field(sa_column=Column(INTEGER, primary_key=True, comment="Unique workout identifier"))
@@ -42,6 +46,13 @@ class FactWorkouts(CoreTable, table=True):
     set_type: str = Field(sa_column=Column(VARCHAR(255), nullable=False, server_default="'Working set'"))
     comments: str = Field(sa_column=Column(TEXT, nullable=False, server_default="'N/A'"))
     workout_split: str = Field(sa_column=Column(TEXT, nullable=False))
+    scenario: str = Field(
+        sa_column=Column(
+            WORKOUT_SCENARIO,
+            nullable=False,
+            server_default="actuals",
+        )
+    )
 
     ta_created_at: datetime = Field(
         sa_column=Column(
