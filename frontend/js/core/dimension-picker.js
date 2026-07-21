@@ -24,20 +24,42 @@ function getAuthHeaders() {
 
 function fillDimensionList(id, items, nameKey, idKey, map) {
     var list = document.getElementById(id);
-    if (!list) return;
-    list.replaceChildren();
-    (items || []).forEach(function (item) {
-        var opt = document.createElement("option");
-        opt.value = item[nameKey];
-        list.appendChild(opt);
+    var rows = parseDimensionList(items);
+    if (list) list.replaceChildren();
+    rows.forEach(function (item) {
+        if (list) {
+            var opt = document.createElement("option");
+            opt.value = item[nameKey];
+            list.appendChild(opt);
+        }
         if (map) map[item[nameKey]] = item[idKey];
     });
+}
+
+function parseDimensionList(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.results)) return payload.results;
+    return [];
 }
 
 function dimensionIdFromName(map, name) {
     if (map[name] != null) return map[name];
     if (name === "None") return PLACEHOLDER_DIMENSION_ID;
     return null;
+}
+
+function dimensionNameFromId(map, id) {
+    var target = normalizeIdForLookup(id);
+    for (var name in map) {
+        if (normalizeIdForLookup(map[name]) === target) return name;
+    }
+    return target === PLACEHOLDER_DIMENSION_ID ? "None" : null;
+}
+
+function normalizeIdForLookup(value) {
+    if (value == null) return null;
+    var n = parseInt(value, 10);
+    return isFinite(n) ? n : value;
 }
 
 /**

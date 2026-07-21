@@ -165,13 +165,114 @@ function formatApiErrors(data) {
 // --- Dimension datalists (exercise, attachment, equipment) ---
 
 function loadOptions() {
-    loadDimensionOptions(
+    return loadDimensionOptions(
         { exerciseMap: exerciseMap, attachmentMap: attachmentMap, equipmentMap: equipmentMap },
         {
             loginMessage: "Please log in to log workouts.",
             loadErrorMessage: "Could not load exercise/attachment/equipment lists.",
         }
     );
+}
+
+function renderBackToTodayLink() {
+    var form = document.getElementById("workout-form");
+    if (!form || document.getElementById("back-to-today-link")) return;
+    var link = document.createElement("a");
+    link.id = "back-to-today-link";
+    link.className = "plan-return-link";
+    link.href = "today.html";
+    link.textContent = "← Back to today's workout";
+    form.insertBefore(link, form.firstChild);
+}
+
+function isPlanFlowFromToday() {
+    return new URLSearchParams(window.location.search).get("return_to") === "today";
+}
+
+function applyPlanRowToForm(exerciseId, row, split) {
+    var exId = normalizePlanId(exerciseId);
+    var exerciseName = dimensionNameFromId(exerciseMap, exId);
+    if (!exerciseName) return false;
+
+    var exerciseInput = document.getElementById("exercise_name");
+    if (exerciseInput) {
+        exerciseInput.value = exerciseName;
+        onExerciseFieldChange();
+    }
+
+    var equipmentInput = document.getElementById("equipment_name");
+    var attachmentInput = document.getElementById("attachment_name");
+    var repsInput = document.getElementById("repetitions");
+    var loadInput = document.getElementById("load");
+    var unitInput = document.getElementById("unit");
+    var setTypeInput = document.getElementById("set_type");
+    var splitInput = document.getElementById("workout_split");
+
+    if (equipmentInput) {
+        var eqName = dimensionNameFromId(equipmentMap, row.equipment);
+        equipmentInput.value = eqName && eqName !== "None" ? eqName : "";
+    }
+    if (attachmentInput) {
+        var atName = dimensionNameFromId(attachmentMap, row.attachment);
+        attachmentInput.value = atName && atName !== "None" ? atName : "";
+    }
+    if (repsInput) repsInput.value = String(row.repetitions);
+    if (loadInput) loadInput.value = String(row.load);
+    if (unitInput) unitInput.value = row.unit || "KG";
+    if (setTypeInput) setTypeInput.value = row.set_type || "Working set";
+    if (splitInput && split && split !== "None") splitInput.value = split;
+
+    saveStickyForCurrentExercise();
+    return true;
+}
+
+function applyPlanTargetToForm(target) {
+    return applyPlanRowToForm(target.exerciseId, target.setRow, target.split);
+}
+
+function advancePlanFlowAfterSubmit() {
+    if (!isPlanFlowFromToday()) return Promise.resolve(false);
+    var params = new URLSearchParams(window.location.search);
+    var exerciseId = normalizePlanId(parseInt(params.get("exercise_id"), 10));
+    var setIndex = parseInt(params.get("set_index"), 10);
+    if (!isFinite(setIndex)) setIndex = 1;
+
+    return fetchWorkoutsForDate("plan", planTodayIso()).then(function (planRows) {
+        var next = findNextPlanTargetAfter(planRows, exerciseId, setIndex, exerciseMap);
+        if (!next) {
+            window.location.href = "today.html";
+            return true;
+        }
+        applyPlanTargetToForm(next);
+        window.history.replaceState(null, "", "workouts_input.html?" + buildPlanLogQueryParams(next));
+        showMessage("Saved. Next: " + next.exerciseName + " — set " + next.setIndex + ".", "success");
+        return true;
+    });
+}
+
+/** Prefill log form from query params when opened from Today's plan. */
+function applyPlanPrefillFromQuery() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get("return_to") === "today") {
+        renderBackToTodayLink();
+    }
+
+    var exerciseIdRaw = params.get("exercise_id");
+    if (!exerciseIdRaw) return;
+
+    var exerciseId = parseInt(exerciseIdRaw, 10);
+    if (!isFinite(exerciseId)) return;
+
+    var row = {
+        repetitions: params.get("reps") || "0",
+        load: params.get("load") || "0",
+        unit: params.get("unit") || "KG",
+        set_type: params.get("set_type") || "Working set",
+        equipment: params.has("equipment_id") ? parseInt(params.get("equipment_id"), 10) : null,
+        attachment: params.has("attachment_id") ? parseInt(params.get("attachment_id"), 10) : null,
+    };
+    var split = params.get("workout_split") || null;
+    applyPlanRowToForm(exerciseId, row, split);
 }
 
 // --- Per-exercise sticky attachment/equipment (sessionStorage) ---
@@ -393,6 +494,23 @@ function onSubmit(e) {
                 activeExerciseName = exerciseName;
 
                 var saved = result.data || {};
+                if (saved.workout_number != null) {
+                    document.getElementById("workout_number").value = saved.workout_number;
+                }
+
+                if (isPlanFlowFromToday()) {
+                    return advancePlanFlowAfterSubmit().then(function (advanced) {
+                        if (!advanced) {
+                            var workoutNum = saved.workout_number != null ? saved.workout_number : "?";
+                            var setNum = saved.set_number != null ? saved.set_number : "?";
+                            showMessage(
+                                "Saved: " + exerciseName + " — Workout #" + workoutNum + ", Set " + setNum + ".",
+                                "success"
+                            );
+                        }
+                    });
+                }
+
                 var workoutNum = saved.workout_number != null ? saved.workout_number : "?";
                 var setNum = saved.set_number != null ? saved.set_number : "?";
                 showMessage(
@@ -400,9 +518,6 @@ function onSubmit(e) {
                     "success"
                 );
 
-                if (saved.workout_number != null) {
-                    document.getElementById("workout_number").value = saved.workout_number;
-                }
                 if (saved.exercise) {
                     loadNextSetNumber(saved.exercise);
                 }
@@ -563,8 +678,10 @@ function applyVoiceResult(parsed) {
 
 document.addEventListener("DOMContentLoaded", function () {
     setDefaultDate();
-    loadOptions();
     loadWorkoutNumber();
+    loadOptions().then(function () {
+        applyPlanPrefillFromQuery();
+    });
     initClearOnFocus();
     initExerciseChangeHandlers();
     initGearStickyHandlers();

@@ -1,83 +1,352 @@
-/* Plan workout page — extends shared workout-input form styles. */
+.workout-plan {
+    max-width: 720px;
+}
 
 .plan-lead {
-    margin: 0 0 16px;
+    margin: 0 0 1rem;
     color: var(--text-secondary);
-    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* The shared .message.success/.error is a fixed, viewport-centered toast meant for the
+   single-screen log-workout form, which auto-fades it shortly after showing it. This is
+   a long scrolling builder that never auto-fades its messages, so a fixed overlay would
+   sit on top of the form indefinitely (blocking clicks on whatever's underneath, even
+   after scrolling, since "fixed" tracks the viewport). Render it inline instead. */
+.workout-plan .message.success,
+.workout-plan .message.error {
+    position: static;
+    left: auto;
+    top: auto;
+    transform: none;
+    min-width: 0;
+    width: auto;
+    text-align: left;
+    box-shadow: none;
+}
+
+.plan-experimental-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: var(--radius-sm);
+    color: #fbbf24;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.85rem;
     line-height: 1.45;
+    margin-bottom: 1.25rem;
 }
 
-.plan-dates-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
+[data-theme="light"] .plan-experimental-banner {
+    color: #92400e;
 }
 
-.plan-date-add {
-    border: 1px solid var(--border-subtle, #2a2a2e);
-    background: var(--bg-elevated, #16161a);
-    color: var(--text-primary);
-    border-radius: 8px;
-    padding: 8px 12px;
-    cursor: pointer;
+.plan-experimental-banner .icon {
+    flex-shrink: 0;
 }
 
-.plan-dates-list {
-    list-style: none;
-    margin: 10px 0 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.plan-dates-list li {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: var(--bg-elevated, #16161a);
-    border: 1px solid var(--border-subtle, #2a2a2e);
-    font-size: 13px;
-}
-
-.plan-dates-list button {
-    border: none;
-    background: transparent;
-    color: var(--text-muted, #71717a);
-    cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
-}
-
-#workout-plan-form {
+.plan-card {
     background: var(--bg-elevated);
     border: 1px solid var(--border-subtle);
-    border-radius: 10px;
-    padding: 24px;
-    margin-bottom: 20px;
+    border-radius: var(--radius-md);
+    padding: 1rem 1.1rem 1.1rem;
+    margin-bottom: 1rem;
 }
 
-#workout-plan-form .form-actions button[type="submit"] {
-    width: 100%;
-    padding: 14px 24px;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--bg-primary);
-    background: var(--accent-secondary);
+.plan-card-title {
+    margin: 0 0 0.85rem;
+    font-size: 1.05rem;
+    color: var(--text-primary);
+}
+
+.plan-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.plan-card-header .plan-card-title {
+    margin: 0;
+}
+
+.plan-repeat-fieldset {
     border: none;
-    border-radius: 8px;
+    padding: 0;
+    margin: 0 0 0.75rem;
+}
+
+.plan-repeat-fieldset legend {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    padding: 0;
+}
+
+.plan-radio {
+    display: block;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+    font-size: 0.92rem;
+}
+
+.plan-weekdays,
+.plan-interval {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin: 0.35rem 0 0.75rem 1.25rem;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+}
+
+.plan-interval label {
+    color: var(--text-secondary);
+}
+
+.plan-interval input {
+    width: 5rem;
+    margin-left: 0.4rem;
+    padding: 6px 8px;
+    background: var(--bg-secondary, var(--bg-primary));
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+}
+
+.plan-secondary-btn,
+.plan-danger-btn {
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
     cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
 }
 
-#workout-plan-form .form-actions button[type="submit"]:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.plan-secondary-btn {
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text-primary);
 }
 
-@media (max-width: 600px) {
-    #workout-plan-form {
-        padding: 16px;
+.plan-secondary-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-secondary);
+    color: var(--accent-secondary);
+}
+
+.plan-danger-btn {
+    border: 1px solid var(--danger);
+    background: transparent;
+    color: var(--danger);
+}
+
+.plan-danger-btn:hover {
+    background: rgba(248, 113, 113, 0.12);
+}
+
+.plan-icon-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s, background 0.15s;
+}
+
+.plan-icon-btn:hover {
+    color: var(--danger);
+    background: var(--bg-hover);
+}
+
+.plan-exercises {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.plan-exercise-block {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary, var(--bg-primary));
+    padding: 0.75rem;
+}
+
+.plan-exercise-header {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.65rem;
+}
+
+.plan-exercise-header .exercise-name {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 15px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+}
+
+.plan-exercise-header .exercise-name:focus {
+    outline: none;
+    border-color: var(--accent-secondary);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.plan-sets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.plan-set-row,
+.plan-set-header {
+    display: grid;
+    grid-template-columns: 3.2rem 0.8fr 0.8fr 0.7fr 1.1fr 1.1fr 1fr auto;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.plan-set-label {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    min-width: 2.5rem;
+}
+
+.plan-set-header {
+    margin-bottom: 0.15rem;
+}
+
+.plan-set-header span {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.plan-set-row input,
+.plan-set-row select {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 9px;
+    font-size: 0.9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+}
+
+.plan-set-row input:focus,
+.plan-set-row select:focus {
+    outline: none;
+    border-color: var(--accent-secondary);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.plan-preview-summary {
+    margin: 0 0 0.5rem;
+    color: var(--text-secondary);
+}
+
+.plan-preview-dates {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.plan-preview-dates li {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.82rem;
+}
+
+.plan-preview-more {
+    background: transparent !important;
+    color: var(--text-muted) !important;
+    font-style: italic;
+}
+
+.plan-list-card {
+    margin-top: 1.5rem;
+}
+
+.my-plans-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.my-plan-card {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary, var(--bg-primary));
+    padding: 0.75rem 0.85rem;
+}
+
+.my-plan-card h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.my-plan-meta {
+    margin: 0 0 0.25rem;
+    font-size: 0.86rem;
+    color: var(--text-secondary);
+}
+
+.my-plan-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+}
+
+.plan-empty {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+@media (max-width: 640px) {
+    .plan-set-header {
+        display: none;
+    }
+
+    .plan-set-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .plan-set-label {
+        grid-column: 1 / -1;
+    }
+
+    .plan-set-row .remove-set {
+        grid-column: 1 / -1;
+        text-align: right;
+    }
+
+    .plan-exercise-header {
+        grid-template-columns: 1fr auto;
+    }
+
+    .plan-exercise-header .exercise-name {
+        grid-column: 1 / -1;
     }
 }

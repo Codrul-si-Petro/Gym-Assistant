@@ -68,6 +68,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
             "comments",
             "workout_split",
             "scenario",
+            "plan_group_id",
             "date",
             "date_id",
             "ta_created_at",
@@ -79,6 +80,7 @@ class WorkoutSerializer(serializers.ModelSerializer):
             "ta_created_at",
             "user",
             "ta_updated_at",
+            "plan_group_id",
         ]
 
     def validate_workout_number(self, value):
@@ -93,6 +95,8 @@ class WorkoutSerializer(serializers.ModelSerializer):
     def validate_date(self, value):
         scenario = SCENARIO_ACTUALS
         if self.initial_data.get("scenario") == SCENARIO_PLAN:
+            scenario = SCENARIO_PLAN
+        elif self.instance is not None and self.instance.scenario == SCENARIO_PLAN:
             scenario = SCENARIO_PLAN
         if scenario == SCENARIO_ACTUALS and value > datetime.date.today():
             raise serializers.ValidationError("Workout date cannot be in the future.")

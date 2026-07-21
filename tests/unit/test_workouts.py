@@ -140,6 +140,31 @@ def test_workouts_patch_future_date_returns_400(authenticated_client, dims):
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
+def test_workouts_patch_future_plan_date_allowed(authenticated_client, dims):
+    plan_payload = {
+        "dates": ["2026-08-10"],
+        "exercise": dims["exercise"],
+        "equipment": dims["equipment"],
+        "attachment": dims["attachment"],
+        "repetitions": 5,
+        "load": 20,
+        "unit": "KG",
+        "workout_split": "Pytest Plan",
+    }
+    batch = authenticated_client.post(f"{BASE_URL}plan-batch/", plan_payload, format="json")
+    assert batch.status_code == status.HTTP_201_CREATED, batch.data
+
+    list_resp = authenticated_client.get(BASE_URL, {"scenario": "plan"}, format="json")
+    plan_row = next(r for r in list_resp.data["results"] if r.get("workout_split") == "Pytest Plan")
+    response = authenticated_client.patch(
+        f"{BASE_URL}{plan_row['workout_id']}/",
+        {"date": "2026-08-15", "repetitions": 6},
+        format="json",
+    )
+    assert response.status_code == status.HTTP_200_OK, response.data
+    assert response.data["repetitions"] == 6
+
+
 def test_workouts_patch_duplicate_set_number_returns_400(authenticated_client, dims):
     _create(authenticated_client, dims, set_number=1)
     second = _create(authenticated_client, dims, set_number=2)

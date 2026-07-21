@@ -21,6 +21,7 @@ on:
 
 jobs:
   migrate:
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'prod' }}
 
@@ -30,6 +31,7 @@ jobs:
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
       DJANGO_DEBUG: "False"
       DJANGO_ALLOWED_HOSTS: "*"
+      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
       MAILERSEND_API_TOKEN: ${{ secrets.MAILERSEND_API_TOKEN }}
       MAILERSEND_FROM_EMAIL: ${{ secrets.MAILERSEND_FROM_EMAIL }}
 

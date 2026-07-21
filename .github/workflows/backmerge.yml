@@ -54,6 +54,8 @@ jobs:
       pull-requests: write
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Merge backmerge PR when approved and checks pass
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

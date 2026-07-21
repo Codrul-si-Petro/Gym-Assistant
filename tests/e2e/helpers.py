@@ -1,9 +1,15 @@
 import re
+from datetime import date
 
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.constants import E2E_SEED_WORKOUT_DATE
+from tests.constants import (
+    E2E_FUTURE_PLAN_EXERCISE_ID,
+    E2E_SEED_WORKOUT_DATE,
+    E2E_TESTER_NAME,
+    E2E_TODAY_FLOW_SPLIT,
+)
 
 
 def clear_auth_state(page: Page, frontend_url: str) -> None:
@@ -57,6 +63,127 @@ def goto_core_page(page: Page, frontend_url: str, filename: str) -> None:
     page.wait_for_load_state("networkidle")
     expect(page).not_to_have_url(re.compile(r"login\.html$"))
     ensure_authenticated(page)
+
+
+def browser_today_iso(page: Page) -> str:
+    """Local calendar date in the browser (matches plan/today JS helpers)."""
+    return page.evaluate(
+        """() => {
+            const d = new Date();
+            return (
+                d.getFullYear() +
+                "-" +
+                String(d.getMonth() + 1).padStart(2, "0") +
+                "-" +
+                String(d.getDate()).padStart(2, "0")
+            );
+        }"""
+    )
+
+
+def delete_plan_series_by_label(bootstrap, label: str) -> None:
+    """Delete all plan series with the given label (plan + scheduled rows)."""
+    session = bootstrap.session
+    base = bootstrap.base
+    res = session.get(f"{base}/api/plan-series/")
+    if res.status_code != 200:
+        return
+    for plan in res.json():
+        if plan.get("label") == label:
+            session.delete(
+                f"{base}/api/plan-series/{plan['plan_series_id']}/",
+                params={"scope": "all"},
+            )
+
+
+def cleanup_plan_conflicts_on_date(
+    bootstrap,
+    plan_date: str,
+    exercise_id: int = E2E_FUTURE_PLAN_EXERCISE_ID,
+) -> None:
+    """Remove any plan series (any label) that already books exercise_id on plan_date."""
+    from tests.helpers import db_cursor, get_test_user_id
+
+    session = bootstrap.session
+    base = bootstrap.base
+
+    res = session.get(
+        f"{base}/api/workouts/",
+        params={
+            "scenario": "plan",
+            "start_date": plan_date,
+            "end_date": plan_date,
+            "exercise_id": exercise_id,
+            "page_size": 200,
+        },
+    )
+    if res.status_code == 200:
+        payload = res.json()
+        rows = payload["results"] if isinstance(payload, dict) else payload
+        series_ids = {row["plan_group_id"] for row in rows if row.get("plan_group_id")}
+        for series_id in series_ids:
+            session.delete(
+                f"{base}/api/plan-series/{series_id}/",
+                params={"scope": "all"},
+            )
+
+    user_id = get_test_user_id(E2E_TESTER_NAME)
+    if not user_id:
+        return
+
+    with db_cursor() as cur:
+        cur.execute(
+            """
+            DELETE FROM core.fact_workouts
+            WHERE user_id = %s AND scenario = 'plan'
+              AND date_id = %s AND exercise_id = %s
+            """,
+            (user_id, plan_date, exercise_id),
+        )
+        cur.execute(
+            """
+            DELETE FROM core.plan_series ps
+            WHERE ps.user_id = %s
+              AND NOT EXISTS (
+                SELECT 1 FROM core.fact_workouts w
+                WHERE w.plan_group_id = ps.plan_series_id
+              )
+            """,
+            (user_id,),
+        )
+
+
+def cleanup_e2e_today_flow_data(bootstrap, today_iso: str | None = None) -> None:
+    """Remove the Today-flow plan series and any logged/planned rows for that split."""
+    from tests.helpers import db_cursor, get_test_user_id
+
+    delete_plan_series_by_label(bootstrap, E2E_TODAY_FLOW_SPLIT)
+
+    user_id = get_test_user_id(E2E_TESTER_NAME)
+    if not user_id:
+        return
+
+    day = today_iso or date.today().isoformat()
+
+    with db_cursor() as cur:
+        cur.execute(
+            """
+            DELETE FROM core.fact_workouts
+            WHERE user_id = %s AND workout_split = %s AND date_id = %s
+            """,
+            (user_id, E2E_TODAY_FLOW_SPLIT, day),
+        )
+
+
+def fill_plan_exercise_block(block, exercise_name: str, sets: list[tuple[int, int]]) -> None:
+    """Fill one plan builder block with an exercise name and reps/load per set."""
+    block.locator(".exercise-name").fill(exercise_name)
+    while block.locator(".plan-set-row").count() < len(sets):
+        block.locator(".add-set").click()
+    for idx, (reps, load) in enumerate(sets):
+        row = block.locator(".plan-set-row").nth(idx)
+        row.locator(".set-reps").fill(str(reps))
+        row.locator(".set-load").fill(str(load))
 
 
 def prepare_dashboard_date_range(page: Page) -> None:

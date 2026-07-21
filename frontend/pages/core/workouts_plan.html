@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../../css/general-components/theme.css?v=7">
     <link rel="stylesheet" href="../../css/general-components/profile-menu.css?v=2">
     <link rel="stylesheet" href="../../css/core/workouts_input.css?v=9">
-    <link rel="stylesheet" href="../../css/core/workouts_plan.css?v=1">
+    <link rel="stylesheet" href="../../css/core/workouts_plan.css?v=6">
     <link rel="stylesheet" href="../../css/general-components/info-popover.css?v=1">
     <link rel="stylesheet" href="../../css/general-components/navigation.css?v=2">
     <link rel="icon" href="../../assets/favicon.ico" sizes="any">
@@ -25,7 +25,9 @@
       <span class="site-title">Gym Assistant</span>
       <div class="nav-links">
           <a href="../../index.html">Home</a>
+          <a href="today.html">Today</a>
           <a href="workouts_input.html">Log workouts</a>
+          <a href="workouts_plan.html" aria-current="page">Plan workouts</a>
           <a href="workouts_table.html">Workout history</a>
           <a href="dashboard.html">Metrics</a>
           <a href="explore.html">Glossary</a>
@@ -35,71 +37,86 @@
 
     <main class="workout-input workout-plan">
         <h1>Plan workout</h1>
-        <p class="plan-lead">Build one template set, then stamp it onto multiple future dates. Plans appear in Metrics as a forecast line.</p>
+        <p class="plan-lead">Design a full workout with multiple exercises and sets, then schedule it once or on a repeating pattern.</p>
+        <div class="plan-experimental-banner" role="note">
+            <span class="icon" aria-hidden="true">⚠️</span>
+            <span>Experimental feature — plan builder, recurrence, and editing may change or have rough edges. Please report anything odd.</span>
+        </div>
         <div id="message" class="message" role="alert" aria-live="polite"></div>
 
+        <datalist id="exercises_list"></datalist>
+        <datalist id="attachments_list"></datalist>
+        <datalist id="equipment_list"></datalist>
+
         <form id="workout-plan-form">
-            <div class="field plan-dates-field">
-                <label for="plan_date_picker">Plan dates</label>
-                <div class="plan-dates-row">
-                    <input type="date" id="plan_date_picker">
-                    <button type="button" id="plan_date_add" class="plan-date-add">Add date</button>
-                </div>
-                <ul id="plan_dates_list" class="plan-dates-list" aria-live="polite"></ul>
-            </div>
-
-            <div class="field">
-                <label for="workout_split">Split</label>
-                <input type="text" id="workout_split" name="workout_split" maxlength="50" placeholder="e.g. Push">
-            </div>
-
-            <div class="field">
-                <label for="exercise_name">Exercise name *</label>
-                <input type="text" id="exercise_name" name="exercise_name" list="exercises_list" required autocomplete="off">
-                <datalist id="exercises_list"></datalist>
-            </div>
-            <div class="field">
-                <label for="attachment_name">Attachment</label>
-                <input type="text" id="attachment_name" name="attachment_name" list="attachments_list" placeholder="None" autocomplete="off">
-                <datalist id="attachments_list"></datalist>
-            </div>
-            <div class="field">
-                <label for="equipment_name">Equipment</label>
-                <input type="text" id="equipment_name" name="equipment_name" list="equipment_list" placeholder="None" autocomplete="off">
-                <datalist id="equipment_list"></datalist>
-            </div>
-
-            <div class="form-row form-set-metrics">
+            <section class="plan-card">
+                <h2 class="plan-card-title">Plan details</h2>
                 <div class="field">
-                    <label for="repetitions">Reps</label>
-                    <input type="number" id="repetitions" name="repetitions" min="1" max="1000" value="8" required>
+                    <label for="plan_label">Plan name / split</label>
+                    <input type="text" id="plan_label" name="plan_label" maxlength="50" placeholder="e.g. Upper body" required>
                 </div>
                 <div class="field">
-                    <label for="load">Load</label>
-                    <input type="number" id="load" name="load" min="0" step="any" value="0" required>
+                    <label for="plan_start_date">Start date</label>
+                    <input type="date" id="plan_start_date" name="plan_start_date" min="" required>
                 </div>
-                <div class="field">
-                    <label for="unit">Unit</label>
-                    <select id="unit" name="unit">
-                        <option value="KG" selected>KG</option>
-                        <option value="LBS">LBS</option>
-                    </select>
+                <fieldset class="plan-repeat-fieldset">
+                    <legend>Repeat</legend>
+                    <label class="plan-radio">
+                        <input type="radio" name="repeat_type" value="once" checked>
+                        Just this day
+                    </label>
+                    <label class="plan-radio">
+                        <input type="radio" name="repeat_type" value="weekly">
+                        On these weekdays
+                    </label>
+                    <div id="weekday_picker" class="plan-weekdays" hidden>
+                        <label><input type="checkbox" value="MON"> Mon</label>
+                        <label><input type="checkbox" value="TUE"> Tue</label>
+                        <label><input type="checkbox" value="WED"> Wed</label>
+                        <label><input type="checkbox" value="THU"> Thu</label>
+                        <label><input type="checkbox" value="FRI"> Fri</label>
+                        <label><input type="checkbox" value="SAT"> Sat</label>
+                        <label><input type="checkbox" value="SUN"> Sun</label>
+                    </div>
+                    <label class="plan-radio">
+                        <input type="radio" name="repeat_type" value="interval">
+                        Every N days
+                    </label>
+                    <div id="interval_picker" class="plan-interval" hidden>
+                        <label for="plan_interval_days">Days between workouts</label>
+                        <input type="number" id="plan_interval_days" min="1" max="365" value="2">
+                    </div>
+                </fieldset>
+                <div class="field" id="end_date_field" hidden>
+                    <label for="plan_end_date">Repeat until</label>
+                    <input type="date" id="plan_end_date" name="plan_end_date">
                 </div>
-            </div>
+            </section>
 
-            <div class="field">
-                <label for="set_type">Set type</label>
-                <input type="text" id="set_type" name="set_type" value="Working set" placeholder="Working set">
-            </div>
-            <div class="field">
-                <label for="comments">Comments</label>
-                <textarea id="comments" name="comments" rows="2" placeholder="Optional"></textarea>
-            </div>
+            <section class="plan-card">
+                <div class="plan-card-header">
+                    <h2 class="plan-card-title">Workout builder</h2>
+                    <button type="button" id="add_exercise_btn" class="plan-secondary-btn">Add exercise</button>
+                </div>
+                <div id="exercises_container" class="plan-exercises"></div>
+            </section>
+
+            <section class="plan-card plan-preview-card">
+                <h2 class="plan-card-title">Preview</h2>
+                <p id="plan_preview_summary" class="plan-preview-summary">Add exercises and dates to preview your plan.</p>
+                <ul id="plan_preview_dates" class="plan-preview-dates" aria-live="polite"></ul>
+            </section>
 
             <div class="form-actions">
+                <button type="button" id="cancel_edit_btn" class="plan-secondary-btn" hidden>Cancel edit</button>
                 <button type="submit" id="submit-btn">Save plan</button>
             </div>
         </form>
+
+        <section class="plan-card plan-list-card">
+            <h2 class="plan-card-title">My plans</h2>
+            <div id="my_plans_list" class="my-plans-list" aria-live="polite"></div>
+        </section>
     </main>
 
     <script type="module" src="../../js/general-components/theme.js?v=2"></script>
@@ -107,7 +124,7 @@
     <script type="module" src="../../js/general-components/info-popover.js?v=2"></script>
     <script src="../../js/auth/require-auth.js?v=2"></script>
     <script src="../../js/core/dimension-picker.js?v=1"></script>
-    <script src="../../js/core/workouts_plan.js?v=2"></script>
+    <script src="../../js/core/workouts_plan.js?v=6"></script>
     <script src="../../js/general-components/navigation.js?v=2"></script>
 </body>
 </html>
