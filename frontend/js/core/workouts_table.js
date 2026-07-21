@@ -305,7 +305,8 @@ function buildSelectOptions(items, idKey, nameKey, selectedId) {
 
 function buildEditFormHtml(row) {
   const date = formatRowDate(row);
-  const maxDate = todayIsoDate();
+  const isPlan = row.scenario === "plan";
+  const maxDateAttr = isPlan ? "" : ` max="${todayIsoDate()}"`;
   return `
     <div class="edit-sheet-row">
       <div class="field">
@@ -314,7 +315,7 @@ function buildEditFormHtml(row) {
       </div>
       <div class="field">
         <label for="edit-date">Date</label>
-        <input type="date" id="edit-date" name="date" value="${date}" max="${maxDate}" required>
+        <input type="date" id="edit-date" name="date" value="${date}"${maxDateAttr} required>
       </div>
     </div>
     <div class="field">
@@ -371,9 +372,10 @@ function buildEditFormHtml(row) {
     </div>`;
 }
 
-function readEditPayload(formEl) {
+function readEditPayload(formEl, row) {
   const dateVal = formEl.querySelector("#edit-date").value;
-  if (dateVal > todayIsoDate()) {
+  const isPlan = row && row.scenario === "plan";
+  if (!isPlan && dateVal > todayIsoDate()) {
     throw new Error("Workout date cannot be in the future.");
   }
   const attachmentVal = formEl.querySelector("#edit-attachment").value;
@@ -404,7 +406,7 @@ function openEditSheet(workoutId) {
       const headers = getAuthHeaders();
       if (!headers) throw new Error("Not logged in.");
 
-      const payload = readEditPayload(formEl);
+      const payload = readEditPayload(formEl, row);
       const res = await fetch(`${API_BASE}/api/workouts/${workoutId}/`, {
         method: "PATCH",
         headers,

@@ -5,6 +5,8 @@ These models are unmanaged (`managed = False`). Schema changes belong in Alembic
 (`db/alembic/versions/`), not Django migrations. Django only manages auth tables.
 """
 
+import uuid
+
 from django.conf import settings
 from django.db import models
 
@@ -35,12 +37,32 @@ class Workouts(models.Model):
     comments = models.TextField(default="N/A")
     workout_split = models.TextField(max_length=50)
     scenario = models.CharField(max_length=10, default="actuals")
+    plan_group_id = models.UUIDField(null=True, blank=True, db_index=True)
     ta_created_at = models.DateTimeField(auto_now_add=True)
     ta_updated_at = models.DateTimeField(null=True)
 
     class Meta:
         managed = False
         db_table = 'core"."fact_workouts'
+
+
+class PlanSeries(models.Model):
+    """Recurring or one-off workout plan definition. Managed by Alembic in core schema."""
+
+    plan_series_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    label = models.TextField()
+    recurrence_type = models.CharField(max_length=10)
+    weekdays = models.TextField(null=True, blank=True)
+    interval_days = models.SmallIntegerField(null=True, blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    ta_created_at = models.DateTimeField(auto_now_add=True)
+    ta_updated_at = models.DateTimeField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'core"."plan_series'
 
 
 class Exercises(models.Model):

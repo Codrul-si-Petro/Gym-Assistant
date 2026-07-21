@@ -1,5 +1,5 @@
 // ?v= is a manual cache-buster for this internal import — bump when info-content.js changes.
-import { PAGE_INFO } from "./info-content.js?v=3";
+import { PAGE_INFO } from "./info-content.js?v=4";
 
 const SEEN_PREFIX = "gym_assistant_info_seen_";
 
@@ -7,6 +7,7 @@ const PATH_PAGE_KEYS = [
   [/index\.html$/, "home"],
   [/\/$/, "home"],
   [/workouts_input\.html$/, "log"],
+  [/today\.html$/, "today"],
   [/workouts_plan\.html$/, "plan"],
   [/workouts_table\.html$/, "history"],
   // dashboard.html has no single page-level key — it's split into per-tab

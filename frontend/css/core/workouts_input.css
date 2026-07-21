@@ -69,6 +69,19 @@ body {
     margin-bottom: 20px;
 }
 
+.plan-return-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--accent-secondary);
+    text-decoration: none;
+}
+
+.plan-return-link:hover {
+    text-decoration: underline;
+}
+
 .form-row {
     display: grid;
     gap: 16px;

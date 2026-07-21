@@ -1,9 +1,10 @@
 import re
+from datetime import date
 
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.constants import E2E_SEED_WORKOUT_DATE
+from tests.constants import E2E_SEED_WORKOUT_DATE, E2E_TESTER_NAME, E2E_TODAY_FLOW_SPLIT
 
 
 def clear_auth_state(page: Page, frontend_url: str) -> None:
@@ -57,6 +58,65 @@ def goto_core_page(page: Page, frontend_url: str, filename: str) -> None:
     page.wait_for_load_state("networkidle")
     expect(page).not_to_have_url(re.compile(r"login\.html$"))
     ensure_authenticated(page)
+
+
+def browser_today_iso(page: Page) -> str:
+    """Local calendar date in the browser (matches plan/today JS helpers)."""
+    return page.evaluate(
+        """() => {
+            const d = new Date();
+            return (
+                d.getFullYear() +
+                "-" +
+                String(d.getMonth() + 1).padStart(2, "0") +
+                "-" +
+                String(d.getDate()).padStart(2, "0")
+            );
+        }"""
+    )
+
+
+def cleanup_e2e_today_flow_data(bootstrap, today_iso: str | None = None) -> None:
+    """Remove the Today-flow plan series and any logged/planned rows for that split."""
+    from tests.helpers import db_cursor, get_test_user_id
+
+    session = bootstrap.session
+    base = bootstrap.base
+
+    res = session.get(f"{base}/api/plan-series/")
+    if res.status_code == 200:
+        for plan in res.json():
+            if plan.get("label") == E2E_TODAY_FLOW_SPLIT:
+                session.delete(
+                    f"{base}/api/plan-series/{plan['plan_series_id']}/",
+                    params={"scope": "all"},
+                )
+
+    user_id = get_test_user_id(E2E_TESTER_NAME)
+    if not user_id:
+        return
+
+    day = today_iso or date.today().isoformat()
+
+    with db_cursor() as cur:
+        cur.execute(
+            """
+            DELETE FROM core.fact_workouts
+            WHERE user_id = %s AND workout_split = %s AND date_id = %s
+            """,
+            (user_id, E2E_TODAY_FLOW_SPLIT, day),
+        )
+
+
+def fill_plan_exercise_block(block, exercise_name: str, sets: list[tuple[int, int]]) -> None:
+    """Fill one plan builder block with an exercise name and reps/load per set."""
+    block.locator(".exercise-name").fill(exercise_name)
+    while block.locator(".plan-set-row").count() < len(sets):
+        block.locator(".add-set").click()
+    for idx, (reps, load) in enumerate(sets):
+        row = block.locator(".plan-set-row").nth(idx)
+        row.locator(".set-reps").fill(str(reps))
+        row.locator(".set-load").fill(str(load))
 
 
 def prepare_dashboard_date_range(page: Page) -> None:

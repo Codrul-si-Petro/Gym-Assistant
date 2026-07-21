@@ -27,14 +27,27 @@ if not SECRET_KEY:
     raise ValueError("DJANGO_SECRET_KEY is not set!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() in ("true")
+DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
 print(f"Debugging set to: {DEBUG}")
 
 ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 
-# Application definition
+def _normalize_cors_origin(url: str | None) -> str | None:
+    """Ignore unset/placeholder values; corsheaders rejects bare 'None' or missing schemes."""
+    if not url or url == "None":
+        return None
+    if not url.startswith(("http://", "https://")):
+        return None
+    return url.rstrip("/")
+
+
+_cors_origin_candidates = [
+    _normalize_cors_origin(FRONTEND_URL),
+    "http://localhost:5500" if DEBUG else None,
+]
+CORS_ALLOWED_ORIGINS = [origin for origin in _cors_origin_candidates if origin]
 
 INSTALLED_APPS = [
     "backend.authentication",
@@ -66,11 +79,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
-]
-
-CORS_ALLOWED_ORIGINS = [
-    f"{FRONTEND_URL}",  # production frontend domain
-    *(["http://localhost:5500"] if DEBUG else ""),  # using this to be able to use CORS in local development
 ]
 
 CORS_ALLOW_CREDENTIALS = True

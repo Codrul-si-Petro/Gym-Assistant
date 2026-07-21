@@ -40,23 +40,22 @@ def test_plan_mode_stamps_future_dates(page: Page, frontend_url: str, e2e_user_b
     goto_core_page(page, frontend_url, "workouts_plan.html")
     page.wait_for_selector("#exercises_list option", state="attached", timeout=15000)
 
-    page.locator("#plan_date_picker").fill("2026-12-01")
-    page.locator("#plan_date_add").click()
-    page.locator("#plan_date_picker").fill("2026-12-08")
-    page.locator("#plan_date_add").click()
+    page.fill("#plan_label", E2E_DASHBOARD_WORKOUT_SPLIT)
+    page.fill("#plan_start_date", "2026-12-01")
+    page.locator('input[name="repeat_type"][value="once"]').check()
 
-    page.fill("#exercise_name", "Triceps extension")
-    page.fill("#repetitions", "12")
-    page.fill("#load", "35")
-    page.fill("#workout_split", E2E_DASHBOARD_WORKOUT_SPLIT)
+    page.locator(".plan-exercise-block .exercise-name").fill("Triceps extension")
+    page.locator(".plan-set-row .set-reps").first.fill("12")
+    page.locator(".plan-set-row .set-load").first.fill("35")
 
     with page.expect_response(
-        lambda res: "/api/workouts/plan-batch/" in res.url and res.request.method == "POST" and res.ok,
+        lambda res: "/api/plan-series/" in res.url and res.request.method == "POST" and res.ok,
         timeout=15000,
     ):
         page.locator("#submit-btn").click()
 
-    expect(page.locator("#message")).to_contain_text("Plan saved on 2 dates", timeout=10000)
+    expect(page.locator("#message")).to_contain_text("Plan saved", timeout=10000)
+    expect(page.locator(".my-plan-card")).to_contain_text(E2E_DASHBOARD_WORKOUT_SPLIT, timeout=10000)
 
 
 @pytest.mark.order(5)
