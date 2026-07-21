@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
+import requests
 
 from .constants import BACKEND_URL, FRONTEND_URL
 from .helpers import wait_server
@@ -59,6 +60,14 @@ def _start_or_raise(cmd: list[str], cwd: Path, label: str, env: dict[str, str] |
     return process
 
 
+def _server_is_up(url: str) -> bool:
+    try:
+        response = requests.get(url, timeout=2)
+        return response.status_code < 500
+    except requests.exceptions.RequestException:
+        return False
+
+
 @pytest.hookimpl(tryfirst=True)
 @pytest.fixture(scope="session", autouse=True)
 def start_servers(request):
@@ -78,42 +87,60 @@ def start_servers(request):
     django_addr = _host_port(BACKEND_URL, 8000)
     frontend_port = _frontend_port(FRONTEND_URL)
 
-    # E2E always boots with DEBUG so api_throttle uses the relaxed rate. Without this,
-    # a local shell that forgot `load django dev` still runs production 15/min limits
-    # and flakes late in the suite (workout history edit save gets 429).
-    django_env = {**os.environ, "DJANGO_DEBUG": "True"}
-    django_process = _start_or_raise(
-        [sys.executable, "manage.py", "runserver", "--noreload", django_addr],
-        BASE_DIR,
-        "Django",
-        env=django_env,
-    )
+    django_process = None
+    frontend_process = None
 
-    frontend_process = _start_or_raise(
-        [sys.executable, "-m", "http.server", str(frontend_port), "--bind", "127.0.0.1"],
-        FRONTEND_DIR,
-        "Frontend",
-    )
+    if _server_is_up(BACKEND_URL):
+        print(f"Reusing already-running backend at {BACKEND_URL}.")
+    else:
+        # E2E always boots with DEBUG so api_throttle uses the relaxed rate. Without this,
+        # a local shell that forgot `load django dev` still runs production 15/min limits
+        # and flakes late in the suite (workout history edit save gets 429).
+        django_env = {**os.environ, "DJANGO_DEBUG": "True"}
+        django_process = _start_or_raise(
+            [sys.executable, "manage.py", "runserver", "--noreload", django_addr],
+            BASE_DIR,
+            "Django",
+            env=django_env,
+        )
 
-    print("Waiting for local servers...")
-    try:
-        wait_server(BACKEND_URL, timeout=E2E_SERVER_TIMEOUT)
-        wait_server(FRONTEND_URL, timeout=E2E_SERVER_TIMEOUT)
-    except RuntimeError:
-        _log_process_output("Django", django_process)
-        _log_process_output("Frontend", frontend_process)
-        django_process.terminate()
-        frontend_process.terminate()
-        django_process.wait(timeout=5)
-        frontend_process.wait(timeout=5)
-        raise
+    if _server_is_up(FRONTEND_URL):
+        print(f"Reusing already-running frontend at {FRONTEND_URL}.")
+    else:
+        frontend_process = _start_or_raise(
+            [sys.executable, "-m", "http.server", str(frontend_port), "--bind", "127.0.0.1"],
+            FRONTEND_DIR,
+            "Frontend",
+        )
+
+    if django_process is not None or frontend_process is not None:
+        print("Waiting for local servers...")
+        try:
+            wait_server(BACKEND_URL, timeout=E2E_SERVER_TIMEOUT)
+            wait_server(FRONTEND_URL, timeout=E2E_SERVER_TIMEOUT)
+        except RuntimeError:
+            if django_process is not None:
+                _log_process_output("Django", django_process)
+            if frontend_process is not None:
+                _log_process_output("Frontend", frontend_process)
+            if django_process is not None:
+                django_process.terminate()
+            if frontend_process is not None:
+                frontend_process.terminate()
+            if django_process is not None:
+                django_process.wait(timeout=5)
+            if frontend_process is not None:
+                frontend_process.wait(timeout=5)
+            raise
 
     yield
 
-    django_process.terminate()
-    frontend_process.terminate()
-    django_process.wait(timeout=5)
-    frontend_process.wait(timeout=5)
+    if django_process is not None:
+        django_process.terminate()
+        django_process.wait(timeout=5)
+    if frontend_process is not None:
+        frontend_process.terminate()
+        frontend_process.wait(timeout=5)
 
 
 @pytest.fixture

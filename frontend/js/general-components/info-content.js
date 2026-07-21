@@ -8,7 +8,9 @@ export const PAGE_INFO = {
   log:
     "Log one set at a time for workouts you actually performed. Workout number refers to the session; set numbers follow the order you log for each exercise. To schedule future workouts, use Plan workouts instead.",
   plan:
-    "Build a template set and stamp it onto one or more future dates. Plans do not affect workout numbering or delete-last on the log page. In Metrics, plan volume appears as a purple forecast line alongside your actual logged volume.",
+    "Design a full workout with multiple exercises and sets, then schedule it once or on a repeating pattern (weekdays or every N days, up to one year). Saved plans appear below for editing or deletion. In Metrics, plan volume appears as a forecast line alongside your actual logged volume.",
+  today:
+    "See what you planned for today, track progress set by set, and tap Log this to open the log form with reps, load, and gear pre-filled. After each save you'll advance to the next planned set, then the next exercise, until the workout is complete.",
   history:
     "Every row is one exercise set. Use the Actuals / Plan filter to separate logged workouts from scheduled plans. Tap edit on a row to fix mistakes, or use the filters at the top to narrow the list.",
   "metrics-volume":
