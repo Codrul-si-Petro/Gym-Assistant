@@ -13,6 +13,10 @@ if not BACKEND_URL or not FRONTEND_URL:
 E2E_DASHBOARD_WORKOUT_SPLIT = "e2e-test-data"
 # Dedicated split for the Today → Log flow E2E (plan + actuals cleaned up each run).
 E2E_TODAY_FLOW_SPLIT = "e2e-today-flow"
+# Future-dated plan created in test_plan_mode_stamps_future_dates.
+E2E_FUTURE_PLAN_LABEL = "e2e-future-plan"
+E2E_FUTURE_PLAN_DATE = "2026-12-01"
+E2E_FUTURE_PLAN_EXERCISE_ID = 2  # Triceps extension (seed data)
 # Fixed date for the persistent E2E user seed workouts (dashboard + history).
 E2E_SEED_WORKOUT_DATE = "2026-04-09"
 

@@ -3,8 +3,18 @@ import os
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.constants import E2E_DASHBOARD_WORKOUT_SPLIT
-from tests.e2e.helpers import goto_core_page
+from tests.constants import (
+    E2E_DASHBOARD_WORKOUT_SPLIT,
+    E2E_FUTURE_PLAN_DATE,
+    E2E_FUTURE_PLAN_EXERCISE_ID,
+    E2E_FUTURE_PLAN_LABEL,
+)
+from tests.e2e.helpers import (
+    cleanup_plan_conflicts_on_date,
+    delete_plan_series_by_label,
+    fill_plan_exercise_block,
+    goto_core_page,
+)
 
 
 @pytest.mark.order(3)
@@ -37,16 +47,26 @@ def test_plan_mode_stamps_future_dates(page: Page, frontend_url: str, e2e_user_b
     if not os.getenv("DATABASE_URL"):
         pytest.skip("DATABASE_URL must be set for plan form test")
 
+    cleanup_plan_conflicts_on_date(
+        e2e_user_bootstrapped,
+        E2E_FUTURE_PLAN_DATE,
+        E2E_FUTURE_PLAN_EXERCISE_ID,
+    )
+    delete_plan_series_by_label(e2e_user_bootstrapped, E2E_FUTURE_PLAN_LABEL)
+    delete_plan_series_by_label(e2e_user_bootstrapped, E2E_DASHBOARD_WORKOUT_SPLIT)
+
     goto_core_page(page, frontend_url, "workouts_plan.html")
     page.wait_for_selector("#exercises_list option", state="attached", timeout=15000)
 
-    page.fill("#plan_label", E2E_DASHBOARD_WORKOUT_SPLIT)
-    page.fill("#plan_start_date", "2026-12-01")
+    page.fill("#plan_label", E2E_FUTURE_PLAN_LABEL)
+    page.fill("#plan_start_date", E2E_FUTURE_PLAN_DATE)
     page.locator('input[name="repeat_type"][value="once"]').check()
 
-    page.locator(".plan-exercise-block .exercise-name").fill("Triceps extension")
-    page.locator(".plan-set-row .set-reps").first.fill("12")
-    page.locator(".plan-set-row .set-load").first.fill("35")
+    fill_plan_exercise_block(
+        page.locator(".plan-exercise-block").first,
+        "Triceps extension",
+        [(12, 35)],
+    )
 
     with page.expect_response(
         lambda res: "/api/plan-series/" in res.url and res.request.method == "POST" and res.ok,
@@ -55,7 +75,14 @@ def test_plan_mode_stamps_future_dates(page: Page, frontend_url: str, e2e_user_b
         page.locator("#submit-btn").click()
 
     expect(page.locator("#message")).to_contain_text("Plan saved", timeout=10000)
-    expect(page.locator(".my-plan-card")).to_contain_text(E2E_DASHBOARD_WORKOUT_SPLIT, timeout=10000)
+    expect(page.locator(".my-plan-card")).to_contain_text(E2E_FUTURE_PLAN_LABEL, timeout=10000)
+
+    cleanup_plan_conflicts_on_date(
+        e2e_user_bootstrapped,
+        E2E_FUTURE_PLAN_DATE,
+        E2E_FUTURE_PLAN_EXERCISE_ID,
+    )
+    delete_plan_series_by_label(e2e_user_bootstrapped, E2E_FUTURE_PLAN_LABEL)
 
 
 @pytest.mark.order(5)
