@@ -9,9 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/general-components/theme.css?v=7">
   <link rel="stylesheet" href="css/general-components/profile-menu.css?v=7">
+  <link rel="stylesheet" href="css/general-components/split-onboarding.css?v=3">
   <link rel="stylesheet" href="css/general-components/info-popover.css?v=1">
-  <link rel="stylesheet" href="css/homepage.css?v=17">
-  <link rel="stylesheet" href="css/core/workout-count-card.css?v=3">
+  <link rel="stylesheet" href="css/homepage.css?v=18">
+  <link rel="stylesheet" href="css/core/workout-count-card.css?v=4">
   <link rel="icon" href="./assets/favicon.ico" sizes="any">
 </head>
 <body class="home-page" data-info-page="home">
@@ -29,6 +30,7 @@
   <section id="member-hero" class="hero hero-animate member-only" hidden>
     <div class="hero-brand reveal">
       <p class="hero-brand-name">Gym Assistant</p>
+      <p class="hero-tagline">Find your <span class="hero-accent hero-rotating-word">motivation.</span></p>
     </div>
 
     <div id="home-stats" class="home-stats reveal reveal-delay-1" hidden>
@@ -38,6 +40,7 @@
       <div class="home-trend-list">
         <div id="home-week-trend" class="home-trend-row" role="img"></div>
         <div id="home-month-trend" class="home-trend-row" role="img"></div>
+        <div id="home-year-trend" class="home-trend-row" role="img"></div>
       </div>
     </div>
 
@@ -49,6 +52,10 @@
       <div class="workout-count-item">
         <span id="workout-count-month" class="workout-count-value">0</span>
         <span class="workout-count-label">Workouts this month</span>
+      </div>
+      <div class="workout-count-item">
+        <span id="workout-count-year" class="workout-count-value">0</span>
+        <span class="workout-count-label">Workouts this year</span>
       </div>
     </div>
 
@@ -70,10 +77,12 @@
     <section class="hero hero-animate">
       <div class="hero-brand reveal">
         <p class="hero-brand-name">Gym Assistant</p>
+        <p class="hero-tagline">Find your <span class="hero-accent hero-rotating-word">motivation.</span></p>
+        <p class="hero-tagline-author">— Petro</p>
       </div>
 
       <p class="hero-badge reveal reveal-delay-1">Track. Learn. Progress.</p>
-      <h1 class="hero-title reveal reveal-delay-2">Find your <span id="word" class="hero-accent">motivation.</span></h1>
+      <h1 class="hero-title reveal reveal-delay-2">Train with a clear record of every set.</h1>
       <p class="hero-subtitle reveal reveal-delay-3">
         Can you remember what you lifted last week? What about last month?
         Gym Assistant keeps every workout, every set, and every personal record in one place
@@ -230,9 +239,10 @@
 <script src="js/auth/store-jwt.js?v=2"></script>
 <script type="module" src="js/general-components/theme.js?v=2"></script>
 <script type="module" src="js/general-components/profile-menu.js?v=2"></script>
-<script type="module" src="js/general-components/info-popover.js?v=2"></script>
+<script type="module" src="js/general-components/info-popover.js?v=4"></script>
 <script type="module" src="js/general-components/animations.js?v=2"></script>
-<script type="module" src="js/homepage.js?v=10"></script>
-<script type="module" src="js/core/workout-count-card.js?v=1"></script>
+<script type="module" src="js/homepage.js?v=12"></script>
+<script type="module" src="js/core/workout-count-card.js?v=3"></script>
+<script type="module" src="js/general-components/split-onboarding.js?v=2"></script>
 </body>
 </html>

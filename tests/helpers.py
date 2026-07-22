@@ -202,6 +202,15 @@ class E2EUserBootstrap:
             if res.status_code not in (200, 201):
                 raise RuntimeError(f"Workout seed failed: {res.status_code} - {res.text}")
 
+    def ensure_splits_configured(self):
+        """Mark onboarding complete so the split modal does not block Playwright."""
+        res = self.session.patch(
+            f"{self.base}/api/auth/preferences/",
+            json={"workout_splits_configured": True},
+        )
+        if res.status_code != 200:
+            raise RuntimeError(f"Could not set workout_splits_configured: {res.status_code} - {res.text}")
+
 
 def bootstrap_e2e_test_user():
     """
@@ -212,6 +221,7 @@ def bootstrap_e2e_test_user():
     b.ensure_user()
     tokens = b.get_bearer_tokens()
     b.attach_auth(tokens["access"])
+    b.ensure_splits_configured()
 
     if not b.has_e2e_seed_data():
         b.fill_synthetic_workouts()

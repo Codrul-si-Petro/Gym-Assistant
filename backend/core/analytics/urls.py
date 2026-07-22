@@ -7,6 +7,7 @@ from .views import (
     TotalVolumePerDayView,
     TotalVolumeView,
     UserRestDaysView,
+    WorkoutSessionsView,
     WorkoutSplitsView,
 )
 
@@ -17,5 +18,6 @@ urlpatterns = [
     path("v1/total-volume-daily", TotalVolumePerDayView.as_view(), name="total-volume-daily"),
     path("v1/workout-splits", WorkoutSplitsView.as_view(), name="workout-splits"),
     path("v1/gym-weekdays", GymWeekdaysView.as_view(), name="gym-weekdays"),
+    path("v1/workout-sessions", WorkoutSessionsView.as_view(), name="workout-sessions"),
     path("v1/home-summary", HomeSummaryView.as_view(), name="home-summary"),
 ]

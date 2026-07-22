@@ -6,8 +6,9 @@
     <title>Plan Workout</title>
     <link rel="stylesheet" href="../../css/general-components/theme.css?v=7">
     <link rel="stylesheet" href="../../css/general-components/profile-menu.css?v=2">
+    <link rel="stylesheet" href="../../css/general-components/split-onboarding.css?v=3">
     <link rel="stylesheet" href="../../css/core/workouts_input.css?v=9">
-    <link rel="stylesheet" href="../../css/core/workouts_plan.css?v=6">
+    <link rel="stylesheet" href="../../css/core/workouts_plan.css?v=9">
     <link rel="stylesheet" href="../../css/general-components/info-popover.css?v=1">
     <link rel="stylesheet" href="../../css/general-components/navigation.css?v=2">
     <link rel="icon" href="../../assets/favicon.ico" sizes="any">
@@ -52,10 +53,20 @@
             <section class="plan-card">
                 <h2 class="plan-card-title">Plan details</h2>
                 <div class="field">
-                    <label for="plan_label">Plan name / split</label>
-                    <input type="text" id="plan_label" name="plan_label" maxlength="50" placeholder="e.g. Upper body" required>
+                    <label for="plan_label">Plan name</label>
+                    <input type="text" id="plan_label" name="plan_label" maxlength="50" placeholder="e.g. Strength block A" required>
                 </div>
                 <div class="field">
+                    <label for="plan_description">Description <span class="field-optional">(optional)</span></label>
+                    <textarea id="plan_description" name="plan_description" maxlength="500" rows="2" placeholder="Why this plan exists / what it focuses on"></textarea>
+                </div>
+                <div class="field">
+                    <label for="plan_workout_split">Workout split <span class="field-optional">(optional)</span></label>
+                    <input type="text" id="plan_workout_split" name="plan_workout_split" list="user_split_suggestions" maxlength="50" placeholder="Pick from your profile splits, or leave blank">
+                    <datalist id="user_split_suggestions"></datalist>
+                    <p class="plan-field-hint">Define splits in Profile if you want a reusable list. If blank, the plan name is used as the split on scheduled sets.</p>
+                </div>
+                <div class="field" id="start_date_field">
                     <label for="plan_start_date">Start date</label>
                     <input type="date" id="plan_start_date" name="plan_start_date" min="" required>
                 </div>
@@ -86,6 +97,19 @@
                         <label for="plan_interval_days">Days between workouts</label>
                         <input type="number" id="plan_interval_days" min="1" max="365" value="2">
                     </div>
+                    <label class="plan-radio">
+                        <input type="radio" name="repeat_type" value="dates">
+                        Specific dates
+                    </label>
+                    <div id="dates_picker" class="plan-dates-picker" hidden>
+                        <div class="plan-dates-add">
+                            <label for="plan_specific_date_input">Add a date</label>
+                            <input type="date" id="plan_specific_date_input">
+                            <button type="button" id="plan_specific_date_add" class="plan-secondary-btn">Add date</button>
+                        </div>
+                        <ul id="plan_specific_dates_list" class="plan-specific-dates-list" aria-live="polite"></ul>
+                        <p class="plan-field-hint">Pick any calendar days you want this plan on — no weekly or interval pattern required.</p>
+                    </div>
                 </fieldset>
                 <div class="field" id="end_date_field" hidden>
                     <label for="plan_end_date">Repeat until</label>
@@ -96,9 +120,9 @@
             <section class="plan-card">
                 <div class="plan-card-header">
                     <h2 class="plan-card-title">Workout builder</h2>
-                    <button type="button" id="add_exercise_btn" class="plan-secondary-btn">Add exercise</button>
                 </div>
                 <div id="exercises_container" class="plan-exercises"></div>
+                <button type="button" id="add_exercise_btn" class="plan-secondary-btn plan-add-exercise-btn">Add exercise</button>
             </section>
 
             <section class="plan-card plan-preview-card">
@@ -121,10 +145,11 @@
 
     <script type="module" src="../../js/general-components/theme.js?v=2"></script>
     <script type="module" src="../../js/general-components/profile-menu.js?v=2"></script>
-    <script type="module" src="../../js/general-components/info-popover.js?v=2"></script>
+    <script type="module" src="../../js/general-components/info-popover.js?v=5"></script>
     <script src="../../js/auth/require-auth.js?v=2"></script>
+    <script type="module" src="../../js/general-components/split-onboarding.js?v=2"></script>
     <script src="../../js/core/dimension-picker.js?v=1"></script>
-    <script src="../../js/core/workouts_plan.js?v=6"></script>
+    <script src="../../js/core/workouts_plan.js?v=9"></script>
     <script src="../../js/general-components/navigation.js?v=2"></script>
 </body>
 </html>

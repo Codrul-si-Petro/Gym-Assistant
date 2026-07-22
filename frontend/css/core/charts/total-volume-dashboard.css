@@ -31,7 +31,14 @@
    Hidden via HTML `hidden` when at root; shown when volumeParentId is set in JS.
    ----------------------------------------------------------------------------- */
 .volume-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   margin-bottom: 12px;
+}
+
+.volume-toolbar[hidden] {
+  display: none;
 }
 
 /* Primary control to go up one level in the hierarchy — icon-only, compact. */

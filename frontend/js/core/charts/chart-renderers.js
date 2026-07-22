@@ -109,7 +109,9 @@ function renderStatList(listId, items) {
   const fills = [];
   for (const item of items) {
     const li = document.createElement("li");
+    const isTotal = item.label === "Total" || item.isTotal;
     li.className = item.rank ? "stat-row" : "stat-row stat-row--no-rank";
+    if (isTotal) li.classList.add("stat-row--total");
 
     let rank = null;
     if (item.rank) {
@@ -150,15 +152,26 @@ function renderStatList(listId, items) {
 
 export function renderFavExercisesChart(labels, values, fullNames, ranks) {
   const max = Math.max(...values, 1);
-  renderStatList(
-    "fav-exercises-list",
-    values.map((v, i) => ({
+  const items = [];
+  const totalSets = values.reduce((sum, v) => sum + (Number(v) || 0), 0);
+  if (values.length) {
+    items.push({
+      rank: "",
+      label: "Total",
+      valueText: `${totalSets} sets`,
+      percent: 100,
+      isTotal: true,
+    });
+  }
+  for (let i = 0; i < values.length; i += 1) {
+    items.push({
       rank: "#" + (ranks?.[i] || i + 1),
       label: fullNames?.[i] || labels[i] || "",
-      valueText: `${v} sets`,
-      percent: (v / max) * 100,
-    }))
-  );
+      valueText: `${values[i]} sets`,
+      percent: (values[i] / max) * 100,
+    });
+  }
+  renderStatList("fav-exercises-list", items);
 }
 
 export function formatVolume(n, unit = "KG") {
@@ -171,17 +184,36 @@ export function formatVolume(n, unit = "KG") {
   return new Intl.NumberFormat("en-US", opts).format(v);
 }
 
-function formatDeltaPct(current, baseline) {
+/**
+ * Hierarchy breadcrumb companion lives in updateVolumeToolbar.
+ * Overall totals are the first "Total" row inside the volume table.
+ */
+
+/** True when the API returned a real plan baseline (null/undefined = no plan → N/A). */
+function hasPlanBaseline(baseline) {
+  return baseline != null;
+}
+
+function computeDeltaPct(current, baseline) {
+  // null/undefined baseline = "no plan" → caller renders N/A (do not compute %).
+  if (!hasPlanBaseline(baseline)) return null;
   const cur = Number(current) || 0;
   const base = Number(baseline) || 0;
-  if (base === 0 && cur === 0) return "—";
-  if (base === 0) return "+100%";
-  const pct = ((cur - base) / base) * 100;
+  if (base === 0 && cur === 0) return null;
+  if (base === 0) return 100;
+  return ((cur - base) / base) * 100;
+}
+
+function formatDeltaPct(current, baseline) {
+  if (!hasPlanBaseline(baseline)) return "N/A";
+  const pct = computeDeltaPct(current, baseline);
+  if (pct == null) return "—";
   const sign = pct >= 0 ? "+" : "";
   return `${sign}${pct.toFixed(0)}%`;
 }
 
 function formatDeltaAbsolute(current, baseline, unit) {
+  if (!hasPlanBaseline(baseline)) return "N/A";
   const cur = Number(current) || 0;
   const base = Number(baseline) || 0;
   const diffKg = cur - base;
@@ -192,13 +224,16 @@ function formatDeltaAbsolute(current, baseline, unit) {
 }
 
 function deltaClass(current, baseline) {
-  const cur = Number(current) || 0;
-  const base = Number(baseline) || 0;
-  if (cur === base) return "volume-delta-neutral";
-  return cur > base ? "volume-delta-up" : "volume-delta-down";
+  if (!hasPlanBaseline(baseline)) return "volume-delta-na";
+  const pct = computeDeltaPct(current, baseline);
+  if (pct == null) return "volume-delta-neutral";
+  if (pct > 10) return "volume-delta-up";
+  if (pct < -10) return "volume-delta-down";
+  return "volume-delta-neutral";
 }
 
 function formatDeltaCell(current, baseline, unit) {
+  if (!hasPlanBaseline(baseline)) return "N/A";
   if (volumeDeltaDisplayMode === "absolute") {
     return formatDeltaAbsolute(current, baseline, unit);
   }
@@ -208,12 +243,20 @@ function formatDeltaCell(current, baseline, unit) {
 /** One "vs X" cell: tabular %/absolute diff, click-to-toggle, color-coded by direction. */
 function makeDeltaCell(current, baseline, unit, onDeltaToggle) {
   const td = document.createElement("td");
-  td.className = "volume-col-delta volume-col-delta-toggle " + deltaClass(current, baseline);
+  const noPlan = !hasPlanBaseline(baseline);
+  td.className =
+    "volume-col-delta " +
+    (noPlan ? "" : "volume-col-delta-toggle ") +
+    deltaClass(current, baseline);
   td.textContent = formatDeltaCell(current, baseline, unit);
-  td.title = "Tap to switch between % and absolute difference";
-  td.addEventListener("click", () => {
-    if (onDeltaToggle) onDeltaToggle();
-  });
+  if (!noPlan) {
+    td.title = "Tap to switch between % and absolute difference";
+    td.addEventListener("click", () => {
+      if (onDeltaToggle) onDeltaToggle();
+    });
+  } else {
+    td.title = "No plan for this exercise in the selected window";
+  }
   return td;
 }
 
@@ -231,55 +274,62 @@ export function renderVolumeTable(results, unit, period, handlers) {
   updateVolumeDeltaHeader(period);
   tbody.replaceChildren();
 
-  for (const row of results) {
+  const appendVolumeRow = (row, { isTotal = false, displayRank = null, planActualVolume = null } = {}) => {
     const tr = document.createElement("tr");
+    if (isTotal) tr.className = "volume-row-total";
 
     const rankTd = document.createElement("td");
     rankTd.className = "volume-col-rank";
-    rankTd.textContent = String(row.rank ?? "");
+    rankTd.textContent = displayRank != null ? String(displayRank) : String(row.rank ?? "");
 
     const nameTd = document.createElement("td");
     nameTd.className = "volume-col-exercise";
-    const canDrill = row.is_leaf === false;
-    if (canDrill && onDrill) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "volume-exercise-drill";
-      const label = document.createElement("span");
-      label.className = "volume-exercise-drill-label";
-      label.textContent = row.exercise_name || "";
-      const chev = document.createElement("span");
-      chev.className = "volume-exercise-drill-chevron";
-      chev.setAttribute("aria-hidden", "true");
-      chev.textContent = ">";
-      btn.append(label, chev);
-      btn.addEventListener("click", () => onDrill(row));
-      nameTd.appendChild(btn);
+    if (isTotal) {
+      nameTd.textContent = "Total";
     } else {
-      nameTd.textContent = row.exercise_name || "";
+      const canDrill = row.is_leaf === false;
+      if (canDrill && onDrill) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "volume-exercise-drill";
+        const label = document.createElement("span");
+        label.className = "volume-exercise-drill-label";
+        label.textContent = row.exercise_name || "";
+        const chev = document.createElement("span");
+        chev.className = "volume-exercise-drill-chevron";
+        chev.setAttribute("aria-hidden", "true");
+        chev.textContent = ">";
+        btn.append(label, chev);
+        btn.addEventListener("click", () => onDrill(row));
+        nameTd.appendChild(btn);
+      } else {
+        nameTd.textContent = row.exercise_name || "";
+      }
     }
 
     const sparkTd = document.createElement("td");
     sparkTd.className = "volume-col-chart";
-    const sparkBtn = document.createElement("button");
-    sparkBtn.type = "button";
-    sparkBtn.className = "volume-minichart-placeholder";
-    sparkBtn.setAttribute(
-      "aria-label",
-      "Open volume chart for " + (row.exercise_name || "exercise")
-    );
-    sparkBtn.innerHTML =
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-      '<line x1="5" y1="20" x2="5" y2="14"></line>' +
-      '<line x1="12" y1="20" x2="12" y2="8"></line>' +
-      '<line x1="19" y1="20" x2="19" y2="4"></line>' +
-      "</svg>";
-    sparkBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (onMinichart) onMinichart(row);
-    });
-    sparkTd.appendChild(sparkBtn);
+    if (!isTotal) {
+      const sparkBtn = document.createElement("button");
+      sparkBtn.type = "button";
+      sparkBtn.className = "volume-minichart-placeholder";
+      sparkBtn.setAttribute(
+        "aria-label",
+        "Open volume chart for " + (row.exercise_name || "exercise")
+      );
+      sparkBtn.innerHTML =
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<line x1="5" y1="20" x2="5" y2="14"></line>' +
+        '<line x1="12" y1="20" x2="12" y2="8"></line>' +
+        '<line x1="19" y1="20" x2="19" y2="4"></line>' +
+        "</svg>";
+      sparkBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (onMinichart) onMinichart(row);
+      });
+      sparkTd.appendChild(sparkBtn);
+    }
 
     const volTd = document.createElement("td");
     volTd.className = "volume-col-vol";
@@ -287,33 +337,191 @@ export function renderVolumeTable(results, unit, period, handlers) {
 
     tr.append(rankTd, nameTd, sparkTd, volTd);
 
-    // vs prior period, to-date (apples-to-apples) — hidden for period=all.
+    // For plan deltas on the Total row, compare only actuals from rows that have a plan
+    // (avoids mixing unplanned volume into the numerator while plan stays small).
+    const planCurrent =
+      isTotal && planActualVolume != null ? planActualVolume : row.total_volume;
+
     if (deltaCfg) {
       tr.appendChild(makeDeltaCell(row.total_volume, row[deltaCfg.key], unit, onDeltaToggle));
     }
-
-    // vs prior period, full (complete prior week/month/year) — hidden for period=all.
     if (deltaFullCfg) {
       const cell = makeDeltaCell(row.total_volume, row[deltaFullCfg.key], unit, onDeltaToggle);
       cell.classList.add("volume-col-delta-full");
       tr.appendChild(cell);
     }
-
-    // Actual vs planned volume, to-date — always shown, independent of the
-    // period-based columns above (those compare against a *prior* period; this
-    // compares against your own plan for the *same* window).
-    tr.appendChild(makeDeltaCell(row.total_volume, row.plan_volume, unit, onDeltaToggle));
-
-    // Actual (to-date) vs the *entire* current week/month/year's plan — the target
-    // to hit, not just plan-to-date. Hidden for period=all.
+    tr.appendChild(makeDeltaCell(planCurrent, row.plan_volume, unit, onDeltaToggle));
     if (planFullCfg) {
-      const cell = makeDeltaCell(row.total_volume, row[planFullCfg.key], unit, onDeltaToggle);
+      const cell = makeDeltaCell(planCurrent, row[planFullCfg.key], unit, onDeltaToggle);
       cell.classList.add("volume-col-delta-full");
       tr.appendChild(cell);
     }
 
     tbody.appendChild(tr);
+  };
+
+  if (results.length) {
+    const PLAN_KEYS = ["plan_volume", "plan_week_full", "plan_month_full", "plan_year_full"];
+    const PRIOR_KEYS = [
+      "previous_week",
+      "previous_week_to_date",
+      "previous_month",
+      "previous_month_to_date",
+      "previous_year",
+      "previous_year_to_date",
+    ];
+    const totals = {
+      total_volume: 0,
+      plan_volume: null,
+      previous_week: 0,
+      previous_week_to_date: 0,
+      previous_month: 0,
+      previous_month_to_date: 0,
+      previous_year: 0,
+      previous_year_to_date: 0,
+      plan_week_full: null,
+      plan_month_full: null,
+      plan_year_full: null,
+    };
+    let planActualVolume = null;
+    for (const row of results) {
+      totals.total_volume += Number(row.total_volume) || 0;
+      for (const key of PRIOR_KEYS) {
+        totals[key] += Number(row[key]) || 0;
+      }
+      for (const key of PLAN_KEYS) {
+        if (row[key] == null) continue;
+        totals[key] = (totals[key] || 0) + (Number(row[key]) || 0);
+        if (key === "plan_volume") {
+          planActualVolume = (planActualVolume || 0) + (Number(row.total_volume) || 0);
+        }
+      }
+    }
+    appendVolumeRow(totals, {
+      isTotal: true,
+      displayRank: 1,
+      planActualVolume,
+    });
   }
+
+  for (let i = 0; i < results.length; i += 1) {
+    appendVolumeRow(results[i], { displayRank: i + 2 });
+  }
+}
+
+function updateSessionsDeltaHeader(period) {
+  setDeltaHeader("sessions-col-delta-header", PERIOD_DELTA_CONFIG[period]);
+  setDeltaHeader("sessions-col-delta-full-header", PERIOD_DELTA_FULL_CONFIG[period]);
+  setDeltaHeader("sessions-col-plan-full-header", PERIOD_PLAN_FULL_CONFIG[period]);
+  // Plan to date is always visible (like volume).
+  const planHeader = document.getElementById("sessions-col-plan-header");
+  if (planHeader) planHeader.hidden = false;
+}
+
+const SESSIONS_PLAN_TO_DATE = {
+  wtd: "plan_week",
+  mtd: "plan_month",
+  ytd: "plan_year",
+  all: "plan_year",
+};
+
+export function renderSessionsTable(results, period = "all", comparisons = {}, onDeltaToggle = null) {
+  const tbody = document.getElementById("sessions-table-body");
+  const inner = document.getElementById("sessions-table-inner");
+  if (!tbody) return;
+
+  const deltaCfg = PERIOD_DELTA_CONFIG[period] || null;
+  const deltaFullCfg = PERIOD_DELTA_FULL_CONFIG[period] || null;
+  const planFullCfg = PERIOD_PLAN_FULL_CONFIG[period] || null;
+  const planKey = SESSIONS_PLAN_TO_DATE[period] || "plan_year";
+
+  updateSessionsDeltaHeader(period);
+  tbody.replaceChildren();
+
+  const colCount =
+    4 + (deltaCfg ? 1 : 0) + (deltaFullCfg ? 1 : 0) + 1 + (planFullCfg ? 1 : 0);
+
+  const appendEmptyDeltaCells = (tr) => {
+    if (deltaCfg) {
+      const td = document.createElement("td");
+      td.className = "volume-col-delta";
+      tr.appendChild(td);
+    }
+    if (deltaFullCfg) {
+      const td = document.createElement("td");
+      td.className = "volume-col-delta volume-col-delta-full";
+      tr.appendChild(td);
+    }
+    const planTd = document.createElement("td");
+    planTd.className = "volume-col-delta";
+    tr.appendChild(planTd);
+    if (planFullCfg) {
+      const td = document.createElement("td");
+      td.className = "volume-col-delta volume-col-delta-full";
+      tr.appendChild(td);
+    }
+  };
+
+  if (results.length) {
+    const totalTr = document.createElement("tr");
+    totalTr.className = "volume-row-total";
+
+    const rankTd = document.createElement("td");
+    rankTd.className = "volume-col-rank";
+    rankTd.textContent = "1";
+
+    const labelTd = document.createElement("td");
+    labelTd.textContent = "Total";
+
+    const countTd = document.createElement("td");
+    countTd.colSpan = 2;
+    countTd.textContent = `${results.length} session${results.length === 1 ? "" : "s"}`;
+    totalTr.append(rankTd, labelTd, countTd);
+
+    const currentCount = results.length;
+    // Unit not used for session counts in absolute mode — show raw count diffs.
+    const unit = "KG";
+    if (deltaCfg) {
+      totalTr.appendChild(
+        makeDeltaCell(currentCount, comparisons[deltaCfg.key], unit, onDeltaToggle)
+      );
+    }
+    if (deltaFullCfg) {
+      const cell = makeDeltaCell(currentCount, comparisons[deltaFullCfg.key], unit, onDeltaToggle);
+      cell.classList.add("volume-col-delta-full");
+      totalTr.appendChild(cell);
+    }
+    totalTr.appendChild(
+      makeDeltaCell(currentCount, comparisons[planKey], unit, onDeltaToggle)
+    );
+    if (planFullCfg) {
+      const cell = makeDeltaCell(currentCount, comparisons[planFullCfg.key], unit, onDeltaToggle);
+      cell.classList.add("volume-col-delta-full");
+      totalTr.appendChild(cell);
+    }
+
+    tbody.appendChild(totalTr);
+  }
+
+  for (let i = 0; i < results.length; i += 1) {
+    const row = results[i];
+    const tr = document.createElement("tr");
+    const rankTd = document.createElement("td");
+    rankTd.className = "volume-col-rank";
+    rankTd.textContent = String(i + 2);
+    const dateTd = document.createElement("td");
+    dateTd.textContent = String(row.date ?? "");
+    const numTd = document.createElement("td");
+    numTd.textContent = String(row.workout_number ?? "");
+    const splitTd = document.createElement("td");
+    splitTd.textContent = row.workout_split || "—";
+    tr.append(rankTd, dateTd, numTd, splitTd);
+    appendEmptyDeltaCells(tr);
+    tbody.appendChild(tr);
+  }
+
+  if (inner) inner.style.display = results.length ? "" : "none";
+  void colCount;
 }
 
 export function renderVolumeDailyTimeSeries(dailyRows, exerciseName, type, unit = "KG") {

@@ -89,6 +89,74 @@
   align-self: flex-start;
 }
 
+.profile-help {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.profile-split-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.profile-split-add input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.profile-split-add .cta-button {
+  margin-top: 0;
+  width: auto;
+  padding: 10px 14px;
+}
+
+.profile-split-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-split-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+}
+
+.profile-split-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.profile-split-remove {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.profile-split-remove:hover {
+  color: var(--danger);
+}
+
 .profile-actions {
   display: flex;
   flex-direction: column;

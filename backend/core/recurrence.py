@@ -26,8 +26,18 @@ def expand_recurrence(
     recurrence_type: str,
     weekdays: list[str] | None = None,
     interval_days: int | None = None,
+    specific_dates: list[date] | None = None,
 ) -> list[date]:
     """Return sorted unique occurrence dates for a recurrence rule."""
+    if recurrence_type == "dates":
+        if not specific_dates:
+            raise RecurrenceError("Select at least one date.")
+        unique = sorted({d for d in specific_dates})
+        if len(unique) > MAX_OCCURRENCES:
+            raise RecurrenceError(f"Plan generates too many dates (max {MAX_OCCURRENCES}).")
+        _validate_span(unique[0], unique[-1])
+        return unique
+
     _validate_span(start_date, end_date)
 
     if recurrence_type == "once":

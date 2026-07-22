@@ -53,12 +53,15 @@
 
 /* Tables with sticky headers need the surface padding removed so rows
    cannot scroll above the sticky thead into the padding area. */
-#tab-volume .chart-scroll-wrap.data-surface {
+#tab-volume .chart-scroll-wrap.data-surface,
+#tab-sessions .chart-scroll-wrap.data-surface {
   padding: 0;
+  overflow: auto;
 }
 
 #tab-volume .chart-scroll-wrap.data-surface > .chart-skeleton,
-#tab-volume .chart-scroll-wrap.data-surface > .volume-daily-chart-block {
+#tab-volume .chart-scroll-wrap.data-surface > .volume-daily-chart-block,
+#tab-sessions .chart-scroll-wrap.data-surface > .chart-skeleton {
   padding: 16px;
 }
 

@@ -44,3 +44,14 @@ jobs:
 
       - name: dbt build
         run: uv run dbt build
+
+      - name: Notify Discord on failure
+        if: failure()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "DISCORD_WEBHOOK not set; skipping notification"
+            exit 0
+          fi
+          python3 -c 'import json,os,urllib.request; c=f"❌ **{os.environ[\"GITHUB_WORKFLOW\"]}** failed on `{os.environ[\"GITHUB_REF_NAME\"]}`\n{os.environ[\"GITHUB_SERVER_URL\"]}/{os.environ[\"GITHUB_REPOSITORY\"]}/actions/runs/{os.environ[\"GITHUB_RUN_ID\"]}"; urllib.request.urlopen(urllib.request.Request(os.environ["DISCORD_WEBHOOK"], data=json.dumps({"content":c}).encode(), headers={"Content-Type":"application/json"}, method="POST"))'

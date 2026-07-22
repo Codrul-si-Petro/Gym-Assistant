@@ -59,6 +59,7 @@ def test_plan_mode_stamps_future_dates(page: Page, frontend_url: str, e2e_user_b
     page.wait_for_selector("#exercises_list option", state="attached", timeout=15000)
 
     page.fill("#plan_label", E2E_FUTURE_PLAN_LABEL)
+    page.fill("#plan_workout_split", E2E_FUTURE_PLAN_LABEL)
     page.fill("#plan_start_date", E2E_FUTURE_PLAN_DATE)
     page.locator('input[name="repeat_type"][value="once"]').check()
 
@@ -75,7 +76,7 @@ def test_plan_mode_stamps_future_dates(page: Page, frontend_url: str, e2e_user_b
         page.locator("#submit-btn").click()
 
     expect(page.locator("#message")).to_contain_text("Plan saved", timeout=10000)
-    expect(page.locator(".my-plan-card")).to_contain_text(E2E_FUTURE_PLAN_LABEL, timeout=10000)
+    expect(page.locator(".my-plan-card").filter(has_text=E2E_FUTURE_PLAN_LABEL)).to_be_visible(timeout=10000)
 
     cleanup_plan_conflicts_on_date(
         e2e_user_bootstrapped,

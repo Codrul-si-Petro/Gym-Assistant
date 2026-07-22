@@ -61,6 +61,20 @@
   color: transparent;
 }
 
+.hero-tagline {
+  margin: 0.4rem 0 0;
+  font-size: clamp(1.05rem, 2.6vw, 1.35rem);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.hero-tagline-author {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .home-stats {
   display: flex;
   flex-direction: column;
