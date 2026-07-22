@@ -30,8 +30,8 @@ class PlanExerciseSerializer(serializers.Serializer):
 
 
 class RecurrenceSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=["once", "weekly", "interval"])
-    start_date = serializers.DateField()
+    type = serializers.ChoiceField(choices=["once", "weekly", "interval", "dates"])
+    start_date = serializers.DateField(required=False, allow_null=True)
     end_date = serializers.DateField(required=False, allow_null=True)
     weekdays = serializers.ListField(
         child=serializers.ChoiceField(choices=["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]),
@@ -39,10 +39,38 @@ class RecurrenceSerializer(serializers.Serializer):
         allow_empty=True,
     )
     interval_days = serializers.IntegerField(min_value=1, max_value=365, required=False, allow_null=True)
+    dates = serializers.ListField(
+        child=serializers.DateField(),
+        required=False,
+        allow_empty=True,
+        max_length=366,
+    )
 
     def validate(self, attrs):
         recurrence_type = attrs["type"]
-        start = attrs["start_date"]
+
+        if recurrence_type == "dates":
+            specific = attrs.get("dates") or []
+            if not specific:
+                raise serializers.ValidationError({"dates": "Select at least one date."})
+            unique = sorted({d for d in specific})
+            attrs["dates"] = unique
+            attrs["start_date"] = unique[0]
+            attrs["end_date"] = unique[-1]
+            try:
+                expand_recurrence(
+                    unique[0],
+                    unique[-1],
+                    "dates",
+                    specific_dates=unique,
+                )
+            except RecurrenceError as exc:
+                raise serializers.ValidationError(str(exc)) from exc
+            return attrs
+
+        start = attrs.get("start_date")
+        if not start:
+            raise serializers.ValidationError({"start_date": "Start date is required."})
 
         if recurrence_type == "once":
             attrs["end_date"] = start
@@ -74,6 +102,8 @@ class RecurrenceSerializer(serializers.Serializer):
 class PlanSeriesSerializer(serializers.Serializer):
     plan_series_id = serializers.UUIDField(read_only=True)
     label = serializers.CharField(max_length=50, allow_blank=False)
+    description = serializers.CharField(required=False, allow_blank=True, max_length=500, default="")
+    workout_split = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=50, default="")
     recurrence = RecurrenceSerializer()
     exercises = PlanExerciseSerializer(many=True, min_length=1, max_length=50)
     occurrence_count = serializers.IntegerField(read_only=True)
@@ -88,6 +118,14 @@ class PlanSeriesSerializer(serializers.Serializer):
         if not stripped:
             raise serializers.ValidationError("Plan name / split cannot be blank.")
         return stripped
+
+    def validate_description(self, value):
+        return (value or "").strip()
+
+    def validate_workout_split(self, value):
+        if value is None:
+            return ""
+        return value.strip()
 
     def validate_exercises(self, value):
         seen = {}
@@ -121,7 +159,24 @@ class PlanSeriesSerializer(serializers.Serializer):
             recurrence_data["type"],
             weekdays=recurrence_data.get("weekdays"),
             interval_days=recurrence_data.get("interval_days"),
+            specific_dates=recurrence_data.get("dates"),
         )
+
+    def _dates_to_str(self, dates):
+        if not dates:
+            return None
+        return ",".join(d.isoformat() if hasattr(d, "isoformat") else str(d) for d in dates)
+
+    def _dates_from_str(self, value):
+        if not value:
+            return []
+        out = []
+        for part in value.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            out.append(date.fromisoformat(part))
+        return out
 
     def _check_conflicts(self, user, dates, exercises_data, exclude_series_id=None):
         """Block scheduling the same exercise on a date another plan already owns."""
@@ -148,14 +203,14 @@ class PlanSeriesSerializer(serializers.Serializer):
                 f"Already planned elsewhere: {detail}. Edit the existing plan instead of double-booking it."
             )
 
-    def _create_workout_rows(self, user, series_id, label, dates, exercises_data):
+    def _create_workout_rows(self, user, series_id, label, dates, exercises_data, workout_split=None):
         total_sets = self._total_sets(exercises_data)
         if len(dates) * total_sets > MAX_PLAN_ROWS:
             raise serializers.ValidationError(
                 f"Plan would create {len(dates) * total_sets} rows (max {MAX_PLAN_ROWS})."
             )
 
-        split = label.strip() or PLACEHOLDER_DIMENSION_NAME
+        split = (workout_split or "").strip() or label.strip() or PLACEHOLDER_DIMENSION_NAME
         for date_val in dates:
             calendar = Calendar.objects.get(date_id=date_val)
             for block in exercises_data:
@@ -234,6 +289,8 @@ class PlanSeriesSerializer(serializers.Serializer):
 
         dates = self._expand_dates(recurrence)
         label = validated_data["label"].strip() or PLACEHOLDER_DIMENSION_NAME
+        description = (validated_data.get("description") or "").strip()
+        workout_split = (validated_data.get("workout_split") or "").strip()
 
         self._check_conflicts(user, dates, exercises_data)
 
@@ -243,17 +300,24 @@ class PlanSeriesSerializer(serializers.Serializer):
                 plan_series_id=series_id,
                 user=user,
                 label=label,
+                description=description or None,
+                workout_split=workout_split or None,
                 recurrence_type=recurrence["type"],
                 weekdays=self._weekdays_to_str(recurrence.get("weekdays")),
                 interval_days=recurrence.get("interval_days"),
+                specific_dates=self._dates_to_str(recurrence.get("dates")),
                 start_date=recurrence["start_date"],
                 end_date=recurrence["end_date"],
             )
-            occurrence_count, set_count = self._create_workout_rows(user, series_id, label, dates, exercises_data)
+            occurrence_count, set_count = self._create_workout_rows(
+                user, series_id, label, dates, exercises_data, workout_split=workout_split
+            )
 
         return {
             "plan_series_id": series_id,
             "label": label,
+            "description": description,
+            "workout_split": workout_split,
             "recurrence": recurrence,
             "exercises": self._serialize_exercises_for_response(exercises_data),
             "occurrence_count": occurrence_count,
@@ -270,6 +334,8 @@ class PlanSeriesSerializer(serializers.Serializer):
         exercises_data = validated_data["exercises"]
         dates = self._expand_dates(recurrence)
         label = validated_data["label"].strip() or PLACEHOLDER_DIMENSION_NAME
+        description = (validated_data.get("description") or "").strip()
+        workout_split = (validated_data.get("workout_split") or "").strip()
         today = date.today()
         future_dates = [d for d in dates if d >= today]
 
@@ -277,9 +343,12 @@ class PlanSeriesSerializer(serializers.Serializer):
 
         with transaction.atomic():
             instance.label = label
+            instance.description = description or None
+            instance.workout_split = workout_split or None
             instance.recurrence_type = recurrence["type"]
             instance.weekdays = self._weekdays_to_str(recurrence.get("weekdays"))
             instance.interval_days = recurrence.get("interval_days")
+            instance.specific_dates = self._dates_to_str(recurrence.get("dates"))
             instance.start_date = recurrence["start_date"]
             instance.end_date = recurrence["end_date"]
             instance.ta_updated_at = timezone.now()
@@ -292,7 +361,14 @@ class PlanSeriesSerializer(serializers.Serializer):
             ).delete()
 
             if future_dates:
-                self._create_workout_rows(user, instance.plan_series_id, label, future_dates, exercises_data)
+                self._create_workout_rows(
+                    user,
+                    instance.plan_series_id,
+                    label,
+                    future_dates,
+                    exercises_data,
+                    workout_split=workout_split,
+                )
 
         return self.to_representation(instance)
 
@@ -338,12 +414,15 @@ class PlanSeriesSerializer(serializers.Serializer):
         return {
             "plan_series_id": instance.plan_series_id,
             "label": instance.label,
+            "description": instance.description or "",
+            "workout_split": instance.workout_split or "",
             "recurrence": {
                 "type": instance.recurrence_type,
                 "start_date": instance.start_date,
                 "end_date": instance.end_date,
                 "weekdays": self._weekdays_from_str(instance.weekdays),
                 "interval_days": instance.interval_days,
+                "dates": self._dates_from_str(getattr(instance, "specific_dates", None)),
             },
             "exercises": exercises,
             "occurrence_count": occurrence_count,

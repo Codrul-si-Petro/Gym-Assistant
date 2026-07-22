@@ -68,6 +68,7 @@ def test_today_plan_log_flow_with_altered_last_set(
 
     today_iso = browser_today_iso(page)
     page.fill("#plan_label", E2E_TODAY_FLOW_SPLIT)
+    page.fill("#plan_workout_split", E2E_TODAY_FLOW_SPLIT)
     page.fill("#plan_start_date", today_iso)
     page.locator('input[name="repeat_type"][value="once"]').check()
 

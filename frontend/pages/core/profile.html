@@ -6,8 +6,9 @@
     <title>Profile</title>
     <link rel="stylesheet" href="../../css/general-components/theme.css?v=7">
     <link rel="stylesheet" href="../../css/general-components/profile-menu.css?v=2">
+    <link rel="stylesheet" href="../../css/general-components/split-onboarding.css?v=3">
     <link rel="stylesheet" href="../../css/general-components/navigation.css?v=2">
-    <link rel="stylesheet" href="../../css/core/profile.css?v=2">
+    <link rel="stylesheet" href="../../css/core/profile.css?v=3">
     <link rel="stylesheet" href="../../css/general-components/info-popover.css?v=1">
     <link rel="icon" href="../../assets/favicon.ico" sizes="any">
 </head>
@@ -49,11 +50,19 @@
                     <option value="KG">KG</option>
                     <option value="LBS">LBS</option>
                 </select>
-                <button type="submit" class="cta-button">Save preference</button>
+
+                <label for="split-input">Your workout splits (optional)</label>
+                <p class="profile-help">Define the split names you use (e.g. Push, Pull, Legs). Leave empty if you do not want to pick a split when planning. These appear as suggestions on the plan form.</p>
+                <div class="profile-split-add">
+                    <input type="text" id="split-input" maxlength="50" placeholder="e.g. Push" autocomplete="off">
+                    <button type="button" id="split-add-btn" class="cta-button cta-button--ghost">Add</button>
+                </div>
+                <ul id="split-list" class="profile-split-list" aria-live="polite"></ul>
+
+                <button type="submit" class="cta-button">Save preferences</button>
             </form>
             <div class="profile-actions">
                 <a href="account.html" class="cta-button">Account settings</a>
-                <a href="explore.html" class="cta-button cta-button--ghost">Glossary</a>
                 <a id="profile-support" href="#" class="cta-button cta-button--ghost">Contact support</a>
             </div>
         </section>
@@ -61,10 +70,11 @@
 
     <script type="module" src="../../js/general-components/theme.js?v=2"></script>
     <script type="module" src="../../js/general-components/profile-menu.js?v=2"></script>
-    <script type="module" src="../../js/general-components/info-popover.js?v=2"></script>
+    <script type="module" src="../../js/general-components/info-popover.js?v=4"></script>
     <script type="module" src="../../js/general-components/animations.js?v=2"></script>
     <script src="../../js/auth/require-auth.js?v=2"></script>
+    <script type="module" src="../../js/general-components/split-onboarding.js?v=2"></script>
     <script src="../../js/general-components/navigation.js?v=2"></script>
-    <script type="module" src="../../js/core/profile.js?v=2"></script>
+    <script type="module" src="../../js/core/profile.js?v=4"></script>
 </body>
 </html>

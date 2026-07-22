@@ -16,6 +16,42 @@ async function fetchHomeSummary() {
   }
 }
 
+function computeDeltaPct(current, baseline) {
+  const cur = Number(current) || 0;
+  const base = Number(baseline) || 0;
+  if (base === 0 && cur === 0) return null;
+  if (base === 0) return 100;
+  return ((cur - base) / base) * 100;
+}
+
+function deltaTone(current, baseline) {
+  const pct = computeDeltaPct(current, baseline);
+  if (pct == null) return "neutral";
+  if (pct > 10) return "up";
+  if (pct < -10) return "down";
+  return "neutral";
+}
+
+function formatDeltaLabel(current, baseline, vsLabel) {
+  const pct = computeDeltaPct(current, baseline);
+  if (pct == null) return `vs ${vsLabel}: —`;
+  const sign = pct >= 0 ? "+" : "";
+  return `vs ${vsLabel}: ${sign}${pct.toFixed(0)}%`;
+}
+
+function renderDelta(el, current, previous, planned, vsPriorLabel) {
+  if (!el) return;
+  const parts = [];
+  parts.push(formatDeltaLabel(current, previous, vsPriorLabel));
+  if (planned != null) {
+    parts.push(formatDeltaLabel(current, planned, "plan"));
+  }
+  el.textContent = parts.join(" · ");
+  // Color by vs-prior when available; otherwise vs-plan.
+  const toneBaseline = previous != null && (Number(previous) || 0) !== 0 ? previous : planned;
+  el.className = `workout-count-delta is-${deltaTone(current, toneBaseline)}`;
+}
+
 export async function initWorkoutCountCard(containerId = "workout-count-card") {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -30,8 +66,32 @@ export async function initWorkoutCountCard(containerId = "workout-count-card") {
 
   const weekEl = container.querySelector("#workout-count-week");
   const monthEl = container.querySelector("#workout-count-month");
+  const yearEl = container.querySelector("#workout-count-year");
   if (weekEl) weekEl.textContent = data.workouts_this_week ?? 0;
   if (monthEl) monthEl.textContent = data.workouts_this_month ?? 0;
+  if (yearEl) yearEl.textContent = data.workouts_this_year ?? 0;
+
+  renderDelta(
+    container.querySelector("#workout-count-week-delta"),
+    data.workouts_this_week ?? 0,
+    data.workouts_last_week ?? 0,
+    data.workouts_planned_this_week ?? 0,
+    "last week"
+  );
+  renderDelta(
+    container.querySelector("#workout-count-month-delta"),
+    data.workouts_this_month ?? 0,
+    data.workouts_last_month ?? 0,
+    data.workouts_planned_this_month ?? 0,
+    "last month"
+  );
+  renderDelta(
+    container.querySelector("#workout-count-year-delta"),
+    data.workouts_this_year ?? 0,
+    data.workouts_last_year ?? 0,
+    data.workouts_planned_this_year ?? 0,
+    "last year"
+  );
 
   container.hidden = false;
 }

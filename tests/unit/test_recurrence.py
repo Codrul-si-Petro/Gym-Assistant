@@ -29,6 +29,21 @@ def test_expand_interval():
     assert dates == [date(2026, 7, 1), date(2026, 7, 4), date(2026, 7, 7), date(2026, 7, 10)]
 
 
+def test_expand_specific_dates():
+    dates = expand_recurrence(
+        date(2026, 7, 1),
+        date(2026, 7, 20),
+        "dates",
+        specific_dates=[date(2026, 7, 20), date(2026, 7, 5), date(2026, 7, 5)],
+    )
+    assert dates == [date(2026, 7, 5), date(2026, 7, 20)]
+
+
+def test_expand_specific_dates_requires_list():
+    with pytest.raises(RecurrenceError):
+        expand_recurrence(date(2026, 7, 1), date(2026, 7, 1), "dates", specific_dates=[])
+
+
 def test_expand_rejects_long_span():
     with pytest.raises(RecurrenceError):
         expand_recurrence(date(2026, 1, 1), date(2027, 2, 1), "interval", interval_days=7)

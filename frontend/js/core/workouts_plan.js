@@ -89,6 +89,54 @@ function getRepeatType() {
     return checked ? checked.value : "once";
 }
 
+/** Sorted unique ISO dates for "Specific dates" recurrence. */
+var specificDates = [];
+
+function renderSpecificDatesList() {
+    var list = document.getElementById("plan_specific_dates_list");
+    if (!list) return;
+    if (!specificDates.length) {
+        list.innerHTML = '<li class="plan-specific-dates-empty">No dates selected yet.</li>';
+        return;
+    }
+    list.innerHTML = specificDates
+        .map(function (d, index) {
+            return (
+                '<li class="plan-specific-date-item">' +
+                "<span>" +
+                d +
+                "</span>" +
+                '<button type="button" class="plan-specific-date-remove" data-index="' +
+                index +
+                '" aria-label="Remove ' +
+                d +
+                '">×</button>' +
+                "</li>"
+            );
+        })
+        .join("");
+}
+
+function addSpecificDateFromInput() {
+    var input = document.getElementById("plan_specific_date_input");
+    if (!input || !input.value) return;
+    var value = input.value;
+    if (specificDates.indexOf(value) !== -1) {
+        showMessage("That date is already selected.", "error");
+        return;
+    }
+    if (specificDates.length >= MAX_OCCURRENCES) {
+        showMessage("Too many dates (max " + MAX_OCCURRENCES + ").", "error");
+        return;
+    }
+    specificDates.push(value);
+    specificDates.sort();
+    input.value = "";
+    renderSpecificDatesList();
+    updatePreview();
+    showMessage("");
+}
+
 function getSelectedWeekdays() {
     return Array.prototype.slice
         .call(document.querySelectorAll("#weekday_picker input:checked"))
@@ -99,6 +147,15 @@ function getSelectedWeekdays() {
 
 function getRecurrenceFromForm() {
     var type = getRepeatType();
+    if (type === "dates") {
+        if (!specificDates.length) return null;
+        return {
+            type: "dates",
+            start_date: specificDates[0],
+            end_date: specificDates[specificDates.length - 1],
+            dates: specificDates.slice(),
+        };
+    }
     var startDate = document.getElementById("plan_start_date").value;
     var endDate = document.getElementById("plan_end_date").value;
     if (!startDate) return null;
@@ -116,7 +173,11 @@ function getRecurrenceFromForm() {
 }
 
 function expandRecurrence(recurrence) {
-    if (!recurrence || !recurrence.start_date) return [];
+    if (!recurrence) return [];
+    if (recurrence.type === "dates") {
+        return (recurrence.dates || []).slice().sort().slice(0, MAX_OCCURRENCES);
+    }
+    if (!recurrence.start_date) return [];
     var start = recurrence.start_date;
     var end = recurrence.end_date || start;
     if (end < start) return [];
@@ -162,7 +223,14 @@ function updateRepeatUi() {
     var type = getRepeatType();
     document.getElementById("weekday_picker").hidden = type !== "weekly";
     document.getElementById("interval_picker").hidden = type !== "interval";
-    document.getElementById("end_date_field").hidden = type === "once";
+    var datesPicker = document.getElementById("dates_picker");
+    if (datesPicker) datesPicker.hidden = type !== "dates";
+    document.getElementById("end_date_field").hidden = type === "once" || type === "dates";
+    var startField = document.getElementById("start_date_field");
+    if (startField) startField.hidden = type === "dates";
+    var startInput = document.getElementById("plan_start_date");
+    if (startInput) startInput.required = type !== "dates";
+    renderSpecificDatesList();
     updatePreview();
 }
 
@@ -469,6 +537,8 @@ function buildPayload() {
 
     return {
         label: label,
+        description: (document.getElementById("plan_description")?.value || "").trim(),
+        workout_split: (document.getElementById("plan_workout_split")?.value || "").trim(),
         recurrence: recurrence,
         exercises: exercises,
     };
@@ -477,6 +547,10 @@ function buildPayload() {
 function resetBuilder() {
     editingSeriesId = null;
     document.getElementById("plan_label").value = "";
+    var descEl = document.getElementById("plan_description");
+    if (descEl) descEl.value = "";
+    var splitEl = document.getElementById("plan_workout_split");
+    if (splitEl) splitEl.value = "";
     var startEl = document.getElementById("plan_start_date");
     startEl.min = todayIso();
     startEl.value = todayIso();
@@ -486,6 +560,8 @@ function resetBuilder() {
         el.checked = false;
     });
     document.getElementById("plan_interval_days").value = "2";
+    specificDates = [];
+    renderSpecificDatesList();
     exerciseBlocks = [createBlock()];
     document.getElementById("cancel_edit_btn").hidden = true;
     document.getElementById("submit-btn").textContent = "Save plan";
@@ -494,9 +570,39 @@ function resetBuilder() {
     renderExercises();
 }
 
+function syncSplitChips(labelValue) {
+    // Kept as no-op for older call sites; splits now come from profile datalist.
+}
+
+function loadUserSplitSuggestions() {
+    var list = document.getElementById("user_split_suggestions");
+    if (!list) return Promise.resolve();
+    var headers = getAuthHeaders();
+    if (!headers) return Promise.resolve();
+    return fetch(API_BASE + "/api/auth/current-user/", { headers: headers })
+        .then(function (res) {
+            return res.ok ? res.json() : null;
+        })
+        .then(function (user) {
+            var splits = (user && Array.isArray(user.workout_splits) ? user.workout_splits : []) || [];
+            list.innerHTML = splits
+                .map(function (name) {
+                    return '<option value="' + String(name).replace(/"/g, "&quot;") + '"></option>';
+                })
+                .join("");
+        })
+        .catch(function () {
+            list.innerHTML = "";
+        });
+}
+
 function loadPlanIntoBuilder(plan) {
     editingSeriesId = plan.plan_series_id;
     document.getElementById("plan_label").value = plan.label || "";
+    var descEl = document.getElementById("plan_description");
+    if (descEl) descEl.value = plan.description || "";
+    var splitEl = document.getElementById("plan_workout_split");
+    if (splitEl) splitEl.value = plan.workout_split || "";
     var startEl = document.getElementById("plan_start_date");
     // Existing plans may have started in the past; relax min so the field
     // still displays/round-trips correctly while editing.
@@ -509,6 +615,8 @@ function loadPlanIntoBuilder(plan) {
         el.checked = (plan.recurrence.weekdays || []).indexOf(el.value) !== -1;
     });
     document.getElementById("plan_interval_days").value = plan.recurrence.interval_days || 2;
+    specificDates = (plan.recurrence.dates || []).slice().sort();
+    renderSpecificDatesList();
 
     exerciseBlocks = (plan.exercises || []).map(function (ex) {
         blockIdCounter += 1;
@@ -551,11 +659,81 @@ function loadPlanIntoBuilder(plan) {
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+/**
+ * Prefills the builder from an existing plan as a *new* plan (POST on save).
+ * Resets the schedule so the user must pick the target day/recurrence.
+ */
+function duplicatePlanIntoBuilder(plan) {
+    editingSeriesId = null;
+    document.getElementById("plan_label").value = plan.label || "";
+    var descEl = document.getElementById("plan_description");
+    if (descEl) descEl.value = plan.description || "";
+    var splitEl = document.getElementById("plan_workout_split");
+    if (splitEl) splitEl.value = plan.workout_split || "";
+
+    var startEl = document.getElementById("plan_start_date");
+    startEl.min = todayIso();
+    startEl.value = todayIso();
+    document.getElementById("plan_end_date").value = "";
+    document.querySelector('input[name="repeat_type"][value="once"]').checked = true;
+    document.querySelectorAll("#weekday_picker input").forEach(function (el) {
+        el.checked = false;
+    });
+    document.getElementById("plan_interval_days").value = "2";
+
+    exerciseBlocks = (plan.exercises || []).map(function (ex) {
+        blockIdCounter += 1;
+        var exerciseName = "";
+        Object.keys(exerciseMap).forEach(function (name) {
+            if (exerciseMap[name] === ex.exercise) exerciseName = name;
+        });
+        return {
+            id: blockIdCounter,
+            exerciseName: exerciseName,
+            sets: (ex.sets || []).map(function (set) {
+                var equipmentName = "None";
+                var attachmentName = "None";
+                Object.keys(equipmentMap).forEach(function (name) {
+                    if (equipmentMap[name] === set.equipment) equipmentName = name;
+                });
+                Object.keys(attachmentMap).forEach(function (name) {
+                    if (attachmentMap[name] === set.attachment) attachmentName = name;
+                });
+                if (set.equipment == null) equipmentName = "";
+                if (set.attachment == null) attachmentName = "";
+                return {
+                    reps: set.reps,
+                    load: set.load,
+                    unit: set.unit || "KG",
+                    equipmentName: equipmentName === "None" ? "" : equipmentName,
+                    attachmentName: attachmentName === "None" ? "" : attachmentName,
+                    setType: set.set_type || "Working set",
+                };
+            }),
+        };
+    });
+    if (!exerciseBlocks.length) exerciseBlocks = [createBlock()];
+
+    document.getElementById("cancel_edit_btn").hidden = true;
+    document.getElementById("submit-btn").textContent = "Save plan";
+    updateRepeatUi();
+    updateEndDateMax();
+    renderExercises();
+    showMessage("Copied. Pick the new day or schedule, then save.", "success");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 function recurrenceSummary(plan) {
     var r = plan.recurrence;
     if (r.type === "once") return "Once on " + r.start_date;
     if (r.type === "weekly") {
         return "Every " + (r.weekdays || []).join(", ") + " until " + r.end_date;
+    }
+    if (r.type === "dates") {
+        var dates = r.dates || [];
+        if (!dates.length) return "Specific dates";
+        if (dates.length === 1) return "On " + dates[0];
+        return dates.length + " specific dates (" + dates[0] + " … " + dates[dates.length - 1] + ")";
     }
     return "Every " + (r.interval_days || 1) + " days until " + r.end_date;
 }
@@ -590,6 +768,7 @@ function renderMyPlans(plans) {
                 "</p>" +
                 '<div class="my-plan-actions">' +
                 '<button type="button" class="plan-secondary-btn edit-plan">Edit</button>' +
+                '<button type="button" class="plan-secondary-btn copy-plan">Copy</button>' +
                 '<button type="button" class="plan-secondary-btn delete-plan-future">Delete future</button>' +
                 '<button type="button" class="plan-danger-btn delete-plan-all">Delete all</button>' +
                 "</div>" +
@@ -723,6 +902,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     ).then(function () {
         resetBuilder();
+        loadUserSplitSuggestions();
         loadMyPlans();
     });
 
@@ -736,6 +916,24 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     document.getElementById("plan_end_date").addEventListener("change", updatePreview);
     document.getElementById("plan_interval_days").addEventListener("input", updatePreview);
+    document.getElementById("plan_specific_date_add")?.addEventListener("click", addSpecificDateFromInput);
+    document.getElementById("plan_specific_date_input")?.addEventListener("change", function () {
+        /* optional: auto-add on pick — keep explicit Add for clarity */
+    });
+    document.getElementById("plan_specific_dates_list")?.addEventListener("click", function (e) {
+        var btn = e.target.closest(".plan-specific-date-remove");
+        if (!btn) return;
+        var index = parseInt(btn.getAttribute("data-index"), 10);
+        if (!isFinite(index)) return;
+        specificDates.splice(index, 1);
+        renderSpecificDatesList();
+        updatePreview();
+    });
+    var specificDateInput = document.getElementById("plan_specific_date_input");
+    if (specificDateInput) {
+        specificDateInput.min = todayIso();
+        specificDateInput.max = addDaysIso(todayIso(), MAX_PLAN_SPAN_DAYS);
+    }
 
     document.getElementById("add_exercise_btn").addEventListener("click", function () {
         syncAllBlocksFromDom();
@@ -823,7 +1021,8 @@ document.addEventListener("DOMContentLoaded", function () {
         var card = e.target.closest(".my-plan-card");
         if (!card) return;
         var seriesId = card.getAttribute("data-series-id");
-        if (e.target.classList.contains("edit-plan")) {
+        if (e.target.classList.contains("edit-plan") || e.target.classList.contains("copy-plan")) {
+            var asCopy = e.target.classList.contains("copy-plan");
             var headers = getAuthHeaders();
             if (!headers) return;
             fetch(API_BASE + "/api/plan-series/" + seriesId + "/", { headers: headers })
@@ -831,8 +1030,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     return res.ok ? res.json() : null;
                 })
                 .then(function (plan) {
-                    if (plan) loadPlanIntoBuilder(plan);
-                    else showMessage("Could not load plan.", "error");
+                    if (!plan) {
+                        showMessage("Could not load plan.", "error");
+                        return;
+                    }
+                    if (asCopy) duplicatePlanIntoBuilder(plan);
+                    else loadPlanIntoBuilder(plan);
                 });
         } else if (e.target.classList.contains("delete-plan-future")) {
             deletePlan(seriesId, "future");

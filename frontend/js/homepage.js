@@ -5,10 +5,12 @@ const words = ["inspiration.", "passion.", "motivation."];
 let wordIndex = 0;
 
 setInterval(() => {
-  const el = document.getElementById("word");
-  if (!el) return;
+  const els = document.querySelectorAll(".hero-rotating-word");
+  if (!els.length) return;
   wordIndex = (wordIndex + 1) % words.length;
-  el.textContent = words[wordIndex];
+  els.forEach((el) => {
+    el.textContent = words[wordIndex];
+  });
 }, 1500);
 
 function formatNumber(value) {
@@ -63,6 +65,7 @@ async function loadHomeSummary() {
   const liftedEl = document.getElementById("home-total-lifted");
   const weekTrendEl = document.getElementById("home-week-trend");
   const monthTrendEl = document.getElementById("home-month-trend");
+  const yearTrendEl = document.getElementById("home-year-trend");
   const memberNameEl = document.getElementById("member-name");
   if (!token || !statsEl || !inactivityEl || !liftedEl) return;
 
@@ -111,6 +114,9 @@ async function loadHomeSummary() {
     }
     if (monthTrendEl) {
       renderTrendComparison(monthTrendEl, data.workouts_this_month ?? 0, data.workouts_last_month ?? 0, "month");
+    }
+    if (yearTrendEl) {
+      renderTrendComparison(yearTrendEl, data.workouts_this_year ?? 0, data.workouts_last_year ?? 0, "year");
     }
 
     statsEl.hidden = false;

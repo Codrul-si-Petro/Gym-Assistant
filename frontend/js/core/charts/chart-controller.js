@@ -1,7 +1,7 @@
 // Controls which content loads per tab and wires shared date controls.
 
-import { API_BASE, BASE, TODAY, getAuthHeaders, syncDateFilters } from "../../utils.js";
-import { convertKgToPreferred, getPreferredUnit, setPreferredUnit, unitSuffix } from "../../user-preferences.js";
+import { BASE, TODAY, syncDateFilters } from "../../utils.js?v=2";
+import { getPreferredUnit, unitSuffix } from "../../user-preferences.js";
 // The ?v= on these two imports is a manual cache-buster — bump it whenever
 // chart-renderers.js/data-fetch.js change. They aren't covered by the ?v= on
 // the <script> tag that loads this file, so edits here can silently keep
@@ -14,12 +14,15 @@ import {
   renderVolumeDailyTimeSeries,
   renderWorkoutSplitsChart,
   renderGymWeekdaysChart,
+  renderSessionsTable,
   toggleVolumeDeltaDisplayMode,
   resetVolumeDeltaDisplayMode,
-} from "./chart-renderers.js?v=8";
-import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSplits } from "./data-fetch.js?v=3";
+  formatVolume,
+} from "./chart-renderers.js?v=12";
+import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSessions, fetchWorkoutSplits } from "./data-fetch.js?v=4";
 
 let volumeParentId = null;
+/** Stack of { id, name, total_volume } for breadcrumb while drilling. */
 const volumeParentStack = [];
 let volumePeriod = "all";
 /** Skip resetting to All when date inputs are updated by a period chip. */
@@ -31,6 +34,9 @@ let volumeDailyChartType = "line"; // "line" | "bar"
 let preferredUnit = getPreferredUnit();
 /** Cached for click-to-toggle delta display without refetching. */
 let lastVolumeTableResults = [];
+/** Cached sessions table payload for delta toggle re-render. */
+let lastSessionsResults = [];
+let lastSessionsComparisons = {};
 
 const dateFrom = document.getElementById("start_date");
 const dateTo = document.getElementById("end_date");
@@ -54,7 +60,11 @@ function getPeriodDateRange(period) {
 }
 
 function setActivePeriodChip(period) {
-  document.querySelectorAll(".volume-period-chip").forEach((el) => {
+  const activePanel = document.querySelector(".chart-panel.active") || document.getElementById("tab-volume");
+  const chips = activePanel
+    ? activePanel.querySelectorAll(".volume-period-chip")
+    : document.querySelectorAll(".volume-period-chip");
+  chips.forEach((el) => {
     el.classList.toggle("is-active", el.dataset.period === period);
   });
 }
@@ -74,7 +84,7 @@ function applyPeriodChip(period) {
   }
   syncDateFilters();
   dateChangeFromChip = false;
-  void loadVolumeTable();
+  void reloadActiveTab();
   if (volumeDailySelection) void reloadVolumeDailyChart();
 }
 
@@ -94,20 +104,9 @@ function updateVolumeHeadingUnit() {
 }
 
 async function loadPreferredUnit() {
-  const headers = getAuthHeaders();
-  if (!headers) {
-    preferredUnit = getPreferredUnit();
-    updateVolumeHeadingUnit();
-    return;
-  }
-  try {
-    const res = await fetch(`${API_BASE}/api/auth/current-user/`, { headers });
-    if (!res.ok) throw new Error("not-authenticated");
-    const user = await res.json();
-    preferredUnit = setPreferredUnit(user?.preferred_unit || "KG");
-  } catch {
-    preferredUnit = getPreferredUnit();
-  }
+  // Metrics prefers localStorage (quick KG/LBS toggle) over the server default.
+  // Profile remains the durable sync path for preferred_unit.
+  preferredUnit = getPreferredUnit();
   updateVolumeHeadingUnit();
 }
 
@@ -163,7 +162,7 @@ function setVolumeTableVisible(visible) {
 function setVolumeMainView(mode) {
   const scrollWrap = document.querySelector("#tab-volume .chart-scroll-wrap");
   const chartBlock = document.getElementById("volume-daily-chart-block");
-  const periodChips = document.querySelector(".volume-period-chips");
+  const periodChips = document.querySelector("#tab-volume .volume-period-chips");
   if (!scrollWrap || !chartBlock) return;
 
   if (mode === "chart") {
@@ -182,6 +181,19 @@ function updateVolumeToolbar() {
   const toolbar = document.getElementById("volume-toolbar");
   if (!toolbar) return;
   toolbar.hidden = volumeParentId == null;
+  const crumb = document.getElementById("volume-breadcrumb");
+  if (!crumb) return;
+  if (!volumeParentStack.length) {
+    crumb.textContent = "";
+    return;
+  }
+  // Roots are non-overlapping; summing stack totals would double-count ancestors.
+  // Show the path of names and the current parent's own total (last stack entry).
+  const path = volumeParentStack
+    .map((entry) => shortLabel(entry.name || "Exercise", 18))
+    .join(" → ");
+  const current = volumeParentStack[volumeParentStack.length - 1];
+  crumb.textContent = `${path} — ${formatVolume(current.total_volume, preferredUnit)} ${unitSuffix(preferredUnit)}`;
 }
 
 // function navigateToVolumeChart(exerciseId, exerciseName) {
@@ -231,7 +243,11 @@ function closeVolumeDailyChart() {
 function buildVolumeTableHandlers() {
   return {
     onDrill: (row) => {
-      volumeParentStack.push(volumeParentId);
+      volumeParentStack.push({
+        id: volumeParentId,
+        name: row.exercise_name || "",
+        total_volume: Number(row.total_volume) || 0,
+      });
       volumeParentId = row.exercise_id;
       loadVolumeTable();
     },
@@ -239,6 +255,14 @@ function buildVolumeTableHandlers() {
     onDeltaToggle: () => {
       toggleVolumeDeltaDisplayMode();
       renderVolumeTable(lastVolumeTableResults, preferredUnit, volumePeriod, buildVolumeTableHandlers());
+      if (lastSessionsResults.length) {
+        renderSessionsTable(
+          lastSessionsResults,
+          volumePeriod,
+          lastSessionsComparisons,
+          buildVolumeTableHandlers().onDeltaToggle
+        );
+      }
     },
   };
 }
@@ -297,7 +321,7 @@ async function openVolumeDailyChart(row) {
 function onDateChange() {
   syncDateFilters();
   const active = document.querySelector(".chart-tab.active")?.dataset.tab;
-  if (active === "volume" && !dateChangeFromChip) {
+  if ((active === "volume" || active === "sessions") && !dateChangeFromChip) {
     volumePeriod = "all";
     setActivePeriodChip("all");
     resetVolumeDeltaDisplayMode();
@@ -310,11 +334,12 @@ function onDateChange() {
     })();
     return;
   }
+  if (active === "sessions") loadWorkoutSessionsTable();
   if (active === "splits") loadWorkoutSplitsChart();
   if (active === "weekdays") loadGymWeekdaysChart();
 }
 
-const METRICS_TABS = new Set(["volume", "favourites", "splits", "weekdays"]);
+const METRICS_TABS = new Set(["volume", "favourites", "sessions", "splits", "weekdays"]);
 const DEFAULT_METRICS_TAB = "volume";
 
 function getTabFromLocation() {
@@ -339,6 +364,7 @@ function syncTabToLocation(tab) {
 function loadTabData(tab) {
   if (tab === "favourites") loadFavExercisesChart();
   if (tab === "volume") loadVolumeTable();
+  if (tab === "sessions") loadWorkoutSessionsTable();
   if (tab === "splits") loadWorkoutSplitsChart();
   if (tab === "weekdays") loadGymWeekdaysChart();
 }
@@ -481,6 +507,48 @@ async function loadVolumeTable() {
   }
 }
 
+async function loadWorkoutSessionsTable() {
+  const msg = document.getElementById("chart-msg");
+  const skeleton = document.getElementById("chart-skeleton-sessions");
+  const chartInner = document.getElementById("sessions-table-inner");
+
+  if (msg) msg.textContent = "";
+  if (skeleton) skeleton.classList.remove("hidden");
+  if (chartInner) chartInner.style.display = "none";
+
+  const { start, end } = getDateRange();
+  try {
+    const data = await fetchWorkoutSessions(start, end);
+    const results = data?.results || [];
+    const comparisons = data?.comparisons || {};
+    if (!results.length) {
+      if (msg) msg.textContent = "No sessions in this range.";
+      if (skeleton) skeleton.classList.add("hidden");
+      lastSessionsResults = [];
+      lastSessionsComparisons = {};
+      return;
+    }
+    if (skeleton) skeleton.classList.add("hidden");
+    if (chartInner) chartInner.style.display = "";
+    lastSessionsResults = results;
+    lastSessionsComparisons = comparisons;
+    const onDeltaToggle = () => {
+      toggleVolumeDeltaDisplayMode();
+      if (lastVolumeTableResults.length) {
+        renderVolumeTable(lastVolumeTableResults, preferredUnit, volumePeriod, buildVolumeTableHandlers());
+      }
+      renderSessionsTable(lastSessionsResults, volumePeriod, lastSessionsComparisons, onDeltaToggle);
+    };
+    renderSessionsTable(results, volumePeriod, comparisons, onDeltaToggle);
+  } catch (err) {
+    if (msg) msg.textContent = "Failed to load sessions.";
+    if (skeleton) skeleton.classList.add("hidden");
+    if (String(err.message || "").includes("401")) {
+      window.location.replace(BASE + "/pages/auth/login.html");
+    }
+  }
+}
+
 async function loadWorkoutSplitsChart() {
   await loadSimpleChart({
     skeletonId: "chart-skeleton-splits",
@@ -525,7 +593,7 @@ if (dateTo) {
 }
 if (dateTo && !dateTo.value) dateTo.value = TODAY;
 
-document.querySelectorAll(".volume-period-chip").forEach((chip) => {
+document.querySelectorAll("#tab-volume .volume-period-chip, #tab-sessions .volume-period-chip").forEach((chip) => {
   chip.addEventListener("click", () => {
     applyPeriodChip(chip.dataset.period || "all");
   });
@@ -534,8 +602,8 @@ document.querySelectorAll(".volume-period-chip").forEach((chip) => {
 const volumeBackBtn = document.getElementById("volume-back-btn");
 if (volumeBackBtn) {
   volumeBackBtn.addEventListener("click", () => {
-
-    volumeParentId = volumeParentStack.length ? volumeParentStack.pop() : null;
+    const prev = volumeParentStack.length ? volumeParentStack.pop() : null;
+    volumeParentId = prev ? prev.id : null;
     loadVolumeTable();
   });
 }
@@ -570,6 +638,7 @@ async function reloadActiveTab() {
   const active = getTabFromLocation();
   if (active === "favourites") await loadFavExercisesChart();
   if (active === "volume") await loadVolumeTable();
+  if (active === "sessions") await loadWorkoutSessionsTable();
   if (active === "splits") await loadWorkoutSplitsChart();
   if (active === "weekdays") await loadGymWeekdaysChart();
 }

@@ -16,6 +16,7 @@ from rest_framework.response import Response
 
 from backend.email_sender import MailerSendPasswordResetForm
 
+from .models import UserWorkoutSplit
 from .serializers import (
     ChangePasswordSerializer,
     LoginSerializer,
@@ -190,6 +191,10 @@ def api_delete_account(request):
     )
 
 
+def _user_workout_split_names(user):
+    return list(user.workout_splits.order_by("position", "id").values_list("name", flat=True))
+
+
 @swagger_auto_schema(
     method="get",
     operation_description="Get the currently authenticated user's information. Returns user details if authenticated, null otherwise.",
@@ -203,6 +208,11 @@ def api_delete_account(request):
                     "email": openapi.Schema(type=openapi.TYPE_STRING),
                     "id": openapi.Schema(type=openapi.TYPE_INTEGER),
                     "preferred_unit": openapi.Schema(type=openapi.TYPE_STRING),
+                    "workout_splits": openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Schema(type=openapi.TYPE_STRING),
+                    ),
+                    "workout_splits_configured": openapi.Schema(type=openapi.TYPE_BOOLEAN),
                 },
             ),
         ),
@@ -219,6 +229,9 @@ def current_user(request):
                 "email": request.user.email,
                 "id": request.user.id,
                 "preferred_unit": request.user.preferred_unit,
+                "workout_splits": _user_workout_split_names(request.user),
+                # getattr: safe if migration 0009 has not been applied yet.
+                "workout_splits_configured": bool(getattr(request.user, "workout_splits_configured", False)),
             }
         )
     return Response(None)
@@ -362,8 +375,36 @@ def api_update_preferences(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     user = request.user
-    user.preferred_unit = serializer.validated_data["preferred_unit"]
-    user.save(update_fields=["preferred_unit"])
+    update_fields = []
+    if "preferred_unit" in serializer.validated_data:
+        user.preferred_unit = serializer.validated_data["preferred_unit"]
+        update_fields.append("preferred_unit")
+
+    if "workout_splits" in serializer.validated_data:
+        names = serializer.validated_data["workout_splits"]
+        user.workout_splits.all().delete()
+        UserWorkoutSplit.objects.bulk_create(
+            [UserWorkoutSplit(user=user, name=name, position=index) for index, name in enumerate(names)]
+        )
+        # Saving splits (including an explicit empty opt-out list) completes onboarding.
+        if not user.workout_splits_configured:
+            user.workout_splits_configured = True
+            update_fields.append("workout_splits_configured")
+
+    if serializer.validated_data.get("workout_splits_configured") is True:
+        if not user.workout_splits_configured:
+            user.workout_splits_configured = True
+            update_fields.append("workout_splits_configured")
+
+    if update_fields:
+        user.save(update_fields=update_fields)
+
     return Response(
-        {"message": "Preferences updated.", "preferred_unit": user.preferred_unit}, status=status.HTTP_200_OK
+        {
+            "message": "Preferences updated.",
+            "preferred_unit": user.preferred_unit,
+            "workout_splits": _user_workout_split_names(user),
+            "workout_splits_configured": user.workout_splits_configured,
+        },
+        status=status.HTTP_200_OK,
     )
