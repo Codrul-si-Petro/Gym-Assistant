@@ -1,17 +1,6 @@
 // useful variables and functions to be reused across the project
-// will have to deprecate a lot of stuff after
-const IS_LOCAL =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1" ||
-  window.location.hostname === "::1";
-
-export const API_BASE = IS_LOCAL
-  ? "http://127.0.0.1:8000"
-  : "https://api.gym-assistant.app";
-
-export const BASE = IS_LOCAL
-  ? window.location.origin
-  : "https://gym-assistant.app";
+// API_BASE / FRONTEND_URL come from config.js (single source of truth for modules).
+export { API_BASE, FRONTEND_URL as BASE, API_PREFIX } from "./config.js";
 
 export const TODAY = (() => {
   const d = new Date();
@@ -32,6 +21,162 @@ export function getAuthHeaders() {
     "Accept": "application/json",
     "Content-Type": "application/json",
   };
+}
+
+let _messageHideTimer = null;
+
+/**
+ * Shared status toast for ES module pages.
+ * Classic pages use general-components/status-message.js (same API).
+ * @param {string} text
+ * @param {"success"|"error"|""} [type]
+ * @param {{ elementId?: string, baseClass?: string, autoHideMs?: number|null }} [opts]
+ */
+export function showMessage(text, type = "", opts = {}) {
+  const el = document.getElementById(opts.elementId || "message");
+  if (!el) return;
+  if (_messageHideTimer != null) {
+    clearTimeout(_messageHideTimer);
+    _messageHideTimer = null;
+  }
+  const baseClass = opts.baseClass || "message";
+  const typeClass =
+    type === "success" ? "success" : type === "error" ? "error" : type || "";
+  el.textContent = text;
+  el.className = typeClass ? `${baseClass} ${typeClass}`.trim() : baseClass;
+  el.removeAttribute("hidden");
+
+  const autoHideMs =
+    opts.autoHideMs !== undefined
+      ? opts.autoHideMs
+      : type === "success"
+        ? 4000
+        : null;
+  if (autoHideMs != null) {
+    _messageHideTimer = setTimeout(() => {
+      _messageHideTimer = null;
+      el.textContent = "";
+      el.className = baseClass;
+    }, autoHideMs);
+  }
+}
+
+/** Shared vs-prior / vs-plan percent delta (null baseline → null). */
+export function computeDeltaPct(current, baseline) {
+  if (baseline == null) return null;
+  const cur = Number(current) || 0;
+  const base = Number(baseline) || 0;
+  if (base === 0 && cur === 0) return null;
+  if (base === 0) return 100;
+  return ((cur - base) / base) * 100;
+}
+
+/** Tone for delta coloring: up / down / neutral (≈±10% thresholds). */
+export function deltaTone(current, baseline) {
+  const pct = computeDeltaPct(current, baseline);
+  if (pct == null) return "neutral";
+  if (pct > 10) return "up";
+  if (pct < -10) return "down";
+  return "neutral";
+}
+
+/**
+ * Read a tab/section key from location hash or ?tab=, falling back to defaultKey.
+ * @param {Set<string>|Record<string, unknown>} allowed
+ * @param {string} defaultKey
+ */
+export function getTabFromLocation(allowed, defaultKey) {
+  const isAllowed =
+    allowed instanceof Set
+      ? (key) => allowed.has(key)
+      : (key) => Object.prototype.hasOwnProperty.call(allowed, key);
+  const hash = location.hash.replace(/^#/, "");
+  if (isAllowed(hash)) return hash;
+  const tabParam = new URLSearchParams(location.search).get("tab");
+  if (isAllowed(tabParam)) return tabParam;
+  return defaultKey;
+}
+
+/** Sync hash to the active tab; clears hash when on the default tab. */
+export function syncTabToLocation(tab, defaultKey) {
+  const nextHash = tab === defaultKey ? "" : `#${tab}`;
+  const nextUrl = `${location.pathname}${location.search}${nextHash}`;
+  const currentUrl = `${location.pathname}${location.search}${location.hash}`;
+  if (currentUrl !== nextUrl) {
+    history.replaceState(null, "", nextUrl);
+  }
+}
+
+/**
+ * Bind document click-outside + Escape to close an open overlay/menu.
+ * Each consumer keeps its own open-state CSS/ARIA contract.
+ * @param {{ isOpen: () => boolean, onClose: () => void, isInside: (target: EventTarget|null) => boolean }} opts
+ * @returns {() => void} unbind
+ */
+export function bindDismissOnOutsideOrEscape({ isOpen, onClose, isInside }) {
+  function onClick(event) {
+    if (!isOpen()) return;
+    if (isInside(event.target)) return;
+    onClose();
+  }
+  function onKey(event) {
+    if (event.key === "Escape" && isOpen()) onClose();
+  }
+  document.addEventListener("click", onClick);
+  document.addEventListener("keydown", onKey);
+  return () => {
+    document.removeEventListener("click", onClick);
+    document.removeEventListener("keydown", onKey);
+  };
+}
+
+function flattenErrorLeaves(data) {
+  if (data == null) return [];
+  if (typeof data === "string") return [data];
+  if (Array.isArray(data)) return data.flatMap(flattenErrorLeaves);
+  if (typeof data === "object") {
+    return Object.keys(data).flatMap((key) => flattenErrorLeaves(data[key]));
+  }
+  return [String(data)];
+}
+
+/**
+ * Flatten DRF-style error payloads into a single user-facing string.
+ * @param {*} data
+ * @param {{ fallback?: string, humanize?: function, includeKey?: boolean, leavesOnly?: boolean, joiner?: string }} [opts]
+ */
+export function formatApiErrors(data, opts = {}) {
+  const fallback = opts.fallback || "Something went wrong.";
+  if (data == null) return fallback;
+  if (typeof data === "string") return data;
+
+  if (opts.leavesOnly) {
+    const leaves = flattenErrorLeaves(data);
+    const unique = [...new Set(leaves)];
+    return unique.length ? unique.join(opts.joiner || " ") : fallback;
+  }
+
+  if (Array.isArray(data)) {
+    return data.map(String).join(opts.joiner || " ") || fallback;
+  }
+  if (typeof data !== "object") return String(data);
+  if (data.detail) return String(data.detail);
+  if (data.non_field_errors) {
+    return data.non_field_errors.map(String).join(opts.joiner || " ") || fallback;
+  }
+
+  const parts = [];
+  const includeKey = opts.includeKey !== false;
+  Object.keys(data).forEach((key) => {
+    const val = data[key];
+    const messages = Array.isArray(val) ? val : [String(val)];
+    messages.forEach((msg) => {
+      if (opts.humanize) parts.push(opts.humanize(key, String(msg)));
+      else if (includeKey) parts.push(`${key}: ${msg}`);
+      else parts.push(String(msg));
+    });
+  });
+  return parts.length ? parts.join(opts.joiner || " ") : fallback;
 }
 
 // to be used when the date filters are present 

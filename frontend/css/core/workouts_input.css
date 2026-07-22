@@ -54,7 +54,7 @@ body {
     box-shadow: var(--shadow-lg);
     background: rgba(127, 29, 29, 0.95);
     color: #fecaca;
-    border: 1px solid rgba(248, 113, 113, 0.5);
+    border: 1px solid var(--danger-alpha-strong);
 }
 
 .message:empty {
@@ -219,14 +219,14 @@ body {
     font-size: 13px;
     color: #f87171;
     background: transparent;
-    border: 1px solid rgba(248, 113, 113, 0.4);
+    border: 1px solid var(--danger-alpha-strong);
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
 }
 
 .btn-delete:hover {
-    background: rgba(248, 113, 113, 0.15);
+    background: var(--danger-alpha-weak);
 }
 
 @media (max-width: 600px) {

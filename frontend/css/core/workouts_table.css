@@ -63,7 +63,7 @@ body {
     padding: 0 6px;
     border-radius: 10px;
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
     font-size: 0.75rem;
     font-weight: 700;
 }
@@ -135,7 +135,7 @@ body {
 .filters-apply {
     border: none;
     background: var(--accent-gradient);
-    color: #fff;
+    color: var(--on-accent);
 }
 
 .filters-clear {
@@ -174,7 +174,7 @@ body {
 
 .edit-col,
 .edit-col-header {
-    width: 44px;
+    width: var(--touch-target);
     text-align: center;
     position: sticky;
     right: 0;

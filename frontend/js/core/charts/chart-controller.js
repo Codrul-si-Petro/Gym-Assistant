@@ -1,6 +1,6 @@
 // Controls which content loads per tab and wires shared date controls.
 
-import { BASE, TODAY, syncDateFilters } from "../../utils.js?v=2";
+import { BASE, TODAY, syncDateFilters, getTabFromLocation, syncTabToLocation } from "../../utils.js?v=3";
 import { getPreferredUnit, unitSuffix } from "../../user-preferences.js";
 // The ?v= on these two imports is a manual cache-buster — bump it whenever
 // chart-renderers.js/data-fetch.js change. They aren't covered by the ?v= on
@@ -18,8 +18,8 @@ import {
   toggleVolumeDeltaDisplayMode,
   resetVolumeDeltaDisplayMode,
   formatVolume,
-} from "./chart-renderers.js?v=12";
-import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSessions, fetchWorkoutSplits } from "./data-fetch.js?v=4";
+} from "./chart-renderers.js?v=13";
+import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSessions, fetchWorkoutSplits } from "./data-fetch.js?v=5";
 
 let volumeParentId = null;
 /** Stack of { id, name, total_volume } for breadcrumb while drilling. */
@@ -27,6 +27,10 @@ const volumeParentStack = [];
 let volumePeriod = "all";
 /** Skip resetting to All when date inputs are updated by a period chip. */
 let dateChangeFromChip = false;
+
+function redirectToLogin() {
+  window.location.replace(BASE + "/pages/auth/login.html");
+}
 
 /** While the daily chart panel is open, refetch daily volume on date change. */
 let volumeDailySelection = null; // { exerciseId: number, exerciseName: string } | null
@@ -48,7 +52,14 @@ function getPeriodDateRange(period) {
     const monday = new Date(today);
     const isoDay = monday.getDay() === 0 ? 7 : monday.getDay();
     monday.setDate(monday.getDate() - (isoDay - 1));
-    return { start: monday.toISOString().slice(0, 10), end };
+    // Local calendar date (not UTC) — matches TODAY and other page helpers.
+    const start =
+      monday.getFullYear() +
+      "-" +
+      String(monday.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(monday.getDate()).padStart(2, "0");
+    return { start, end };
   }
   if (period === "mtd") {
     return { start: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`, end };
@@ -144,7 +155,7 @@ async function reloadVolumeDailyChart() {
     destroyChart("volume-daily-canvas");
     if (inner) inner.style.display = "none";
     if (String(e.message || "").includes("401")) {
-      window.location.replace(BASE + "/pages/auth/login.html");
+      redirectToLogin();
     }
   }
 }
@@ -194,35 +205,6 @@ function updateVolumeToolbar() {
     .join(" → ");
   const current = volumeParentStack[volumeParentStack.length - 1];
   crumb.textContent = `${path} — ${formatVolume(current.total_volume, preferredUnit)} ${unitSuffix(preferredUnit)}`;
-}
-
-// function navigateToVolumeChart(exerciseId, exerciseName) {
-//   const u = new URL(window.location.href);
-//   u.searchParams.set("volumeChart", String(exerciseId));
-//   if (exerciseName) u.searchParams.set("volumeChartName", exerciseName);
-//   if (dateFrom?.value) u.searchParams.set("start_date", dateFrom.value);
-//   if (dateTo?.value) u.searchParams.set("end_date", dateTo.value);
-//   window.location.href = u.toString();
-//
-const VOLUME_CHART_TOAST_MS = 2000;
-const VOLUME_CHART_TOAST_TEXT = "This feature is not finished yet. Wait for it, it'll be cool.";
-
-let volumeChartToastTimer = null;
-
-function showVolumeChartComingSoonToast() {
-  const el = document.getElementById("volume-chart-toast");
-  if (!el) return;
-  el.textContent = VOLUME_CHART_TOAST_TEXT;
-  el.hidden = false;
-  el.setAttribute("aria-hidden", "false");
-  el.classList.add("volume-chart-toast--visible");
-  if (volumeChartToastTimer) clearTimeout(volumeChartToastTimer);
-  volumeChartToastTimer = setTimeout(() => {
-    el.classList.remove("volume-chart-toast--visible");
-    el.hidden = true;
-    el.setAttribute("aria-hidden", "true");
-    volumeChartToastTimer = null;
-  }, VOLUME_CHART_TOAST_MS);
 }
 
 function closeVolumeDailyChart() {
@@ -313,7 +295,7 @@ async function openVolumeDailyChart(row) {
     volumeDailySelection = null;
     if (inner) inner.style.display = "none";
     if (String(e.message || "").includes("401")) {
-      window.location.replace(BASE + "/pages/auth/login.html");
+      redirectToLogin();
     }
   }
 }
@@ -342,25 +324,6 @@ function onDateChange() {
 const METRICS_TABS = new Set(["volume", "favourites", "sessions", "splits", "weekdays"]);
 const DEFAULT_METRICS_TAB = "volume";
 
-function getTabFromLocation() {
-  const hash = location.hash.replace(/^#/, "");
-  if (METRICS_TABS.has(hash)) return hash;
-
-  const tabParam = new URLSearchParams(location.search).get("tab");
-  if (METRICS_TABS.has(tabParam)) return tabParam;
-
-  return DEFAULT_METRICS_TAB;
-}
-
-function syncTabToLocation(tab) {
-  const nextHash = tab === DEFAULT_METRICS_TAB ? "" : `#${tab}`;
-  const nextUrl = `${location.pathname}${location.search}${nextHash}`;
-  const currentUrl = `${location.pathname}${location.search}${location.hash}`;
-  if (currentUrl !== nextUrl) {
-    history.replaceState(null, "", nextUrl);
-  }
-}
-
 function loadTabData(tab) {
   if (tab === "favourites") loadFavExercisesChart();
   if (tab === "volume") loadVolumeTable();
@@ -380,21 +343,21 @@ function activateTab(tab, { syncLocation = true, loadData = true } = {}) {
   panels.forEach((p) => p.classList.remove("active"));
   document.getElementById(`tab-${tab}`)?.classList.add("active");
 
-  if (syncLocation) syncTabToLocation(tab);
+  if (syncLocation) syncTabToLocation(tab, DEFAULT_METRICS_TAB);
   if (loadData) loadTabData(tab);
 }
 
 const tabs = document.querySelectorAll(".chart-tab");
 const panels = document.querySelectorAll(".chart-panel");
 
-activateTab(getTabFromLocation(), { syncLocation: false, loadData: false });
+activateTab(getTabFromLocation(METRICS_TABS, DEFAULT_METRICS_TAB), { syncLocation: false, loadData: false });
 
 tabs.forEach((tab) => {
   tab.addEventListener("click", () => activateTab(tab.dataset.tab));
 });
 
 window.addEventListener("hashchange", () => {
-  const tab = getTabFromLocation();
+  const tab = getTabFromLocation(METRICS_TABS, DEFAULT_METRICS_TAB);
   const active = document.querySelector(".chart-tab.active")?.dataset.tab;
   if (tab !== active) activateTab(tab, { syncLocation: false });
 });
@@ -435,7 +398,7 @@ async function loadSimpleChart({
     if (canvasId) destroyChart(canvasId);
     if (skeleton) skeleton.classList.add("hidden");
     if (String(err.message || "").includes("401")) {
-      window.location.replace(BASE + "/pages/auth/login.html");
+      redirectToLogin();
     }
   }
 }
@@ -502,7 +465,7 @@ async function loadVolumeTable() {
     if (skeleton) skeleton.classList.add("hidden");
 
     if (String(err.message || "").includes("401")) {
-      window.location.replace(BASE + "/pages/auth/login.html");
+      redirectToLogin();
     }
   }
 }
@@ -544,7 +507,7 @@ async function loadWorkoutSessionsTable() {
     if (msg) msg.textContent = "Failed to load sessions.";
     if (skeleton) skeleton.classList.add("hidden");
     if (String(err.message || "").includes("401")) {
-      window.location.replace(BASE + "/pages/auth/login.html");
+      redirectToLogin();
     }
   }
 }
@@ -635,7 +598,7 @@ if (chartExId && placeholder) {
 }
 
 async function reloadActiveTab() {
-  const active = getTabFromLocation();
+  const active = getTabFromLocation(METRICS_TABS, DEFAULT_METRICS_TAB);
   if (active === "favourites") await loadFavExercisesChart();
   if (active === "volume") await loadVolumeTable();
   if (active === "sessions") await loadWorkoutSessionsTable();
@@ -648,7 +611,7 @@ window.addEventListener("preferred-unit-changed", async () => {
   await reloadActiveTab();
 });
 
-const initialTab = getTabFromLocation();
+const initialTab = getTabFromLocation(METRICS_TABS, DEFAULT_METRICS_TAB);
 void (async () => {
   await loadPreferredUnit();
   setActivePeriodChip(volumePeriod);

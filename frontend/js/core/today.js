@@ -11,14 +11,6 @@ function formatDisplayDate(iso) {
     return d.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 }
 
-function showMessage(text, type) {
-    var el = document.getElementById("message");
-    if (!el) return;
-    el.textContent = text;
-    el.className = "message " + (type === "success" ? "success" : "error");
-    el.removeAttribute("hidden");
-}
-
 function statusBadge(loggedCount, plannedCount) {
     if (loggedCount >= plannedCount) {
         return { text: "Done", className: "today-status-badge today-status-badge--done" };

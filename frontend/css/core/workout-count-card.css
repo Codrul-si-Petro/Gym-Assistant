@@ -9,14 +9,6 @@
   background: transparent; /* blends with the hero, only the outline separates it */
 }
 
-.workout-count-card--metrics {
-  max-width: 720px;
-  grid-template-columns: 1fr 1fr 1fr;
-  margin: 0 var(--page-gutter) 16px;
-  padding: 14px 8px;
-  background: var(--bg-elevated);
-}
-
 .workout-count-card[hidden] {
   display: none !important;
 }
@@ -66,14 +58,12 @@
 }
 
 @media (max-width: 560px) {
-  .workout-count-card,
-  .workout-count-card--metrics {
+  .workout-count-card {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
 
-  .workout-count-card .workout-count-item + .workout-count-item,
-  .workout-count-card--metrics .workout-count-item + .workout-count-item {
+  .workout-count-card .workout-count-item + .workout-count-item {
     border-left: none;
     border-top: 1px solid var(--border-subtle);
     padding-top: 0.75rem;

@@ -10,7 +10,7 @@
 }
 
 .split-onboarding::backdrop {
-  background: rgba(0, 0, 0, 0.72);
+  background: var(--overlay-backdrop);
   backdrop-filter: blur(3px);
 }
 

@@ -42,7 +42,7 @@
 .glossary-tab {
   min-height: var(--touch-target);
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
   color: var(--text-secondary);
@@ -108,7 +108,7 @@
 
 .glossary-badge {
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--bg-hover);
   color: var(--text-secondary);
   font-size: 0.75rem;
@@ -122,7 +122,7 @@
 
 .muscle-tag {
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--bg-hover);
   color: var(--text-secondary);
   font-size: 0.8rem;

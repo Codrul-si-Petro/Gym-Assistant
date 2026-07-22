@@ -34,71 +34,16 @@ var DEFAULT_SUCCESS_MS = 3500;
 /** Delete-last confirmation: keep visible longer (5–10s range). */
 var DELETE_SUCCESS_MS = 7500;
 var MESSAGE_FADE_MS = 300;
-var MESSAGE_MIN_MS = 1000;
 
-/** Cleared when a new success message is shown so old timers do not clear the new text. */
-var successHideTimer = null;
-var successFadeTimer = null;
+// --- Auth & user feedback (showMessage/clearMessage from status-message.js) ---
 
-// --- Auth & user feedback ---
-
-function cancelSuccessTimers() {
-    if (successHideTimer !== null) {
-        clearTimeout(successHideTimer);
-        successHideTimer = null;
-    }
-    if (successFadeTimer !== null) {
-        clearTimeout(successFadeTimer);
-        successFadeTimer = null;
-    }
-}
-
-/**
- * @param {string} text
- * @param {"success"|"error"} type
- * @param {number} [duration] visible time before fade (success only); defaults to DEFAULT_SUCCESS_MS
- */
-function showMessage(text, type, duration) {
-    var el = document.getElementById("message");
-    if (!el) return;
-
-    cancelSuccessTimers();
-
-    el.textContent = text;
-    el.className = "message " + (type === "success" ? "success" : "error");
-    el.removeAttribute("hidden");
-    el.style.opacity = "";
-    el.style.transition = "";
-
-    var defaultDuration = type === "success" ? DEFAULT_SUCCESS_MS : DEFAULT_SUCCESS_MS;
-    var effectiveDuration = Math.max(
-        duration != null ? duration : defaultDuration,
-        MESSAGE_MIN_MS
-    );
-
-    successHideTimer = setTimeout(function () {
-        successHideTimer = null;
-        el.style.opacity = "0";
-        el.style.transition = "opacity " + MESSAGE_FADE_MS + "ms ease";
-
-        successFadeTimer = setTimeout(function () {
-            successFadeTimer = null;
-            el.textContent = "";
-            el.className = "message";
-            el.style.opacity = "";
-            el.style.transition = "";
-        }, MESSAGE_FADE_MS);
-    }, effectiveDuration);
-}
-
-function clearMessage() {
-    cancelSuccessTimers();
-    var el = document.getElementById("message");
-    if (!el) return;
-    el.textContent = "";
-    el.className = "message";
-    el.style.opacity = "";
-    el.style.transition = "";
+function showToast(text, type, duration) {
+    showMessage(text, type, {
+        autoHideMs: type === "success"
+            ? Math.max(duration != null ? duration : DEFAULT_SUCCESS_MS, 1000)
+            : null,
+        fadeMs: MESSAGE_FADE_MS,
+    });
 }
 
 var FIELD_LABELS = {
@@ -142,24 +87,7 @@ function humanizeWorkoutError(key, message) {
 }
 
 function formatApiErrors(data) {
-    if (!data || typeof data !== "object") return "Something went wrong.";
-    var parts = [];
-    if (Array.isArray(data)) {
-        parts = data.map(String);
-    } else if (data.non_field_errors) {
-        parts = data.non_field_errors.map(String);
-    } else if (data.detail) {
-        parts = [String(data.detail)];
-    } else {
-        Object.keys(data).forEach(function (key) {
-            var val = data[key];
-            var messages = Array.isArray(val) ? val : [String(val)];
-            messages.forEach(function (msg) {
-                parts.push(humanizeWorkoutError(key, msg));
-            });
-        });
-    }
-    return parts.length ? parts.join(" ") : "Something went wrong.";
+    return window.formatApiErrors(data, { humanize: humanizeWorkoutError });
 }
 
 // --- Dimension datalists (exercise, attachment, equipment) ---
@@ -245,7 +173,7 @@ function advancePlanFlowAfterSubmit() {
         }
         applyPlanTargetToForm(next);
         window.history.replaceState(null, "", "workouts_input.html?" + buildPlanLogQueryParams(next));
-        showMessage("Saved. Next: " + next.exerciseName + " — set " + next.setIndex + ".", "success");
+        showToast("Saved. Next: " + next.exerciseName + " — set " + next.setIndex + ".", "success");
         return true;
     });
 }
@@ -409,7 +337,7 @@ function loadWorkoutNumber(options) {
             }
 
             if (!silent && data.hour_elapsed) {
-                showMessage(
+                showToast(
                     "Over 6 hours since last input — starting workout #" + data.next_workout_number + ".",
                     "success"
                 );
@@ -443,14 +371,14 @@ function getPayload() {
     var dateVal = document.getElementById("date").value;
     var today = localTodayIso();
     if (dateVal > today) {
-        showMessage("Workout date cannot be in the future.", "error");
+        showToast("Workout date cannot be in the future.", "error");
         return null;
     }
     var exerciseName = (document.getElementById("exercise_name").value || "").trim();
     var attachmentName = (document.getElementById("attachment_name").value || "").trim() || "None";
     var equipmentName = (document.getElementById("equipment_name").value || "").trim() || "None";
     if (!exerciseMap[exerciseName]) {
-        showMessage("Pick a valid exercise from the list.", "error");
+        showToast("Pick a valid exercise from the list.", "error");
         return null;
     }
 
@@ -476,7 +404,7 @@ function onSubmit(e) {
     clearMessage();
     var headers = getAuthHeaders();
     if (!headers) {
-        showMessage("Please log in to log workouts.", "error");
+        showToast("Please log in to log workouts.", "error");
         return;
     }
     var payload = getPayload();
@@ -514,7 +442,7 @@ function onSubmit(e) {
                         if (!advanced) {
                             var workoutNum = saved.workout_number != null ? saved.workout_number : "?";
                             var setNum = saved.set_number != null ? saved.set_number : "?";
-                            showMessage(
+                            showToast(
                                 "Saved: " + exerciseName + " — Workout #" + workoutNum + ", Set " + setNum + ".",
                                 "success"
                             );
@@ -524,7 +452,7 @@ function onSubmit(e) {
 
                 var workoutNum = saved.workout_number != null ? saved.workout_number : "?";
                 var setNum = saved.set_number != null ? saved.set_number : "?";
-                showMessage(
+                showToast(
                     "Saved: " + exerciseName + " — Workout #" + workoutNum + ", Set " + setNum + ".",
                     "success"
                 );
@@ -537,11 +465,11 @@ function onSubmit(e) {
                 document.getElementById("load").value = "0";
                 document.getElementById("comments").value = "";
             } else {
-                showMessage(formatApiErrors(result.data), "error");
+                showToast(formatApiErrors(result.data), "error");
             }
         })
         .catch(function () {
-            showMessage("Network error. Try again.", "error");
+            showToast("Network error. Try again.", "error");
         })
         .finally(function () {
             btn.disabled = false;
@@ -552,7 +480,7 @@ function onDeleteLast() {
     clearMessage();
     var headers = getAuthHeaders();
     if (!headers) {
-        showMessage("Please log in first.", "error");
+        showToast("Please log in first.", "error");
         return;
     }
     var btn = document.getElementById("delete-last-btn");
@@ -569,7 +497,7 @@ function onDeleteLast() {
         })
         .then(function (result) {
             if (result.status === 200 && result.data && result.data.message) {
-                showMessage(result.data.message, "success", DELETE_SUCCESS_MS);
+                showToast(result.data.message, "success", DELETE_SUCCESS_MS);
                 var input = document.getElementById("workout_number");
                 if (input && result.data.next_workout_number != null) {
                     input.value = result.data.next_workout_number;
@@ -583,16 +511,16 @@ function onDeleteLast() {
                 return;
             }
             if (result.status === 404) {
-                showMessage(
+                showToast(
                     (result.data && result.data.detail) || "No workouts to delete.",
                     "error"
                 );
                 return;
             }
-            showMessage(formatApiErrors(result.data), "error");
+            showToast(formatApiErrors(result.data), "error");
         })
         .catch(function () {
-            showMessage("Could not delete last entry.", "error");
+            showToast("Could not delete last entry.", "error");
         })
         .finally(function () {
             if (btn) btn.disabled = false;
@@ -707,7 +635,7 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             onParsed: applyVoiceResult,
             showError: function (message) {
-                showMessage(message, "error");
+                showToast(message, "error");
             },
         });
     }
