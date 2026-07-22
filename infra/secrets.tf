@@ -1,6 +1,6 @@
 data "doppler_secrets" "prod" {
   project = "gym-assistant"
-  config = "prd_gym-assistant"
+  config = "prd"
 }
 
 data "doppler_secrets" "dev" {
@@ -27,7 +27,8 @@ locals {
     "DBT_SCHEMA",
     "DBT_USER",
     "DBT_DBNAME",
-    "BACKEND_URL"
+    "BACKEND_URL",
+    "DISCORD_WEBHOOK"
   ]
 }
 
