@@ -1,5 +1,6 @@
 // ?v= is a manual cache-buster for this internal import — bump when info-content.js changes.
 import { PAGE_INFO } from "./info-content.js?v=9";
+import { bindDismissOnOutsideOrEscape } from "../utils.js";
 
 const SEEN_PREFIX = "gym_assistant_info_seen_";
 
@@ -89,14 +90,12 @@ function mountPageInfo(pageKey, text) {
   document.body.appendChild(wrap);
 }
 
-document.addEventListener("click", (event) => {
-  if (!(event.target instanceof Element)) return;
-  if (event.target.closest(".info-fab-wrap")) return;
-  closeAll(null);
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closeAll(null);
+bindDismissOnOutsideOrEscape({
+  isOpen: () =>
+    document.querySelector('.info-fab[aria-expanded="true"]') != null,
+  onClose: () => closeAll(null),
+  isInside: (target) =>
+    target instanceof Element && target.closest(".info-fab-wrap") != null,
 });
 
 /**

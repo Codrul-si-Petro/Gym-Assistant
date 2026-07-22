@@ -1,5 +1,5 @@
 import { API_BASE, API_PREFIX, SUPPORT_EMAIL } from "../config.js";
-import { getAuthHeaders } from "../utils.js";
+import { getAuthHeaders, showMessage as showStatus } from "../utils.js";
 import { getPreferredUnit, setPreferredUnit } from "../user-preferences.js";
 
 let workoutSplits = [];
@@ -7,10 +7,11 @@ let workoutSplits = [];
 let splitsTouched = false;
 
 function showMessage(text, type = "") {
-  const el = document.getElementById("profile-msg");
-  if (!el) return;
-  el.textContent = text;
-  el.className = `profile-msg ${type}`.trim();
+  showStatus(text, type, {
+    elementId: "profile-msg",
+    baseClass: "profile-msg",
+    autoHideMs: null,
+  });
 }
 
 function renderSplitList() {

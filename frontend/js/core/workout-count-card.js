@@ -1,6 +1,7 @@
 // Self-contained component (own fetch + own mount), same pattern as
 // profile-menu.js, so it can be dropped onto any authenticated page.
 import { API_BASE, API_PREFIX } from "../config.js";
+import { computeDeltaPct, deltaTone } from "../utils.js";
 
 async function fetchHomeSummary() {
   const token = localStorage.getItem("access_token");
@@ -14,22 +15,6 @@ async function fetchHomeSummary() {
   } catch {
     return null;
   }
-}
-
-function computeDeltaPct(current, baseline) {
-  const cur = Number(current) || 0;
-  const base = Number(baseline) || 0;
-  if (base === 0 && cur === 0) return null;
-  if (base === 0) return 100;
-  return ((cur - base) / base) * 100;
-}
-
-function deltaTone(current, baseline) {
-  const pct = computeDeltaPct(current, baseline);
-  if (pct == null) return "neutral";
-  if (pct > 10) return "up";
-  if (pct < -10) return "down";
-  return "neutral";
 }
 
 function formatDeltaLabel(current, baseline, vsLabel) {

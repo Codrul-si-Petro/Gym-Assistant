@@ -10,7 +10,7 @@
 }
 
 .edit-sheet::backdrop {
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay-backdrop);
   backdrop-filter: blur(2px);
 }
 
@@ -180,7 +180,7 @@
 .edit-sheet-save {
   border: none;
   background: var(--accent-gradient);
-  color: #fff;
+  color: var(--on-accent);
   box-shadow: 0 4px 20px var(--accent-glow);
 }
 

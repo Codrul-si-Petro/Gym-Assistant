@@ -56,7 +56,3 @@ export async function fetchGymWeekdays(startDate, endDate) {
 export async function fetchWorkoutSessions(startDate, endDate) {
   return fetchWithDateRange("/api/v1/workout-sessions", {}, startDate, endDate);
 }
-
-export async function fetchHomeSummary() {
-  return fetchJson(new URL(API_BASE + "/api/v1/home-summary"));
-}

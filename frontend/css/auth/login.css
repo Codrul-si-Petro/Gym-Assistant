@@ -56,7 +56,7 @@ body {
     min-height: var(--touch-target);
     padding: 12px;
     background: var(--accent-gradient);
-    color: #fff;
+    color: var(--on-accent);
     border: none;
     border-radius: var(--radius-sm);
     font-weight: 600;
@@ -112,7 +112,7 @@ body {
     min-height: var(--touch-target);
     padding: 10px 20px;
     background: var(--accent-gradient);
-    color: #fff !important;
+    color: var(--on-accent) !important;
     border-radius: var(--radius-sm);
     text-decoration: none;
     font-weight: 600;

@@ -1,13 +1,4 @@
-// Use localhost/127/::1 if running locally, otherwise use current host
-if (
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1" ||
-  window.location.hostname === "::1"
-) {
-  API_BASE = "http://127.0.0.1:8000"; // local backend
-} else {
-  API_BASE = "https://api.gym-assistant.app";
-}
+// API_BASE comes from api-base.js (load that script first).
 
 document.getElementById("signupForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -41,24 +32,9 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
         window.location.href = "login.html";
       }, 2000);
     } else {
-  // API returned an error (400, 401, etc.)
-        let messages = [];
-
-        if (typeof data === "object") {
-          // flatten all fields into one message array
-          for (const [key, value] of Object.entries(data)) {
-            if (Array.isArray(value)) {
-              messages.push(`${key}: ${value.join(", ")}`);
-            } else {
-              messages.push(`${key}: ${value}`);
-            }
-          }
-        } else {
-          messages.push(data);
-        }
-
-        errorDiv.textContent = messages.join(" | ") || "Sign up failed.";
-      }
+      errorDiv.textContent =
+        formatApiErrors(data, { joiner: " | ", fallback: "Sign up failed." });
+    }
     } catch (err) {
       // Real network error
       errorDiv.textContent = `Network error: ${err.message}`;

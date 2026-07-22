@@ -1,26 +1,7 @@
 // Shared exercise/attachment/equipment datalist helpers for log + plan pages.
-
-if (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "::1"
-) {
-    API_BASE = "http://127.0.0.1:8000";
-} else {
-    API_BASE = "https://api.gym-assistant.app";
-}
+// API_BASE / getAuthHeaders come from api-base.js (load that script first).
 
 var PLACEHOLDER_DIMENSION_ID = -1;
-
-function getAuthHeaders() {
-    var token = localStorage.getItem("access_token");
-    if (!token) return null;
-    return {
-        Authorization: "Bearer " + token,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-    };
-}
 
 function fillDimensionList(id, items, nameKey, idKey, map) {
     var list = document.getElementById(id);
@@ -62,6 +43,39 @@ function normalizeIdForLookup(value) {
     return isFinite(n) ? n : value;
 }
 
+/** Build an id→name map from raw dimension rows. */
+function buildIdToNameMap(rows, idKey, nameKey) {
+    var map = {};
+    (rows || []).forEach(function (row) {
+        map[row[idKey]] = row[nameKey];
+    });
+    return map;
+}
+
+/**
+ * Fetch raw exercise/attachment/equipment lists (shared by log/plan/history).
+ * @returns {Promise<{ exercises: Array, attachments: Array, equipment: Array }>}
+ */
+function fetchDimensionLists(headers) {
+    return Promise.all([
+        fetch(API_BASE + "/api/exercises/", { headers: headers }).then(function (r) {
+            return r.ok ? r.json() : [];
+        }),
+        fetch(API_BASE + "/api/attachments/", { headers: headers }).then(function (r) {
+            return r.ok ? r.json() : [];
+        }),
+        fetch(API_BASE + "/api/equipment/", { headers: headers }).then(function (r) {
+            return r.ok ? r.json() : [];
+        }),
+    ]).then(function (results) {
+        return {
+            exercises: parseDimensionList(results[0]),
+            attachments: parseDimensionList(results[1]),
+            equipment: parseDimensionList(results[2]),
+        };
+    });
+}
+
 /**
  * @param {Object} maps - { exerciseMap, attachmentMap, equipmentMap } mutable name→id maps
  * @param {{ loginMessage?: string, loadErrorMessage?: string }} [options]
@@ -76,21 +90,30 @@ function loadDimensionOptions(maps, options) {
         return Promise.resolve();
     }
 
-    return Promise.all([
-        fetch(API_BASE + "/api/exercises/", { headers: headers }).then(function (r) {
-            return r.ok ? r.json() : [];
-        }),
-        fetch(API_BASE + "/api/attachments/", { headers: headers }).then(function (r) {
-            return r.ok ? r.json() : [];
-        }),
-        fetch(API_BASE + "/api/equipment/", { headers: headers }).then(function (r) {
-            return r.ok ? r.json() : [];
-        }),
-    ])
-        .then(function (results) {
-            fillDimensionList("exercises_list", results[0], "exercise_name", "exercise_id", maps.exerciseMap);
-            fillDimensionList("attachments_list", results[1], "attachment_name", "attachment_id", maps.attachmentMap);
-            fillDimensionList("equipment_list", results[2], "equipment_name", "equipment_id", maps.equipmentMap);
+    return fetchDimensionLists(headers)
+        .then(function (lists) {
+            fillDimensionList(
+                "exercises_list",
+                lists.exercises,
+                "exercise_name",
+                "exercise_id",
+                maps.exerciseMap
+            );
+            fillDimensionList(
+                "attachments_list",
+                lists.attachments,
+                "attachment_name",
+                "attachment_id",
+                maps.attachmentMap
+            );
+            fillDimensionList(
+                "equipment_list",
+                lists.equipment,
+                "equipment_name",
+                "equipment_id",
+                maps.equipmentMap
+            );
+            return lists;
         })
         .catch(function () {
             if (typeof showMessage === "function") {

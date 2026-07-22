@@ -7,37 +7,10 @@ var exerciseBlocks = [];
 var blockIdCounter = 0;
 var editingSeriesId = null;
 
-var WEEKDAY_CODES = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 var MAX_PLAN_SPAN_DAYS = 365;
 var MAX_OCCURRENCES = 366;
 
-var messageHideTimer = null;
-
-function showMessage(text, type) {
-    var el = document.getElementById("message");
-    if (!el) return;
-    if (messageHideTimer !== null) {
-        clearTimeout(messageHideTimer);
-        messageHideTimer = null;
-    }
-    el.textContent = text;
-    el.className = "message " + (type === "success" ? "success" : "error");
-    el.removeAttribute("hidden");
-    if (type === "success") {
-        messageHideTimer = setTimeout(clearMessage, 4000);
-    }
-}
-
-function clearMessage() {
-    var el = document.getElementById("message");
-    if (!el) return;
-    if (messageHideTimer !== null) {
-        clearTimeout(messageHideTimer);
-        messageHideTimer = null;
-    }
-    el.setAttribute("hidden", "hidden");
-    el.textContent = "";
-}
+// showMessage / clearMessage provided by status-message.js
 
 function todayIso() {
     // Use local date parts, not toISOString() (which is UTC and rolls back to
@@ -134,7 +107,7 @@ function addSpecificDateFromInput() {
     input.value = "";
     renderSpecificDatesList();
     updatePreview();
-    showMessage("");
+    clearMessage();
 }
 
 function getSelectedWeekdays() {
@@ -415,8 +388,7 @@ var MAX_REPS = 1000;
 var MIN_LOAD = 0;
 var MAX_LOAD = 1500;
 
-function buildPayload() {
-    syncAllBlocksFromDom();
+function validatePlanMeta() {
     var label = (document.getElementById("plan_label").value || "").trim();
     if (!label) {
         showMessage("Enter a plan name or split.", "error");
@@ -450,6 +422,10 @@ function buildPayload() {
         showMessage("End date must be on or after the start date.", "error");
         return null;
     }
+    return { label: label, recurrence: recurrence };
+}
+
+function collectBlockRows() {
     if (exerciseBlocks.length === 0) {
         showMessage("Add at least one exercise.", "error");
         return null;
@@ -483,58 +459,66 @@ function buildPayload() {
             return null;
         }
 
-        var sets = [];
-        for (var j = 0; j < block.sets.length; j += 1) {
-            var set = block.sets[j];
-            if (!isFinite(set.reps) || set.reps < MIN_REPS || set.reps > MAX_REPS) {
-                showMessage(
-                    exerciseName + " set " + (j + 1) + ": reps must be between " + MIN_REPS + " and " + MAX_REPS + ".",
-                    "error"
-                );
-                return null;
-            }
-            if (!isFinite(set.load) || set.load < MIN_LOAD || set.load > MAX_LOAD) {
-                showMessage(
-                    exerciseName + " set " + (j + 1) + ": load must be between " + MIN_LOAD + " and " + MAX_LOAD + ".",
-                    "error"
-                );
-                return null;
-            }
-            var equipmentName = set.equipmentName || "None";
-            var attachmentName = set.attachmentName || "None";
-            var equipmentId = dimensionIdFromName(equipmentMap, equipmentName);
-            if (equipmentId == null) {
-                showMessage(
-                    exerciseName + " set " + (j + 1) + ': unknown equipment "' + equipmentName + '". Pick one from the list or leave blank.',
-                    "error"
-                );
-                return null;
-            }
-            var attachmentId = dimensionIdFromName(attachmentMap, attachmentName);
-            if (attachmentId == null) {
-                showMessage(
-                    exerciseName + " set " + (j + 1) + ': unknown attachment "' + attachmentName + '". Pick one from the list or leave blank.',
-                    "error"
-                );
-                return null;
-            }
-            if (!(set.setType || "").trim()) {
-                showMessage(exerciseName + " set " + (j + 1) + ": set type cannot be blank.", "error");
-                return null;
-            }
-            sets.push({
-                reps: set.reps,
-                load: set.load,
-                unit: set.unit,
-                equipment: equipmentId === PLACEHOLDER_DIMENSION_ID ? null : equipmentId,
-                attachment: attachmentId === PLACEHOLDER_DIMENSION_ID ? null : attachmentId,
-                set_type: set.setType.trim(),
-            });
-        }
-
+        var sets = collectSetsForBlock(block, exerciseName);
+        if (!sets) return null;
         exercises.push({ exercise: exerciseId, sets: sets });
     }
+    return exercises;
+}
 
+function collectSetsForBlock(block, exerciseName) {
+    var sets = [];
+    for (var j = 0; j < block.sets.length; j += 1) {
+        var set = block.sets[j];
+        if (!isFinite(set.reps) || set.reps < MIN_REPS || set.reps > MAX_REPS) {
+            showMessage(
+                exerciseName + " set " + (j + 1) + ": reps must be between " + MIN_REPS + " and " + MAX_REPS + ".",
+                "error"
+            );
+            return null;
+        }
+        if (!isFinite(set.load) || set.load < MIN_LOAD || set.load > MAX_LOAD) {
+            showMessage(
+                exerciseName + " set " + (j + 1) + ": load must be between " + MIN_LOAD + " and " + MAX_LOAD + ".",
+                "error"
+            );
+            return null;
+        }
+        var equipmentName = set.equipmentName || "None";
+        var attachmentName = set.attachmentName || "None";
+        var equipmentId = dimensionIdFromName(equipmentMap, equipmentName);
+        if (equipmentId == null) {
+            showMessage(
+                exerciseName + " set " + (j + 1) + ': unknown equipment "' + equipmentName + '". Pick one from the list or leave blank.',
+                "error"
+            );
+            return null;
+        }
+        var attachmentId = dimensionIdFromName(attachmentMap, attachmentName);
+        if (attachmentId == null) {
+            showMessage(
+                exerciseName + " set " + (j + 1) + ': unknown attachment "' + attachmentName + '". Pick one from the list or leave blank.',
+                "error"
+            );
+            return null;
+        }
+        if (!(set.setType || "").trim()) {
+            showMessage(exerciseName + " set " + (j + 1) + ": set type cannot be blank.", "error");
+            return null;
+        }
+        sets.push({
+            reps: set.reps,
+            load: set.load,
+            unit: set.unit,
+            equipment: equipmentId === PLACEHOLDER_DIMENSION_ID ? null : equipmentId,
+            attachment: attachmentId === PLACEHOLDER_DIMENSION_ID ? null : attachmentId,
+            set_type: set.setType.trim(),
+        });
+    }
+    return sets;
+}
+
+function assemblePayload(label, recurrence, exercises) {
     return {
         label: label,
         description: (document.getElementById("plan_description")?.value || "").trim(),
@@ -542,6 +526,15 @@ function buildPayload() {
         recurrence: recurrence,
         exercises: exercises,
     };
+}
+
+function buildPayload() {
+    syncAllBlocksFromDom();
+    var meta = validatePlanMeta();
+    if (!meta) return null;
+    var exercises = collectBlockRows();
+    if (!exercises) return null;
+    return assemblePayload(meta.label, meta.recurrence, exercises);
 }
 
 function resetBuilder() {
@@ -568,10 +561,6 @@ function resetBuilder() {
     updateRepeatUi();
     updateEndDateMax();
     renderExercises();
-}
-
-function syncSplitChips(labelValue) {
-    // Kept as no-op for older call sites; splits now come from profile datalist.
 }
 
 function loadUserSplitSuggestions() {
@@ -791,36 +780,11 @@ function loadMyPlans() {
         });
 }
 
-function flattenErrors(data) {
-    var messages = [];
-    if (data == null) return messages;
-    if (typeof data === "string") {
-        messages.push(data);
-    } else if (Array.isArray(data)) {
-        data.forEach(function (item) {
-            messages = messages.concat(flattenErrors(item));
-        });
-    } else if (typeof data === "object") {
-        Object.keys(data).forEach(function (key) {
-            messages = messages.concat(flattenErrors(data[key]));
-        });
-    } else {
-        messages.push(String(data));
-    }
-    return messages;
-}
-
 function errorMessageFromResponse(data) {
-    var messages = flattenErrors(data);
-    if (!messages.length) return "Could not save plan.";
-    // De-dupe in case the same message appears under multiple keys.
-    var seen = {};
-    var unique = messages.filter(function (m) {
-        if (seen[m]) return false;
-        seen[m] = true;
-        return true;
+    return window.formatApiErrors(data, {
+        leavesOnly: true,
+        fallback: "Could not save plan.",
     });
-    return unique.join(" ");
 }
 
 function onSubmit(e) {
@@ -893,19 +857,7 @@ function deletePlan(seriesId, scope) {
         });
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    loadDimensionOptions(
-        { exerciseMap: exerciseMap, attachmentMap: attachmentMap, equipmentMap: equipmentMap },
-        {
-            loginMessage: "Please log in to plan workouts.",
-            loadErrorMessage: "Could not load exercise lists.",
-        }
-    ).then(function () {
-        resetBuilder();
-        loadUserSplitSuggestions();
-        loadMyPlans();
-    });
-
+function wireRecurrenceEvents() {
     document.querySelectorAll('input[name="repeat_type"]').forEach(function (el) {
         el.addEventListener("change", updateRepeatUi);
     });
@@ -917,9 +869,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("plan_end_date").addEventListener("change", updatePreview);
     document.getElementById("plan_interval_days").addEventListener("input", updatePreview);
     document.getElementById("plan_specific_date_add")?.addEventListener("click", addSpecificDateFromInput);
-    document.getElementById("plan_specific_date_input")?.addEventListener("change", function () {
-        /* optional: auto-add on pick — keep explicit Add for clarity */
-    });
     document.getElementById("plan_specific_dates_list")?.addEventListener("click", function (e) {
         var btn = e.target.closest(".plan-specific-date-remove");
         if (!btn) return;
@@ -934,7 +883,9 @@ document.addEventListener("DOMContentLoaded", function () {
         specificDateInput.min = todayIso();
         specificDateInput.max = addDaysIso(todayIso(), MAX_PLAN_SPAN_DAYS);
     }
+}
 
+function wireBuilderEvents() {
     document.getElementById("add_exercise_btn").addEventListener("click", function () {
         syncAllBlocksFromDom();
         exerciseBlocks.push(createBlock());
@@ -987,8 +938,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById("exercises_container").addEventListener("input", updatePreview);
 
-    // Clear-on-focus / restore-on-blur, matching the log-workout form's fast-entry UX.
-    // Delegated (via focusin/focusout, which bubble) since set rows are re-rendered often.
     var CLEAR_ON_FOCUS_DEFAULTS = {
         "set-reps": "0",
         "set-load": "0",
@@ -1016,7 +965,9 @@ document.addEventListener("DOMContentLoaded", function () {
         resetBuilder();
         clearMessage();
     });
+}
 
+function wireMyPlansEvents() {
     document.getElementById("my_plans_list").addEventListener("click", function (e) {
         var card = e.target.closest(".my-plan-card");
         if (!card) return;
@@ -1043,4 +994,21 @@ document.addEventListener("DOMContentLoaded", function () {
             deletePlan(seriesId, "all");
         }
     });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    loadDimensionOptions(
+        { exerciseMap: exerciseMap, attachmentMap: attachmentMap, equipmentMap: equipmentMap },
+        {
+            loginMessage: "Please log in to plan workouts.",
+            loadErrorMessage: "Could not load exercise lists.",
+        }
+    ).then(function () {
+        resetBuilder();
+        loadUserSplitSuggestions();
+        loadMyPlans();
+    });
+    wireRecurrenceEvents();
+    wireBuilderEvents();
+    wireMyPlansEvents();
 });
