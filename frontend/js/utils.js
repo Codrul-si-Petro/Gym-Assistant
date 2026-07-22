@@ -13,7 +13,16 @@ export const BASE = IS_LOCAL
   ? window.location.origin
   : "https://gym-assistant.app";
 
-export const TODAY = new Date().toISOString().slice(0, 10);
+export const TODAY = (() => {
+  const d = new Date();
+  return (
+    d.getFullYear() +
+    "-" +
+    String(d.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(d.getDate()).padStart(2, "0")
+  );
+})();
 
 export function getAuthHeaders() {
   const token = localStorage.getItem("access_token");

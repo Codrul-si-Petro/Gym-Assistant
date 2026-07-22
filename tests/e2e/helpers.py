@@ -47,6 +47,27 @@ def ensure_authenticated(page: Page) -> None:
         timeout=15000,
     )
     expect(page.locator(".profile-trigger")).to_be_visible(timeout=5000)
+    dismiss_split_onboarding(page)
+
+
+def dismiss_split_onboarding(page: Page) -> None:
+    """Close the blocking split modal if it appears (should already be opted out via bootstrap)."""
+    dialog = page.locator("dialog.split-onboarding[open]")
+    try:
+        dialog.wait_for(state="visible", timeout=1500)
+    except Exception:
+        return
+    skip = dialog.locator("#split-onboarding-skip")
+    if skip.count():
+        skip.click()
+        expect(dialog).to_be_hidden(timeout=10000)
+        return
+    page.evaluate(
+        """() => {
+            const d = document.querySelector('dialog.split-onboarding');
+            if (d && d.open) d.close();
+        }"""
+    )
 
 
 def open_home(page: Page, frontend_url: str) -> None:
@@ -55,6 +76,9 @@ def open_home(page: Page, frontend_url: str) -> None:
     page.wait_for_load_state("networkidle")
     expect(page).not_to_have_url(re.compile(r"login\.html$"))
     ensure_authenticated(page)
+    # Summary stays [hidden] until home-summary + current-user succeed.
+    expect(page.locator("#member-hero")).to_be_visible(timeout=15000)
+    expect(page.locator("#home-stats")).to_be_visible(timeout=20000)
 
 
 def goto_core_page(page: Page, frontend_url: str, filename: str) -> None:
@@ -192,7 +216,8 @@ def prepare_dashboard_date_range(page: Page) -> None:
         lambda res: "/api/v1/total-volume" in res.url and res.request.method == "GET",
         timeout=20000,
     ):
-        page.locator(".volume-period-chip[data-period='all']").click()
+        # Scope to volume tab — sessions tab reuses the same chip class names.
+        page.locator("#tab-volume .volume-period-chip[data-period='all']").click()
 
 
 def click_metrics_tab(page: Page, tab: str) -> None:
@@ -222,6 +247,7 @@ def wait_for_volume_table(page: Page) -> None:
     if "Failed to load" in chart_msg:
         pytest.fail(f"Dashboard volume request failed: {chart_msg}")
     expect(page.locator("#volume-table-inner")).to_be_visible(timeout=5000)
+    expect(page.locator("#tab-volume .volume-period-chip.is-active")).to_have_text("All")
 
 
 def wait_for_favourites_list(page: Page) -> None:

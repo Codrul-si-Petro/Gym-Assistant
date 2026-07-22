@@ -37,6 +37,10 @@
   margin-bottom: 12px;
 }
 
+.volume-toolbar[hidden] {
+  display: none;
+}
+
 /* Primary control to go up one level in the hierarchy — icon-only, compact. */
 .volume-back-btn {
   display: inline-flex;

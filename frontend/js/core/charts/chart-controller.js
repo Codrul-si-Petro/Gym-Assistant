@@ -1,6 +1,6 @@
 // Controls which content loads per tab and wires shared date controls.
 
-import { BASE, TODAY, syncDateFilters } from "../../utils.js";
+import { BASE, TODAY, syncDateFilters } from "../../utils.js?v=2";
 import { getPreferredUnit, unitSuffix } from "../../user-preferences.js";
 // The ?v= on these two imports is a manual cache-buster — bump it whenever
 // chart-renderers.js/data-fetch.js change. They aren't covered by the ?v= on
@@ -60,7 +60,11 @@ function getPeriodDateRange(period) {
 }
 
 function setActivePeriodChip(period) {
-  document.querySelectorAll(".volume-period-chip").forEach((el) => {
+  const activePanel = document.querySelector(".chart-panel.active") || document.getElementById("tab-volume");
+  const chips = activePanel
+    ? activePanel.querySelectorAll(".volume-period-chip")
+    : document.querySelectorAll(".volume-period-chip");
+  chips.forEach((el) => {
     el.classList.toggle("is-active", el.dataset.period === period);
   });
 }
@@ -589,7 +593,7 @@ if (dateTo) {
 }
 if (dateTo && !dateTo.value) dateTo.value = TODAY;
 
-document.querySelectorAll(".volume-period-chip").forEach((chip) => {
+document.querySelectorAll("#tab-volume .volume-period-chip, #tab-sessions .volume-period-chip").forEach((chip) => {
   chip.addEventListener("click", () => {
     applyPeriodChip(chip.dataset.period || "all");
   });

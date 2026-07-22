@@ -24,7 +24,7 @@ def test_dashboard_default_volume_tab_and_all_metric_views(page: Page, frontend_
     if rows.count() == 0:
         pytest.skip("No volume rows for this user/date range — cannot assert table data")
     expect(rows.first).to_be_visible()
-    expect(page.locator(".volume-period-chip.is-active")).to_have_text("All")
+    expect(page.locator("#tab-volume .volume-period-chip.is-active")).to_have_text("All")
 
     spark = page.locator(".volume-minichart-placeholder").first
     if spark.count():

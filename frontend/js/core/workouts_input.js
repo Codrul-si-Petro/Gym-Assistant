@@ -418,10 +418,21 @@ function loadWorkoutNumber(options) {
         .catch(function () {});
 }
 
+function localTodayIso() {
+    var d = new Date();
+    return (
+        d.getFullYear() +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getDate()).padStart(2, "0")
+    );
+}
+
 function setDefaultDate() {
     var dateInput = document.getElementById("date");
     if (!dateInput) return;
-    var today = new Date().toISOString().slice(0, 10);
+    var today = localTodayIso();
     dateInput.max = today;
     if (!dateInput.value) {
         dateInput.value = today;
@@ -430,7 +441,7 @@ function setDefaultDate() {
 
 function getPayload() {
     var dateVal = document.getElementById("date").value;
-    var today = new Date().toISOString().slice(0, 10);
+    var today = localTodayIso();
     if (dateVal > today) {
         showMessage("Workout date cannot be in the future.", "error");
         return null;
