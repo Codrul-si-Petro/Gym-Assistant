@@ -74,6 +74,8 @@ class RecurrenceSerializer(serializers.Serializer):
 class PlanSeriesSerializer(serializers.Serializer):
     plan_series_id = serializers.UUIDField(read_only=True)
     label = serializers.CharField(max_length=50, allow_blank=False)
+    description = serializers.CharField(required=False, allow_blank=True, max_length=500, default="")
+    workout_split = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=50, default="")
     recurrence = RecurrenceSerializer()
     exercises = PlanExerciseSerializer(many=True, min_length=1, max_length=50)
     occurrence_count = serializers.IntegerField(read_only=True)
@@ -88,6 +90,14 @@ class PlanSeriesSerializer(serializers.Serializer):
         if not stripped:
             raise serializers.ValidationError("Plan name / split cannot be blank.")
         return stripped
+
+    def validate_description(self, value):
+        return (value or "").strip()
+
+    def validate_workout_split(self, value):
+        if value is None:
+            return ""
+        return value.strip()
 
     def validate_exercises(self, value):
         seen = {}
@@ -148,14 +158,14 @@ class PlanSeriesSerializer(serializers.Serializer):
                 f"Already planned elsewhere: {detail}. Edit the existing plan instead of double-booking it."
             )
 
-    def _create_workout_rows(self, user, series_id, label, dates, exercises_data):
+    def _create_workout_rows(self, user, series_id, label, dates, exercises_data, workout_split=None):
         total_sets = self._total_sets(exercises_data)
         if len(dates) * total_sets > MAX_PLAN_ROWS:
             raise serializers.ValidationError(
                 f"Plan would create {len(dates) * total_sets} rows (max {MAX_PLAN_ROWS})."
             )
 
-        split = label.strip() or PLACEHOLDER_DIMENSION_NAME
+        split = (workout_split or "").strip() or label.strip() or PLACEHOLDER_DIMENSION_NAME
         for date_val in dates:
             calendar = Calendar.objects.get(date_id=date_val)
             for block in exercises_data:
@@ -234,6 +244,8 @@ class PlanSeriesSerializer(serializers.Serializer):
 
         dates = self._expand_dates(recurrence)
         label = validated_data["label"].strip() or PLACEHOLDER_DIMENSION_NAME
+        description = (validated_data.get("description") or "").strip()
+        workout_split = (validated_data.get("workout_split") or "").strip()
 
         self._check_conflicts(user, dates, exercises_data)
 
@@ -243,17 +255,23 @@ class PlanSeriesSerializer(serializers.Serializer):
                 plan_series_id=series_id,
                 user=user,
                 label=label,
+                description=description or None,
+                workout_split=workout_split or None,
                 recurrence_type=recurrence["type"],
                 weekdays=self._weekdays_to_str(recurrence.get("weekdays")),
                 interval_days=recurrence.get("interval_days"),
                 start_date=recurrence["start_date"],
                 end_date=recurrence["end_date"],
             )
-            occurrence_count, set_count = self._create_workout_rows(user, series_id, label, dates, exercises_data)
+            occurrence_count, set_count = self._create_workout_rows(
+                user, series_id, label, dates, exercises_data, workout_split=workout_split
+            )
 
         return {
             "plan_series_id": series_id,
             "label": label,
+            "description": description,
+            "workout_split": workout_split,
             "recurrence": recurrence,
             "exercises": self._serialize_exercises_for_response(exercises_data),
             "occurrence_count": occurrence_count,
@@ -270,6 +288,8 @@ class PlanSeriesSerializer(serializers.Serializer):
         exercises_data = validated_data["exercises"]
         dates = self._expand_dates(recurrence)
         label = validated_data["label"].strip() or PLACEHOLDER_DIMENSION_NAME
+        description = (validated_data.get("description") or "").strip()
+        workout_split = (validated_data.get("workout_split") or "").strip()
         today = date.today()
         future_dates = [d for d in dates if d >= today]
 
@@ -277,6 +297,8 @@ class PlanSeriesSerializer(serializers.Serializer):
 
         with transaction.atomic():
             instance.label = label
+            instance.description = description or None
+            instance.workout_split = workout_split or None
             instance.recurrence_type = recurrence["type"]
             instance.weekdays = self._weekdays_to_str(recurrence.get("weekdays"))
             instance.interval_days = recurrence.get("interval_days")
@@ -292,7 +314,14 @@ class PlanSeriesSerializer(serializers.Serializer):
             ).delete()
 
             if future_dates:
-                self._create_workout_rows(user, instance.plan_series_id, label, future_dates, exercises_data)
+                self._create_workout_rows(
+                    user,
+                    instance.plan_series_id,
+                    label,
+                    future_dates,
+                    exercises_data,
+                    workout_split=workout_split,
+                )
 
         return self.to_representation(instance)
 
@@ -338,6 +367,8 @@ class PlanSeriesSerializer(serializers.Serializer):
         return {
             "plan_series_id": instance.plan_series_id,
             "label": instance.label,
+            "description": instance.description or "",
+            "workout_split": instance.workout_split or "",
             "recurrence": {
                 "type": instance.recurrence_type,
                 "start_date": instance.start_date,

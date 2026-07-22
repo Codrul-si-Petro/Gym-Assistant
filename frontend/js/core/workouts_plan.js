@@ -469,6 +469,8 @@ function buildPayload() {
 
     return {
         label: label,
+        description: (document.getElementById("plan_description")?.value || "").trim(),
+        workout_split: (document.getElementById("plan_workout_split")?.value || "").trim(),
         recurrence: recurrence,
         exercises: exercises,
     };
@@ -477,6 +479,10 @@ function buildPayload() {
 function resetBuilder() {
     editingSeriesId = null;
     document.getElementById("plan_label").value = "";
+    var descEl = document.getElementById("plan_description");
+    if (descEl) descEl.value = "";
+    var splitEl = document.getElementById("plan_workout_split");
+    if (splitEl) splitEl.value = "";
     var startEl = document.getElementById("plan_start_date");
     startEl.min = todayIso();
     startEl.value = todayIso();
@@ -494,9 +500,39 @@ function resetBuilder() {
     renderExercises();
 }
 
+function syncSplitChips(labelValue) {
+    // Kept as no-op for older call sites; splits now come from profile datalist.
+}
+
+function loadUserSplitSuggestions() {
+    var list = document.getElementById("user_split_suggestions");
+    if (!list) return Promise.resolve();
+    var headers = getAuthHeaders();
+    if (!headers) return Promise.resolve();
+    return fetch(API_BASE + "/api/auth/current-user/", { headers: headers })
+        .then(function (res) {
+            return res.ok ? res.json() : null;
+        })
+        .then(function (user) {
+            var splits = (user && Array.isArray(user.workout_splits) ? user.workout_splits : []) || [];
+            list.innerHTML = splits
+                .map(function (name) {
+                    return '<option value="' + String(name).replace(/"/g, "&quot;") + '"></option>';
+                })
+                .join("");
+        })
+        .catch(function () {
+            list.innerHTML = "";
+        });
+}
+
 function loadPlanIntoBuilder(plan) {
     editingSeriesId = plan.plan_series_id;
     document.getElementById("plan_label").value = plan.label || "";
+    var descEl = document.getElementById("plan_description");
+    if (descEl) descEl.value = plan.description || "";
+    var splitEl = document.getElementById("plan_workout_split");
+    if (splitEl) splitEl.value = plan.workout_split || "";
     var startEl = document.getElementById("plan_start_date");
     // Existing plans may have started in the past; relax min so the field
     // still displays/round-trips correctly while editing.
@@ -551,6 +587,70 @@ function loadPlanIntoBuilder(plan) {
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+/**
+ * Prefills the builder from an existing plan as a *new* plan (POST on save).
+ * Resets the schedule so the user must pick the target day/recurrence.
+ */
+function duplicatePlanIntoBuilder(plan) {
+    editingSeriesId = null;
+    document.getElementById("plan_label").value = plan.label || "";
+    var descEl = document.getElementById("plan_description");
+    if (descEl) descEl.value = plan.description || "";
+    var splitEl = document.getElementById("plan_workout_split");
+    if (splitEl) splitEl.value = plan.workout_split || "";
+
+    var startEl = document.getElementById("plan_start_date");
+    startEl.min = todayIso();
+    startEl.value = todayIso();
+    document.getElementById("plan_end_date").value = "";
+    document.querySelector('input[name="repeat_type"][value="once"]').checked = true;
+    document.querySelectorAll("#weekday_picker input").forEach(function (el) {
+        el.checked = false;
+    });
+    document.getElementById("plan_interval_days").value = "2";
+
+    exerciseBlocks = (plan.exercises || []).map(function (ex) {
+        blockIdCounter += 1;
+        var exerciseName = "";
+        Object.keys(exerciseMap).forEach(function (name) {
+            if (exerciseMap[name] === ex.exercise) exerciseName = name;
+        });
+        return {
+            id: blockIdCounter,
+            exerciseName: exerciseName,
+            sets: (ex.sets || []).map(function (set) {
+                var equipmentName = "None";
+                var attachmentName = "None";
+                Object.keys(equipmentMap).forEach(function (name) {
+                    if (equipmentMap[name] === set.equipment) equipmentName = name;
+                });
+                Object.keys(attachmentMap).forEach(function (name) {
+                    if (attachmentMap[name] === set.attachment) attachmentName = name;
+                });
+                if (set.equipment == null) equipmentName = "";
+                if (set.attachment == null) attachmentName = "";
+                return {
+                    reps: set.reps,
+                    load: set.load,
+                    unit: set.unit || "KG",
+                    equipmentName: equipmentName === "None" ? "" : equipmentName,
+                    attachmentName: attachmentName === "None" ? "" : attachmentName,
+                    setType: set.set_type || "Working set",
+                };
+            }),
+        };
+    });
+    if (!exerciseBlocks.length) exerciseBlocks = [createBlock()];
+
+    document.getElementById("cancel_edit_btn").hidden = true;
+    document.getElementById("submit-btn").textContent = "Save plan";
+    updateRepeatUi();
+    updateEndDateMax();
+    renderExercises();
+    showMessage("Copied. Pick the new day or schedule, then save.", "success");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 function recurrenceSummary(plan) {
     var r = plan.recurrence;
     if (r.type === "once") return "Once on " + r.start_date;
@@ -590,6 +690,7 @@ function renderMyPlans(plans) {
                 "</p>" +
                 '<div class="my-plan-actions">' +
                 '<button type="button" class="plan-secondary-btn edit-plan">Edit</button>' +
+                '<button type="button" class="plan-secondary-btn copy-plan">Copy</button>' +
                 '<button type="button" class="plan-secondary-btn delete-plan-future">Delete future</button>' +
                 '<button type="button" class="plan-danger-btn delete-plan-all">Delete all</button>' +
                 "</div>" +
@@ -723,6 +824,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     ).then(function () {
         resetBuilder();
+        loadUserSplitSuggestions();
         loadMyPlans();
     });
 
@@ -823,7 +925,8 @@ document.addEventListener("DOMContentLoaded", function () {
         var card = e.target.closest(".my-plan-card");
         if (!card) return;
         var seriesId = card.getAttribute("data-series-id");
-        if (e.target.classList.contains("edit-plan")) {
+        if (e.target.classList.contains("edit-plan") || e.target.classList.contains("copy-plan")) {
+            var asCopy = e.target.classList.contains("copy-plan");
             var headers = getAuthHeaders();
             if (!headers) return;
             fetch(API_BASE + "/api/plan-series/" + seriesId + "/", { headers: headers })
@@ -831,8 +934,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     return res.ok ? res.json() : null;
                 })
                 .then(function (plan) {
-                    if (plan) loadPlanIntoBuilder(plan);
-                    else showMessage("Could not load plan.", "error");
+                    if (!plan) {
+                        showMessage("Could not load plan.", "error");
+                        return;
+                    }
+                    if (asCopy) duplicatePlanIntoBuilder(plan);
+                    else loadPlanIntoBuilder(plan);
                 });
         } else if (e.target.classList.contains("delete-plan-future")) {
             deletePlan(seriesId, "future");

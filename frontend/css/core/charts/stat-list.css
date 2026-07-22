@@ -28,6 +28,18 @@
   border-bottom: none;
 }
 
+.stat-row--total {
+  font-weight: 700;
+  border-top: 1px solid var(--border-strong);
+  margin-top: 4px;
+}
+
+.stat-row--total .stat-name,
+.stat-row--total .stat-value {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
 .stat-row--no-rank {
   grid-template-columns: minmax(0, 1fr) auto;
 }

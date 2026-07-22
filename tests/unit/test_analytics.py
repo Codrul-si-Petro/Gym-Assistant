@@ -77,6 +77,15 @@ def test_gym_weekdays_returns_200(authenticated_client):
     assert isinstance(response.data["results"], list)
 
 
+def test_workout_sessions_returns_200(authenticated_client):
+    response = authenticated_client.get("/api/v1/workout-sessions", format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert "results" in response.data
+    assert "total" in response.data
+    assert isinstance(response.data["results"], list)
+    assert response.data["total"] == len(response.data["results"])
+
+
 def test_home_summary_returns_200(authenticated_client):
     response = authenticated_client.get("/api/v1/home-summary", format="json")
     assert response.status_code == status.HTTP_200_OK
@@ -88,12 +97,28 @@ def test_home_summary_returns_200(authenticated_client):
         "workouts_last_week",
         "workouts_this_month",
         "workouts_last_month",
+        "workouts_this_year",
+        "workouts_last_year",
+        "workouts_planned_this_week",
+        "workouts_planned_this_month",
+        "workouts_planned_this_year",
+        "workouts_planned_week_full",
+        "workouts_planned_month_full",
+        "workouts_planned_year_full",
     }
     for key in (
         "workouts_this_week",
         "workouts_last_week",
         "workouts_this_month",
         "workouts_last_month",
+        "workouts_this_year",
+        "workouts_last_year",
+        "workouts_planned_this_week",
+        "workouts_planned_this_month",
+        "workouts_planned_this_year",
+        "workouts_planned_week_full",
+        "workouts_planned_month_full",
+        "workouts_planned_year_full",
     ):
         assert isinstance(response.data[key], int)
         assert response.data[key] >= 0

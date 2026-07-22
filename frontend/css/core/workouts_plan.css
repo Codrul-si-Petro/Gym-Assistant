@@ -173,11 +173,51 @@
     gap: 0.85rem;
 }
 
-.plan-exercise-block {
+.plan-add-exercise-btn {
+    margin-top: 0.85rem;
+}
+
+.field-optional {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.plan-field-hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+#plan_description {
+    width: 100%;
+    min-height: 4rem;
+    resize: vertical;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: var(--bg-secondary, var(--bg-primary));
     border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+}
+
+#plan_description:focus {
+    outline: none;
+    border-color: var(--accent-secondary);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.plan-exercise-block {
+    border: 1px solid var(--accent-secondary);
     border-radius: var(--radius-sm);
     background: var(--bg-secondary, var(--bg-primary));
     padding: 0.75rem;
+    box-shadow: 0 0 0 1px var(--accent-glow), 0 0 16px var(--accent-glow);
+}
+
+.plan-exercise-block:focus-within {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 20px var(--accent-glow);
 }
 
 .plan-exercise-header {
@@ -348,5 +388,10 @@
 
     .plan-exercise-header .exercise-name {
         grid-column: 1 / -1;
+    }
+
+    .plan-add-exercise-btn {
+        width: 100%;
+        min-height: var(--touch-target);
     }
 }

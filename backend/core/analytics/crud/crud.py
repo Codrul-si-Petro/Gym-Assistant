@@ -229,17 +229,40 @@ def get_gym_weekdays(user_id: int, start_date: date | None, end_date: date | Non
     )
 
 
+def get_workout_sessions(user_id: int, start_date: date | None, end_date: date | None):
+    """List distinct workout sessions (date + workout_number) with split label."""
+    query = (SQL_DIR / "get_workout_sessions.sql").read_text()
+    return execute_sql(
+        query,
+        {
+            "user_id": user_id,
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+    )
+
+
 def _period_bounds(today: date, unit: str) -> dict[str, date]:
-    """Start/end for home-summary workout counts (this/last week and month)."""
+    """Start/end for home-summary workout counts (this/last week, month, year).
+
+    Returns to-date bounds (cur_end = today) plus full-period ends for plan targets
+    (week_full_end / month_full_end / year_full_end = last day of the enclosing period).
+    """
     if unit == "week":
         cur_start = today - timedelta(days=today.isoweekday() - 1)
         cur_end = today
+        full_end = cur_start + timedelta(days=6)
     elif unit == "year":
         cur_start = today.replace(month=1, day=1)
         cur_end = today
+        full_end = today.replace(month=12, day=31)
     else:
         cur_start = today.replace(day=1)
         cur_end = today
+        if today.month == 12:
+            full_end = today.replace(day=31)
+        else:
+            full_end = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
 
     prev_end = cur_start - timedelta(days=1)
     if unit == "week":
@@ -250,14 +273,41 @@ def _period_bounds(today: date, unit: str) -> dict[str, date]:
     else:
         prev_start = prev_end.replace(day=1)
 
-    return {"cur_start": cur_start, "cur_end": cur_end, "prev_start": prev_start, "prev_end": prev_end}
+    return {
+        "cur_start": cur_start,
+        "cur_end": cur_end,
+        "prev_start": prev_start,
+        "prev_end": prev_end,
+        "full_end": full_end,
+    }
+
+
+_WORKOUT_COUNT_KEYS = (
+    "workouts_this_week",
+    "workouts_last_week",
+    "workouts_this_month",
+    "workouts_last_month",
+    "workouts_this_year",
+    "workouts_last_year",
+    "workouts_planned_this_week",
+    "workouts_planned_this_month",
+    "workouts_planned_this_year",
+    "workouts_planned_week_full",
+    "workouts_planned_month_full",
+    "workouts_planned_year_full",
+)
 
 
 def get_workout_counts(user_id: int) -> dict[str, int]:
-    """Count distinct gym days (see `workout_sets_daily`) for this/last week and month."""
+    """Count distinct gym days (see `workout_sets_daily`) for this/last week, month, year.
+
+    Includes planned gym days for the same to-date windows and for the full
+    enclosing week/month/year (mirroring volume's plan-to-date vs plan-full).
+    """
     today = timezone.localdate()
     week = _period_bounds(today, "week")
     month = _period_bounds(today, "month")
+    year = _period_bounds(today, "year")
 
     query = (SQL_DIR / "get_workout_counts.sql").read_text()
     rows = execute_sql(
@@ -268,18 +318,22 @@ def get_workout_counts(user_id: int) -> dict[str, int]:
             "cur_week_end": week["cur_end"],
             "prev_week_start": week["prev_start"],
             "prev_week_end": week["prev_end"],
+            "week_full_end": week["full_end"],
             "cur_month_start": month["cur_start"],
             "cur_month_end": month["cur_end"],
             "prev_month_start": month["prev_start"],
             "prev_month_end": month["prev_end"],
+            "month_full_end": month["full_end"],
+            "cur_year_start": year["cur_start"],
+            "cur_year_end": year["cur_end"],
+            "prev_year_start": year["prev_start"],
+            "prev_year_end": year["prev_end"],
+            "year_full_end": year["full_end"],
         },
     )
 
     row = rows[0] if rows else {}
-    return {
-        key: int(row.get(key) or 0)
-        for key in ("workouts_this_week", "workouts_last_week", "workouts_this_month", "workouts_last_month")
-    }
+    return {key: int(row.get(key) or 0) for key in _WORKOUT_COUNT_KEYS}
 
 
 def get_home_summary(user_id: int):

@@ -109,7 +109,9 @@ function renderStatList(listId, items) {
   const fills = [];
   for (const item of items) {
     const li = document.createElement("li");
+    const isTotal = item.label === "Total" || item.isTotal;
     li.className = item.rank ? "stat-row" : "stat-row stat-row--no-rank";
+    if (isTotal) li.classList.add("stat-row--total");
 
     let rank = null;
     if (item.rank) {
@@ -150,15 +152,26 @@ function renderStatList(listId, items) {
 
 export function renderFavExercisesChart(labels, values, fullNames, ranks) {
   const max = Math.max(...values, 1);
-  renderStatList(
-    "fav-exercises-list",
-    values.map((v, i) => ({
+  const items = [];
+  const totalSets = values.reduce((sum, v) => sum + (Number(v) || 0), 0);
+  if (values.length) {
+    items.push({
+      rank: "",
+      label: "Total",
+      valueText: `${totalSets} sets`,
+      percent: 100,
+      isTotal: true,
+    });
+  }
+  for (let i = 0; i < values.length; i += 1) {
+    items.push({
       rank: "#" + (ranks?.[i] || i + 1),
       label: fullNames?.[i] || labels[i] || "",
-      valueText: `${v} sets`,
-      percent: (v / max) * 100,
-    }))
-  );
+      valueText: `${values[i]} sets`,
+      percent: (values[i] / max) * 100,
+    });
+  }
+  renderStatList("fav-exercises-list", items);
 }
 
 export function formatVolume(n, unit = "KG") {
@@ -171,12 +184,22 @@ export function formatVolume(n, unit = "KG") {
   return new Intl.NumberFormat("en-US", opts).format(v);
 }
 
-function formatDeltaPct(current, baseline) {
+/**
+ * Hierarchy breadcrumb companion lives in updateVolumeToolbar.
+ * Overall totals are the first "Total" row inside the volume table.
+ */
+
+function computeDeltaPct(current, baseline) {
   const cur = Number(current) || 0;
   const base = Number(baseline) || 0;
-  if (base === 0 && cur === 0) return "—";
-  if (base === 0) return "+100%";
-  const pct = ((cur - base) / base) * 100;
+  if (base === 0 && cur === 0) return null;
+  if (base === 0) return 100;
+  return ((cur - base) / base) * 100;
+}
+
+function formatDeltaPct(current, baseline) {
+  const pct = computeDeltaPct(current, baseline);
+  if (pct == null) return "—";
   const sign = pct >= 0 ? "+" : "";
   return `${sign}${pct.toFixed(0)}%`;
 }
@@ -192,10 +215,11 @@ function formatDeltaAbsolute(current, baseline, unit) {
 }
 
 function deltaClass(current, baseline) {
-  const cur = Number(current) || 0;
-  const base = Number(baseline) || 0;
-  if (cur === base) return "volume-delta-neutral";
-  return cur > base ? "volume-delta-up" : "volume-delta-down";
+  const pct = computeDeltaPct(current, baseline);
+  if (pct == null) return "volume-delta-neutral";
+  if (pct > 10) return "volume-delta-up";
+  if (pct < -10) return "volume-delta-down";
+  return "volume-delta-neutral";
 }
 
 function formatDeltaCell(current, baseline, unit) {
@@ -231,55 +255,62 @@ export function renderVolumeTable(results, unit, period, handlers) {
   updateVolumeDeltaHeader(period);
   tbody.replaceChildren();
 
-  for (const row of results) {
+  const appendVolumeRow = (row, { isTotal = false } = {}) => {
     const tr = document.createElement("tr");
+    if (isTotal) tr.className = "volume-row-total";
 
     const rankTd = document.createElement("td");
     rankTd.className = "volume-col-rank";
-    rankTd.textContent = String(row.rank ?? "");
+    rankTd.textContent = isTotal ? "" : String(row.rank ?? "");
 
     const nameTd = document.createElement("td");
     nameTd.className = "volume-col-exercise";
-    const canDrill = row.is_leaf === false;
-    if (canDrill && onDrill) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "volume-exercise-drill";
-      const label = document.createElement("span");
-      label.className = "volume-exercise-drill-label";
-      label.textContent = row.exercise_name || "";
-      const chev = document.createElement("span");
-      chev.className = "volume-exercise-drill-chevron";
-      chev.setAttribute("aria-hidden", "true");
-      chev.textContent = ">";
-      btn.append(label, chev);
-      btn.addEventListener("click", () => onDrill(row));
-      nameTd.appendChild(btn);
+    if (isTotal) {
+      nameTd.textContent = "Total";
     } else {
-      nameTd.textContent = row.exercise_name || "";
+      const canDrill = row.is_leaf === false;
+      if (canDrill && onDrill) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "volume-exercise-drill";
+        const label = document.createElement("span");
+        label.className = "volume-exercise-drill-label";
+        label.textContent = row.exercise_name || "";
+        const chev = document.createElement("span");
+        chev.className = "volume-exercise-drill-chevron";
+        chev.setAttribute("aria-hidden", "true");
+        chev.textContent = ">";
+        btn.append(label, chev);
+        btn.addEventListener("click", () => onDrill(row));
+        nameTd.appendChild(btn);
+      } else {
+        nameTd.textContent = row.exercise_name || "";
+      }
     }
 
     const sparkTd = document.createElement("td");
     sparkTd.className = "volume-col-chart";
-    const sparkBtn = document.createElement("button");
-    sparkBtn.type = "button";
-    sparkBtn.className = "volume-minichart-placeholder";
-    sparkBtn.setAttribute(
-      "aria-label",
-      "Open volume chart for " + (row.exercise_name || "exercise")
-    );
-    sparkBtn.innerHTML =
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-      '<line x1="5" y1="20" x2="5" y2="14"></line>' +
-      '<line x1="12" y1="20" x2="12" y2="8"></line>' +
-      '<line x1="19" y1="20" x2="19" y2="4"></line>' +
-      "</svg>";
-    sparkBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (onMinichart) onMinichart(row);
-    });
-    sparkTd.appendChild(sparkBtn);
+    if (!isTotal) {
+      const sparkBtn = document.createElement("button");
+      sparkBtn.type = "button";
+      sparkBtn.className = "volume-minichart-placeholder";
+      sparkBtn.setAttribute(
+        "aria-label",
+        "Open volume chart for " + (row.exercise_name || "exercise")
+      );
+      sparkBtn.innerHTML =
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<line x1="5" y1="20" x2="5" y2="14"></line>' +
+        '<line x1="12" y1="20" x2="12" y2="8"></line>' +
+        '<line x1="19" y1="20" x2="19" y2="4"></line>' +
+        "</svg>";
+      sparkBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (onMinichart) onMinichart(row);
+      });
+      sparkTd.appendChild(sparkBtn);
+    }
 
     const volTd = document.createElement("td");
     volTd.className = "volume-col-vol";
@@ -287,25 +318,15 @@ export function renderVolumeTable(results, unit, period, handlers) {
 
     tr.append(rankTd, nameTd, sparkTd, volTd);
 
-    // vs prior period, to-date (apples-to-apples) — hidden for period=all.
     if (deltaCfg) {
       tr.appendChild(makeDeltaCell(row.total_volume, row[deltaCfg.key], unit, onDeltaToggle));
     }
-
-    // vs prior period, full (complete prior week/month/year) — hidden for period=all.
     if (deltaFullCfg) {
       const cell = makeDeltaCell(row.total_volume, row[deltaFullCfg.key], unit, onDeltaToggle);
       cell.classList.add("volume-col-delta-full");
       tr.appendChild(cell);
     }
-
-    // Actual vs planned volume, to-date — always shown, independent of the
-    // period-based columns above (those compare against a *prior* period; this
-    // compares against your own plan for the *same* window).
     tr.appendChild(makeDeltaCell(row.total_volume, row.plan_volume, unit, onDeltaToggle));
-
-    // Actual (to-date) vs the *entire* current week/month/year's plan — the target
-    // to hit, not just plan-to-date. Hidden for period=all.
     if (planFullCfg) {
       const cell = makeDeltaCell(row.total_volume, row[planFullCfg.key], unit, onDeltaToggle);
       cell.classList.add("volume-col-delta-full");
@@ -313,7 +334,67 @@ export function renderVolumeTable(results, unit, period, handlers) {
     }
 
     tbody.appendChild(tr);
+  };
+
+  if (results.length) {
+    const totals = {
+      total_volume: 0,
+      plan_volume: 0,
+      previous_week: 0,
+      previous_week_to_date: 0,
+      previous_month: 0,
+      previous_month_to_date: 0,
+      previous_year: 0,
+      previous_year_to_date: 0,
+      plan_week_full: 0,
+      plan_month_full: 0,
+      plan_year_full: 0,
+    };
+    for (const row of results) {
+      for (const key of Object.keys(totals)) {
+        totals[key] += Number(row[key]) || 0;
+      }
+    }
+    appendVolumeRow(totals, { isTotal: true });
   }
+
+  for (const row of results) {
+    appendVolumeRow(row);
+  }
+}
+
+export function renderSessionsTable(results) {
+  const tbody = document.getElementById("sessions-table-body");
+  const inner = document.getElementById("sessions-table-inner");
+  if (!tbody) return;
+
+  tbody.replaceChildren();
+
+  if (results.length) {
+    const totalTr = document.createElement("tr");
+    totalTr.className = "volume-row-total";
+    const labelTd = document.createElement("td");
+    labelTd.textContent = "Total";
+    const countTd = document.createElement("td");
+    countTd.colSpan = 2;
+    countTd.textContent = `${results.length} session${results.length === 1 ? "" : "s"}`;
+    totalTr.append(labelTd, countTd);
+    tbody.appendChild(totalTr);
+  }
+
+  for (const row of results) {
+    const tr = document.createElement("tr");
+    const dateTd = document.createElement("td");
+    dateTd.textContent = String(row.date ?? "");
+    const numTd = document.createElement("td");
+    numTd.textContent = String(row.workout_number ?? "");
+    const splitTd = document.createElement("td");
+    splitTd.textContent = row.workout_split || "—";
+    tr.append(dateTd, numTd, splitTd);
+    tbody.appendChild(tr);
+  }
+
+  if (inner) inner.style.display = results.length ? "" : "none";
 }
 
 export function renderVolumeDailyTimeSeries(dailyRows, exerciseName, type, unit = "KG") {

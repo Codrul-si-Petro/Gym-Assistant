@@ -3,6 +3,15 @@
 .volume-period-chips {
   display: inline-flex;
   gap: 6px;
+  margin-bottom: 0;
+}
+
+.volume-period-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
@@ -24,6 +33,14 @@
   font-weight: 600;
 }
 
+.volume-breadcrumb {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.35;
+  min-width: 0;
+}
+
 .volume-col-delta {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -41,6 +58,12 @@
 
 .volume-table tbody td.volume-delta-neutral {
   color: var(--accent-secondary, #a78bfa);
+}
+
+.volume-table tbody tr.volume-row-total td {
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-strong, #3f3f46);
+  color: var(--text-primary);
 }
 
 .volume-col-delta-toggle {

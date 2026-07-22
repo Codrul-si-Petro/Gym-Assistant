@@ -4,18 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metrics</title>
-    <link rel="stylesheet" href="../../css/general-components/data-surface.css?v=2">
+    <link rel="stylesheet" href="../../css/general-components/data-surface.css?v=4">
     <link rel="stylesheet" href="../../css/core/dashboard.css?v=5">
-    <link rel="stylesheet" href="../../css/core/charts/total-volume-dashboard.css?v=11">
-    <link rel="stylesheet" href="../../css/core/charts/total-volume-table.css?v=1">
+    <link rel="stylesheet" href="../../css/core/charts/total-volume-dashboard.css?v=12">
+    <link rel="stylesheet" href="../../css/core/charts/total-volume-table.css?v=5">
     <link rel="stylesheet" href="../../css/core/charts/total-volume-chart.css?v=6">
     <link rel="stylesheet" href="../../css/core/charts/fav-exercises-dashboard.css?v=3">
     <link rel="stylesheet" href="../../css/core/charts/metrics-extra.css?v=2">
-    <link rel="stylesheet" href="../../css/core/charts/stat-list.css?v=1">
-    <link rel="stylesheet" href="../../css/general-components/theme.css?v=9">
+    <link rel="stylesheet" href="../../css/core/charts/stat-list.css?v=3">
+    <link rel="stylesheet" href="../../css/core/workout-count-card.css?v=5">
+    <link rel="stylesheet" href="../../css/general-components/theme.css?v=10">
     <link rel="stylesheet" href="../../css/general-components/profile-menu.css?v=2">
     <link rel="stylesheet" href="../../css/general-components/navigation.css?v=2">
     <link rel="stylesheet" href="../../css/general-components/info-popover.css?v=1">
+    <link rel="stylesheet" href="../../css/general-components/unit-toggle.css?v=1">
     <link rel="icon" href="../../assets/favicon.ico" sizes="any">
 </head>
 <body>
@@ -47,6 +49,7 @@
         <div class="chart-tabs" role="tablist" aria-label="Metrics sections">
             <button type="button" class="chart-tab active" role="tab" data-tab="volume" aria-selected="true">Total Volumes</button>
             <button type="button" class="chart-tab" role="tab" data-tab="favourites" aria-selected="false">Favourite Exercises</button>
+            <button type="button" class="chart-tab" role="tab" data-tab="sessions" aria-selected="false">Sessions</button>
             <button type="button" class="chart-tab" role="tab" data-tab="splits" aria-selected="false">Workout Splits</button>
             <button type="button" class="chart-tab" role="tab" data-tab="weekdays" aria-selected="false">Gym Days</button>
         </div>
@@ -87,14 +90,21 @@
         <div class="chart-panel active" id="tab-volume" data-info-area="metrics-volume">
             <div class="total-volume-dashboard">
                 <h1>Total volume per exercises</h1>
-                <div class="volume-period-chips" role="group" aria-label="Volume period">
-                    <button type="button" class="volume-period-chip is-active" data-period="all">All</button>
-                    <button type="button" class="volume-period-chip" data-period="wtd">WTD</button>
-                    <button type="button" class="volume-period-chip" data-period="mtd">MTD</button>
-                    <button type="button" class="volume-period-chip" data-period="ytd">YTD</button>
+                <div class="volume-period-row">
+                    <div class="volume-period-chips" role="group" aria-label="Volume period">
+                        <button type="button" class="volume-period-chip is-active" data-period="all" title="Custom or full history (use From/To dates)">All</button>
+                        <button type="button" class="volume-period-chip" data-period="wtd" title="Week to date — Monday through today">WTD</button>
+                        <button type="button" class="volume-period-chip" data-period="mtd" title="Month to date — 1st of this month through today">MTD</button>
+                        <button type="button" class="volume-period-chip" data-period="ytd" title="Year to date — January 1 through today">YTD</button>
+                    </div>
+                    <div class="unit-toggle" role="group" aria-label="Display unit">
+                        <button type="button" class="unit-toggle-btn is-active" data-unit="KG" aria-pressed="true">KG</button>
+                        <button type="button" class="unit-toggle-btn" data-unit="LBS" aria-pressed="false">LBS</button>
+                    </div>
                 </div>
                 <div class="volume-toolbar" id="volume-toolbar" hidden>
                     <button type="button" class="volume-back-btn" id="volume-back-btn" aria-label="Back up one level">←</button>
+                    <p id="volume-breadcrumb" class="volume-breadcrumb" aria-live="polite"></p>
                 </div>
                 <div class="chart-scroll-wrap data-surface">
                     <div id="chart-skeleton-volume" class="chart-skeleton">
@@ -115,10 +125,10 @@
                                 <span class="volume-col-chart-label" aria-hidden="true">Chart</span>
                               </th>
                               <th scope="col" class="volume-col-vol">Total volume</th>
-                              <th scope="col" class="volume-col-delta" id="volume-col-delta-header" hidden>vs PW</th>
-                              <th scope="col" class="volume-col-delta volume-col-delta-full" id="volume-col-delta-full-header" hidden>vs Full PW</th>
-                              <th scope="col" class="volume-col-delta">Plan to date</th>
-                              <th scope="col" class="volume-col-delta volume-col-delta-full" id="volume-col-plan-full-header" hidden>Plan full week</th>
+                              <th scope="col" class="volume-col-delta" id="volume-col-delta-header" hidden title="Versus the prior period to the same relative day">vs PW</th>
+                              <th scope="col" class="volume-col-delta volume-col-delta-full" id="volume-col-delta-full-header" hidden title="Versus the complete prior period">vs Full PW</th>
+                              <th scope="col" class="volume-col-delta" title="Actual volume versus your plan for the same window so far">Plan to date</th>
+                              <th scope="col" class="volume-col-delta volume-col-delta-full" id="volume-col-plan-full-header" hidden title="Actual (to date) versus the entire current period’s plan target">Plan full week</th>
                             </tr>
                           </thead>
                             <tbody id="volume-table-body"></tbody>
@@ -148,6 +158,57 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-panel" id="tab-sessions" data-info-area="metrics-sessions">
+            <div class="metrics-extra-panel">
+                <h1>Workout sessions</h1>
+                <div class="volume-period-row">
+                    <div class="volume-period-chips sessions-period-chips" role="group" aria-label="Sessions period">
+                        <button type="button" class="volume-period-chip is-active" data-period="all" title="Custom or full history (use From/To dates)">All</button>
+                        <button type="button" class="volume-period-chip" data-period="wtd" title="Week to date — Monday through today">WTD</button>
+                        <button type="button" class="volume-period-chip" data-period="mtd" title="Month to date — 1st of this month through today">MTD</button>
+                        <button type="button" class="volume-period-chip" data-period="ytd" title="Year to date — January 1 through today">YTD</button>
+                    </div>
+                </div>
+                <div id="sessions-workout-count-card" class="workout-count-card workout-count-card--metrics" hidden>
+                  <div class="workout-count-item">
+                    <span id="workout-count-week" class="workout-count-value">0</span>
+                    <span class="workout-count-label">Workouts this week</span>
+                    <span id="workout-count-week-delta" class="workout-count-delta"></span>
+                  </div>
+                  <div class="workout-count-item">
+                    <span id="workout-count-month" class="workout-count-value">0</span>
+                    <span class="workout-count-label">Workouts this month</span>
+                    <span id="workout-count-month-delta" class="workout-count-delta"></span>
+                  </div>
+                  <div class="workout-count-item">
+                    <span id="workout-count-year" class="workout-count-value">0</span>
+                    <span class="workout-count-label">Workouts this year</span>
+                    <span id="workout-count-year-delta" class="workout-count-delta"></span>
+                  </div>
+                </div>
+                <div class="chart-scroll-wrap data-surface">
+                    <div id="chart-skeleton-sessions" class="chart-skeleton">
+                        <div class="skeleton-bar" style="width: 90%"></div>
+                        <div class="skeleton-bar" style="width: 80%"></div>
+                        <div class="skeleton-bar" style="width: 70%"></div>
+                        <div class="skeleton-bar" style="width: 55%"></div>
+                    </div>
+                    <div class="chart-inner volume-table-inner" id="sessions-table-inner" style="display: none;">
+                        <table class="volume-table data-table sessions-table">
+                          <thead>
+                            <tr>
+                              <th scope="col">Date</th>
+                              <th scope="col">Workout #</th>
+                              <th scope="col">Split</th>
+                            </tr>
+                          </thead>
+                          <tbody id="sessions-table-body"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -188,14 +249,16 @@
 
     <script type="module" src="../../js/general-components/theme.js?v=2"></script>
     <script type="module" src="../../js/general-components/profile-menu.js?v=2"></script>
-    <script type="module" src="../../js/general-components/info-popover.js?v=3"></script>
+    <script type="module" src="../../js/general-components/info-popover.js?v=6"></script>
+    <script type="module" src="../../js/general-components/unit-toggle.js?v=1"></script>
+    <script type="module" src="../../js/core/workout-count-card.js?v=3"></script>
     <script src="../../js/general-components/navigation.js?v=2"></script>
     <script src="../../js/auth/require-auth.js?v=2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-    <script type="module" src="../../js/core/charts/chart-controller.js?v=17"></script>
+    <script type="module" src="../../js/core/charts/chart-controller.js?v=20"></script>
 
 </body>
 </html>

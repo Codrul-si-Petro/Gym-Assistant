@@ -66,4 +66,28 @@ class UpdateUsernameSerializer(serializers.Serializer):
 
 
 class UpdatePreferencesSerializer(serializers.Serializer):
-    preferred_unit = serializers.ChoiceField(choices=["KG", "LBS"], required=True)
+    preferred_unit = serializers.ChoiceField(choices=["KG", "LBS"], required=False)
+    workout_splits = serializers.ListField(
+        child=serializers.CharField(max_length=50, allow_blank=False),
+        required=False,
+        max_length=20,
+    )
+
+    def validate(self, attrs):
+        if "preferred_unit" not in attrs and "workout_splits" not in attrs:
+            raise serializers.ValidationError("Provide preferred_unit and/or workout_splits.")
+        return attrs
+
+    def validate_workout_splits(self, value):
+        cleaned = []
+        seen = set()
+        for raw in value:
+            name = (raw or "").strip()
+            if not name:
+                continue
+            key = name.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            cleaned.append(name[:50])
+        return cleaned

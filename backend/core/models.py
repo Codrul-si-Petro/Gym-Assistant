@@ -52,6 +52,8 @@ class PlanSeries(models.Model):
     plan_series_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     label = models.TextField()
+    description = models.TextField(null=True, blank=True)
+    workout_split = models.TextField(null=True, blank=True)
     recurrence_type = models.CharField(max_length=10)
     weekdays = models.TextField(null=True, blank=True)
     interval_days = models.SmallIntegerField(null=True, blank=True)

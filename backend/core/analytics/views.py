@@ -16,6 +16,7 @@ from .crud.crud import (
     get_rest_days,
     get_total_volume,
     get_total_volume_per_day,
+    get_workout_sessions,
     get_workout_splits,
 )
 
@@ -265,6 +266,39 @@ class GymWeekdaysView(APIView):
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({"results": results})
+
+
+class WorkoutSessionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        tags=["Analytics"],
+        manual_parameters=[
+            openapi.Parameter("start_date", openapi.IN_QUERY, type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
+            openapi.Parameter("end_date", openapi.IN_QUERY, type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
+        ],
+    )
+    def get(self, request):
+        user_id = request.user.id
+        start_date_parsed, end_date_parsed, error = _parse_date_range(request)
+        if error:
+            return error
+
+        cache_params = {
+            "start_date": start_date_parsed,
+            "end_date": end_date_parsed,
+        }
+        try:
+            results = get_cached_analytics(
+                user_id,
+                "workout-sessions",
+                cache_params,
+                lambda: get_workout_sessions(user_id, start_date=start_date_parsed, end_date=end_date_parsed),
+            )
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"results": results, "total": len(results)})
 
 
 class HomeSummaryView(APIView):
