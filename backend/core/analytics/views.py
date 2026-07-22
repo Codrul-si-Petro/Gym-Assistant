@@ -289,7 +289,7 @@ class WorkoutSessionsView(APIView):
             "end_date": end_date_parsed,
         }
         try:
-            results = get_cached_analytics(
+            payload = get_cached_analytics(
                 user_id,
                 "workout-sessions",
                 cache_params,
@@ -298,7 +298,16 @@ class WorkoutSessionsView(APIView):
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response({"results": results, "total": len(results)})
+        # Backward-compatible: older cache entries may still be a bare list.
+        if isinstance(payload, list):
+            return Response({"results": payload, "total": len(payload), "comparisons": {}})
+        return Response(
+            {
+                "results": payload.get("results") or [],
+                "total": payload.get("total") or len(payload.get("results") or []),
+                "comparisons": payload.get("comparisons") or {},
+            }
+        )
 
 
 class HomeSummaryView(APIView):

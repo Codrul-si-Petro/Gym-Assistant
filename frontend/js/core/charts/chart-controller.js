@@ -18,7 +18,7 @@ import {
   toggleVolumeDeltaDisplayMode,
   resetVolumeDeltaDisplayMode,
   formatVolume,
-} from "./chart-renderers.js?v=11";
+} from "./chart-renderers.js?v=12";
 import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSessions, fetchWorkoutSplits } from "./data-fetch.js?v=4";
 
 let volumeParentId = null;
@@ -34,6 +34,9 @@ let volumeDailyChartType = "line"; // "line" | "bar"
 let preferredUnit = getPreferredUnit();
 /** Cached for click-to-toggle delta display without refetching. */
 let lastVolumeTableResults = [];
+/** Cached sessions table payload for delta toggle re-render. */
+let lastSessionsResults = [];
+let lastSessionsComparisons = {};
 
 const dateFrom = document.getElementById("start_date");
 const dateTo = document.getElementById("end_date");
@@ -248,6 +251,14 @@ function buildVolumeTableHandlers() {
     onDeltaToggle: () => {
       toggleVolumeDeltaDisplayMode();
       renderVolumeTable(lastVolumeTableResults, preferredUnit, volumePeriod, buildVolumeTableHandlers());
+      if (lastSessionsResults.length) {
+        renderSessionsTable(
+          lastSessionsResults,
+          volumePeriod,
+          lastSessionsComparisons,
+          buildVolumeTableHandlers().onDeltaToggle
+        );
+      }
     },
   };
 }
@@ -493,17 +504,45 @@ async function loadVolumeTable() {
 }
 
 async function loadWorkoutSessionsTable() {
-  await loadSimpleChart({
-    skeletonId: "chart-skeleton-sessions",
-    innerSelector: "#sessions-table-inner",
-    canvasId: null,
-    emptyMessage: "No sessions in this range.",
-    errorMessage: "Failed to load sessions.",
-    fetchFn: fetchWorkoutSessions,
-    render(results) {
-      renderSessionsTable(results);
-    },
-  });
+  const msg = document.getElementById("chart-msg");
+  const skeleton = document.getElementById("chart-skeleton-sessions");
+  const chartInner = document.getElementById("sessions-table-inner");
+
+  if (msg) msg.textContent = "";
+  if (skeleton) skeleton.classList.remove("hidden");
+  if (chartInner) chartInner.style.display = "none";
+
+  const { start, end } = getDateRange();
+  try {
+    const data = await fetchWorkoutSessions(start, end);
+    const results = data?.results || [];
+    const comparisons = data?.comparisons || {};
+    if (!results.length) {
+      if (msg) msg.textContent = "No sessions in this range.";
+      if (skeleton) skeleton.classList.add("hidden");
+      lastSessionsResults = [];
+      lastSessionsComparisons = {};
+      return;
+    }
+    if (skeleton) skeleton.classList.add("hidden");
+    if (chartInner) chartInner.style.display = "";
+    lastSessionsResults = results;
+    lastSessionsComparisons = comparisons;
+    const onDeltaToggle = () => {
+      toggleVolumeDeltaDisplayMode();
+      if (lastVolumeTableResults.length) {
+        renderVolumeTable(lastVolumeTableResults, preferredUnit, volumePeriod, buildVolumeTableHandlers());
+      }
+      renderSessionsTable(lastSessionsResults, volumePeriod, lastSessionsComparisons, onDeltaToggle);
+    };
+    renderSessionsTable(results, volumePeriod, comparisons, onDeltaToggle);
+  } catch (err) {
+    if (msg) msg.textContent = "Failed to load sessions.";
+    if (skeleton) skeleton.classList.add("hidden");
+    if (String(err.message || "").includes("401")) {
+      window.location.replace(BASE + "/pages/auth/login.html");
+    }
+  }
 }
 
 async function loadWorkoutSplitsChart() {

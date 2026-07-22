@@ -89,6 +89,54 @@ function getRepeatType() {
     return checked ? checked.value : "once";
 }
 
+/** Sorted unique ISO dates for "Specific dates" recurrence. */
+var specificDates = [];
+
+function renderSpecificDatesList() {
+    var list = document.getElementById("plan_specific_dates_list");
+    if (!list) return;
+    if (!specificDates.length) {
+        list.innerHTML = '<li class="plan-specific-dates-empty">No dates selected yet.</li>';
+        return;
+    }
+    list.innerHTML = specificDates
+        .map(function (d, index) {
+            return (
+                '<li class="plan-specific-date-item">' +
+                "<span>" +
+                d +
+                "</span>" +
+                '<button type="button" class="plan-specific-date-remove" data-index="' +
+                index +
+                '" aria-label="Remove ' +
+                d +
+                '">×</button>' +
+                "</li>"
+            );
+        })
+        .join("");
+}
+
+function addSpecificDateFromInput() {
+    var input = document.getElementById("plan_specific_date_input");
+    if (!input || !input.value) return;
+    var value = input.value;
+    if (specificDates.indexOf(value) !== -1) {
+        showMessage("That date is already selected.", "error");
+        return;
+    }
+    if (specificDates.length >= MAX_OCCURRENCES) {
+        showMessage("Too many dates (max " + MAX_OCCURRENCES + ").", "error");
+        return;
+    }
+    specificDates.push(value);
+    specificDates.sort();
+    input.value = "";
+    renderSpecificDatesList();
+    updatePreview();
+    showMessage("");
+}
+
 function getSelectedWeekdays() {
     return Array.prototype.slice
         .call(document.querySelectorAll("#weekday_picker input:checked"))
@@ -99,6 +147,15 @@ function getSelectedWeekdays() {
 
 function getRecurrenceFromForm() {
     var type = getRepeatType();
+    if (type === "dates") {
+        if (!specificDates.length) return null;
+        return {
+            type: "dates",
+            start_date: specificDates[0],
+            end_date: specificDates[specificDates.length - 1],
+            dates: specificDates.slice(),
+        };
+    }
     var startDate = document.getElementById("plan_start_date").value;
     var endDate = document.getElementById("plan_end_date").value;
     if (!startDate) return null;
@@ -116,7 +173,11 @@ function getRecurrenceFromForm() {
 }
 
 function expandRecurrence(recurrence) {
-    if (!recurrence || !recurrence.start_date) return [];
+    if (!recurrence) return [];
+    if (recurrence.type === "dates") {
+        return (recurrence.dates || []).slice().sort().slice(0, MAX_OCCURRENCES);
+    }
+    if (!recurrence.start_date) return [];
     var start = recurrence.start_date;
     var end = recurrence.end_date || start;
     if (end < start) return [];
@@ -162,7 +223,14 @@ function updateRepeatUi() {
     var type = getRepeatType();
     document.getElementById("weekday_picker").hidden = type !== "weekly";
     document.getElementById("interval_picker").hidden = type !== "interval";
-    document.getElementById("end_date_field").hidden = type === "once";
+    var datesPicker = document.getElementById("dates_picker");
+    if (datesPicker) datesPicker.hidden = type !== "dates";
+    document.getElementById("end_date_field").hidden = type === "once" || type === "dates";
+    var startField = document.getElementById("start_date_field");
+    if (startField) startField.hidden = type === "dates";
+    var startInput = document.getElementById("plan_start_date");
+    if (startInput) startInput.required = type !== "dates";
+    renderSpecificDatesList();
     updatePreview();
 }
 
@@ -492,6 +560,8 @@ function resetBuilder() {
         el.checked = false;
     });
     document.getElementById("plan_interval_days").value = "2";
+    specificDates = [];
+    renderSpecificDatesList();
     exerciseBlocks = [createBlock()];
     document.getElementById("cancel_edit_btn").hidden = true;
     document.getElementById("submit-btn").textContent = "Save plan";
@@ -545,6 +615,8 @@ function loadPlanIntoBuilder(plan) {
         el.checked = (plan.recurrence.weekdays || []).indexOf(el.value) !== -1;
     });
     document.getElementById("plan_interval_days").value = plan.recurrence.interval_days || 2;
+    specificDates = (plan.recurrence.dates || []).slice().sort();
+    renderSpecificDatesList();
 
     exerciseBlocks = (plan.exercises || []).map(function (ex) {
         blockIdCounter += 1;
@@ -656,6 +728,12 @@ function recurrenceSummary(plan) {
     if (r.type === "once") return "Once on " + r.start_date;
     if (r.type === "weekly") {
         return "Every " + (r.weekdays || []).join(", ") + " until " + r.end_date;
+    }
+    if (r.type === "dates") {
+        var dates = r.dates || [];
+        if (!dates.length) return "Specific dates";
+        if (dates.length === 1) return "On " + dates[0];
+        return dates.length + " specific dates (" + dates[0] + " … " + dates[dates.length - 1] + ")";
     }
     return "Every " + (r.interval_days || 1) + " days until " + r.end_date;
 }
@@ -838,6 +916,24 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     document.getElementById("plan_end_date").addEventListener("change", updatePreview);
     document.getElementById("plan_interval_days").addEventListener("input", updatePreview);
+    document.getElementById("plan_specific_date_add")?.addEventListener("click", addSpecificDateFromInput);
+    document.getElementById("plan_specific_date_input")?.addEventListener("change", function () {
+        /* optional: auto-add on pick — keep explicit Add for clarity */
+    });
+    document.getElementById("plan_specific_dates_list")?.addEventListener("click", function (e) {
+        var btn = e.target.closest(".plan-specific-date-remove");
+        if (!btn) return;
+        var index = parseInt(btn.getAttribute("data-index"), 10);
+        if (!isFinite(index)) return;
+        specificDates.splice(index, 1);
+        renderSpecificDatesList();
+        updatePreview();
+    });
+    var specificDateInput = document.getElementById("plan_specific_date_input");
+    if (specificDateInput) {
+        specificDateInput.min = todayIso();
+        specificDateInput.max = addDaysIso(todayIso(), MAX_PLAN_SPAN_DAYS);
+    }
 
     document.getElementById("add_exercise_btn").addEventListener("click", function () {
         syncAllBlocksFromDom();

@@ -98,7 +98,6 @@ export async function initWorkoutCountCard(containerId = "workout-count-card") {
 
 function boot() {
   initWorkoutCountCard();
-  initWorkoutCountCard("sessions-workout-count-card");
 }
 
 if (document.readyState === "loading") {

@@ -60,10 +60,32 @@
   color: var(--accent-secondary, #a78bfa);
 }
 
+.volume-table tbody td.volume-delta-na {
+  color: var(--text-muted, #71717a);
+  font-weight: 500;
+}
+
 .volume-table tbody tr.volume-row-total td {
   font-weight: 700;
   border-bottom: 1px solid var(--border-strong, #3f3f46);
   color: var(--text-primary);
+}
+
+/* Total-row blanket color must not wipe variance greens/reds/N/A. */
+.volume-table tbody tr.volume-row-total td.volume-delta-up {
+  color: var(--success, #4ade80);
+}
+
+.volume-table tbody tr.volume-row-total td.volume-delta-down {
+  color: var(--danger, #f87171);
+}
+
+.volume-table tbody tr.volume-row-total td.volume-delta-neutral {
+  color: var(--accent-secondary, #a78bfa);
+}
+
+.volume-table tbody tr.volume-row-total td.volume-delta-na {
+  color: var(--text-muted, #71717a);
 }
 
 .volume-col-delta-toggle {

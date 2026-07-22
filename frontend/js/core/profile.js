@@ -3,6 +3,8 @@ import { getAuthHeaders } from "../utils.js";
 import { getPreferredUnit, setPreferredUnit } from "../user-preferences.js";
 
 let workoutSplits = [];
+/** Once the user edits splits locally, ignore late loadProfile overwrites. */
+let splitsTouched = false;
 
 function showMessage(text, type = "") {
   const el = document.getElementById("profile-msg");
@@ -29,23 +31,24 @@ function renderSplitList() {
     .join("");
 }
 
-function addSplitFromInput() {
+function addSplitFromInput({ quiet = false } = {}) {
   const input = document.getElementById("split-input");
   if (!input) return;
   const name = (input.value || "").trim();
   if (!name) return;
   if (workoutSplits.some((s) => s.toLowerCase() === name.toLowerCase())) {
-    showMessage("That split is already in your list.", "error");
+    if (!quiet) showMessage("That split is already in your list.", "error");
     return;
   }
   if (workoutSplits.length >= 20) {
-    showMessage("You can define up to 20 splits.", "error");
+    if (!quiet) showMessage("You can define up to 20 splits.", "error");
     return;
   }
+  splitsTouched = true;
   workoutSplits.push(name);
   input.value = "";
   renderSplitList();
-  showMessage("");
+  if (!quiet) showMessage("");
 }
 
 async function loadProfile() {
@@ -66,8 +69,11 @@ async function loadProfile() {
       select.value = setPreferredUnit(user.preferred_unit || getPreferredUnit());
     }
 
-    workoutSplits = Array.isArray(user.workout_splits) ? [...user.workout_splits] : [];
-    renderSplitList();
+    // Don't clobber local adds if the user already interacted with the list.
+    if (!splitsTouched) {
+      workoutSplits = Array.isArray(user.workout_splits) ? [...user.workout_splits] : [];
+      renderSplitList();
+    }
   } catch {
     /* ignore */
   }
@@ -80,6 +86,9 @@ async function submitPreferences(event) {
     showMessage("Please log in first.", "error");
     return;
   }
+
+  // Flush any text still sitting in the input (Save without clicking Add).
+  addSplitFromInput({ quiet: true });
 
   const form = event.target;
   const payload = {
@@ -100,6 +109,7 @@ async function submitPreferences(event) {
 
   const unit = setPreferredUnit(data.preferred_unit || payload.preferred_unit);
   workoutSplits = Array.isArray(data.workout_splits) ? [...data.workout_splits] : [...workoutSplits];
+  splitsTouched = false;
   renderSplitList();
   window.dispatchEvent(new CustomEvent("preferred-unit-changed", { detail: { unit } }));
   showMessage("Preferences updated.", "success");
@@ -111,7 +121,7 @@ if (support) {
 }
 
 document.getElementById("preferences-form")?.addEventListener("submit", submitPreferences);
-document.getElementById("split-add-btn")?.addEventListener("click", addSplitFromInput);
+document.getElementById("split-add-btn")?.addEventListener("click", () => addSplitFromInput());
 document.getElementById("split-input")?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     event.preventDefault();
@@ -123,6 +133,7 @@ document.getElementById("split-list")?.addEventListener("click", (event) => {
   if (!btn) return;
   const index = Number(btn.dataset.index);
   if (!Number.isFinite(index)) return;
+  splitsTouched = true;
   workoutSplits.splice(index, 1);
   renderSplitList();
 });

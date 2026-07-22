@@ -8,7 +8,7 @@ export const PAGE_INFO = {
   log:
     "Log one set at a time for workouts you actually performed. Workout number refers to the session; set numbers follow the order you log for each exercise. To schedule future workouts, use Plan workouts instead.",
   plan:
-    "Design a full workout with multiple exercises and sets, then schedule it once or on a repeating pattern (weekdays or every N days, up to one year). Give the plan a name, optionally add a description, and optionally pick a workout split from the list you define in Profile (if blank, the plan name is used as the split on scheduled sets). Saved plans appear below for editing, copying to another day, or deletion. In Metrics, plan volume appears as a forecast line alongside your actual logged volume.",
+    "Design a full workout with multiple exercises and sets, then schedule it once, on repeating weekdays, every N days, or on specific calendar dates you pick (up to one year). Give the plan a name, optionally add a description, and optionally pick a workout split from the list you define in Profile (if blank, the plan name is used as the split on scheduled sets). Saved plans appear below for editing, copying to another day, or deletion. In Metrics, plan volume appears as a forecast line alongside your actual logged volume.",
   today:
     "See what you planned for today, track progress set by set, and tap Log this to open the log form with reps, load, and gear pre-filled. After each save you'll advance to the next planned set, then the next exercise, until the workout is complete.",
   history:
@@ -18,7 +18,7 @@ export const PAGE_INFO = {
   "metrics-favourites":
     "Favourite Exercises counts how many sets you've logged for each exercise over the selected date range, ranked from most to least performed. The Total row at the top is the sum of all sets shown.",
   "metrics-sessions":
-    "Sessions lists each distinct workout session in the selected date range: the calendar date, the workout number (so two sessions on the same day stay separate), and the workout split. Use WTD / MTD / YTD to snap the date range (same as Total Volumes). The attendance card compares this week / month / year against the prior period and against your plan. The Total row (first in the table) counts how many sessions are listed.",
+    "Sessions lists each distinct workout session in the selected date range: the calendar date, the workout number (so two sessions on the same day stay separate), and the workout split. Use WTD / MTD / YTD to snap the date range — the Total row then shows vs prior week/month/year and vs plan, same idea as Total Volumes. The Total row is first (#1).",
   "metrics-splits":
     "Workout Splits groups your logged actual sets by split (e.g. push, pull, legs) over the selected date range, so you can see where your training time is going. Consistent split names from Profile keep this chart clean.",
   "metrics-weekdays":

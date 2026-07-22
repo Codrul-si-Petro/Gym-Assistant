@@ -31,7 +31,6 @@ def test_home_summary_only_on_home_page(page: Page, frontend_url: str, e2e_user_
 
     page.locator('.chart-tab[data-tab="sessions"]').click()
     expect(page.locator("#tab-sessions")).to_be_visible()
-    expect(page.locator("#sessions-workout-count-card")).to_be_visible(timeout=15000)
-    expect(page.locator("#sessions-workout-count-card #workout-count-week")).not_to_be_empty()
+    expect(page.locator("#sessions-workout-count-card")).to_have_count(0)
     expect(page.locator(".sessions-period-chips")).to_be_visible()
     expect(page.locator("#sessions-table-inner, #chart-skeleton-sessions")).to_be_visible()

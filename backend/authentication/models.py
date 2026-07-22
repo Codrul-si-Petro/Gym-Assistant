@@ -17,6 +17,10 @@ class User(AbstractUser):
     # Let Django manage this table (in public schema)
     # Only core tables use Alembic with separate schemas
     preferred_unit = models.CharField(max_length=3, choices=[("KG", "KG"), ("LBS", "LBS")], default="KG")
+    workout_splits_configured = models.BooleanField(
+        default=False,
+        help_text="True once the user set splits or explicitly opted out during onboarding.",
+    )
 
 
 class UserWorkoutSplit(models.Model):

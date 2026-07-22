@@ -57,6 +57,7 @@ class PlanSeries(models.Model):
     recurrence_type = models.CharField(max_length=10)
     weekdays = models.TextField(null=True, blank=True)
     interval_days = models.SmallIntegerField(null=True, blank=True)
+    specific_dates = models.TextField(null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
     ta_created_at = models.DateTimeField(auto_now_add=True)

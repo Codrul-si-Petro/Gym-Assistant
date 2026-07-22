@@ -166,6 +166,12 @@ class AuthenticationAPITestCase(TestCase):
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_password_reset_request_returns_200(self):
+        """Request endpoint always returns 200 (does not leak whether email exists)."""
+        url = f"{BASE_URL}/password-reset/"
+        response = self.client.post(url, {"email": self.test_user.email}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_change_password_success_returns_200(self):
         url = f"{BASE_URL}/change-password/"
         self.client.force_authenticate(user=self.test_user)

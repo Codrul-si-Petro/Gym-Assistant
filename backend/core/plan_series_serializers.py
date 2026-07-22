@@ -30,8 +30,8 @@ class PlanExerciseSerializer(serializers.Serializer):
 
 
 class RecurrenceSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=["once", "weekly", "interval"])
-    start_date = serializers.DateField()
+    type = serializers.ChoiceField(choices=["once", "weekly", "interval", "dates"])
+    start_date = serializers.DateField(required=False, allow_null=True)
     end_date = serializers.DateField(required=False, allow_null=True)
     weekdays = serializers.ListField(
         child=serializers.ChoiceField(choices=["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]),
@@ -39,10 +39,38 @@ class RecurrenceSerializer(serializers.Serializer):
         allow_empty=True,
     )
     interval_days = serializers.IntegerField(min_value=1, max_value=365, required=False, allow_null=True)
+    dates = serializers.ListField(
+        child=serializers.DateField(),
+        required=False,
+        allow_empty=True,
+        max_length=366,
+    )
 
     def validate(self, attrs):
         recurrence_type = attrs["type"]
-        start = attrs["start_date"]
+
+        if recurrence_type == "dates":
+            specific = attrs.get("dates") or []
+            if not specific:
+                raise serializers.ValidationError({"dates": "Select at least one date."})
+            unique = sorted({d for d in specific})
+            attrs["dates"] = unique
+            attrs["start_date"] = unique[0]
+            attrs["end_date"] = unique[-1]
+            try:
+                expand_recurrence(
+                    unique[0],
+                    unique[-1],
+                    "dates",
+                    specific_dates=unique,
+                )
+            except RecurrenceError as exc:
+                raise serializers.ValidationError(str(exc)) from exc
+            return attrs
+
+        start = attrs.get("start_date")
+        if not start:
+            raise serializers.ValidationError({"start_date": "Start date is required."})
 
         if recurrence_type == "once":
             attrs["end_date"] = start
@@ -131,7 +159,24 @@ class PlanSeriesSerializer(serializers.Serializer):
             recurrence_data["type"],
             weekdays=recurrence_data.get("weekdays"),
             interval_days=recurrence_data.get("interval_days"),
+            specific_dates=recurrence_data.get("dates"),
         )
+
+    def _dates_to_str(self, dates):
+        if not dates:
+            return None
+        return ",".join(d.isoformat() if hasattr(d, "isoformat") else str(d) for d in dates)
+
+    def _dates_from_str(self, value):
+        if not value:
+            return []
+        out = []
+        for part in value.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            out.append(date.fromisoformat(part))
+        return out
 
     def _check_conflicts(self, user, dates, exercises_data, exclude_series_id=None):
         """Block scheduling the same exercise on a date another plan already owns."""
@@ -260,6 +305,7 @@ class PlanSeriesSerializer(serializers.Serializer):
                 recurrence_type=recurrence["type"],
                 weekdays=self._weekdays_to_str(recurrence.get("weekdays")),
                 interval_days=recurrence.get("interval_days"),
+                specific_dates=self._dates_to_str(recurrence.get("dates")),
                 start_date=recurrence["start_date"],
                 end_date=recurrence["end_date"],
             )
@@ -302,6 +348,7 @@ class PlanSeriesSerializer(serializers.Serializer):
             instance.recurrence_type = recurrence["type"]
             instance.weekdays = self._weekdays_to_str(recurrence.get("weekdays"))
             instance.interval_days = recurrence.get("interval_days")
+            instance.specific_dates = self._dates_to_str(recurrence.get("dates"))
             instance.start_date = recurrence["start_date"]
             instance.end_date = recurrence["end_date"]
             instance.ta_updated_at = timezone.now()
@@ -375,6 +422,7 @@ class PlanSeriesSerializer(serializers.Serializer):
                 "end_date": instance.end_date,
                 "weekdays": self._weekdays_from_str(instance.weekdays),
                 "interval_days": instance.interval_days,
+                "dates": self._dates_from_str(getattr(instance, "specific_dates", None)),
             },
             "exercises": exercises,
             "occurrence_count": occurrence_count,

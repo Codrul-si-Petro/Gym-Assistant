@@ -234,3 +234,33 @@ def test_plan_series_update_does_not_conflict_with_itself(authenticated_client, 
     )
     response = authenticated_client.put(f"{BASE_URL}{series_id}/", updated_payload, format="json")
     assert response.status_code == status.HTTP_200_OK, response.data
+
+
+def test_plan_series_partial_update_returns_200(authenticated_client, dims):
+    created = authenticated_client.post(BASE_URL, _plan_payload(dims), format="json")
+    assert created.status_code == status.HTTP_201_CREATED, created.data
+    series_id = created.data["plan_series_id"]
+
+    updated_payload = _plan_payload(dims, label="Pytest Upper patched")
+    response = authenticated_client.patch(f"{BASE_URL}{series_id}/", updated_payload, format="json")
+    assert response.status_code == status.HTTP_200_OK, response.data
+    assert response.data["label"] == "Pytest Upper patched"
+
+
+def test_plan_series_create_specific_dates(authenticated_client, dims):
+    payload = _plan_payload(
+        dims,
+        recurrence={
+            "type": "dates",
+            "dates": ["2026-09-03", "2026-09-10", "2026-09-17"],
+        },
+    )
+    response = authenticated_client.post(BASE_URL, payload, format="json")
+    assert response.status_code == status.HTTP_201_CREATED, response.data
+    assert response.data["occurrence_count"] == 3
+    assert response.data["recurrence"]["type"] == "dates"
+    assert [str(d) for d in response.data["recurrence"]["dates"]] == [
+        "2026-09-03",
+        "2026-09-10",
+        "2026-09-17",
+    ]

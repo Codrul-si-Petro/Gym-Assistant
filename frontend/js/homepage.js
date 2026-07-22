@@ -5,10 +5,12 @@ const words = ["inspiration.", "passion.", "motivation."];
 let wordIndex = 0;
 
 setInterval(() => {
-  const el = document.getElementById("word");
-  if (!el) return;
+  const els = document.querySelectorAll(".hero-rotating-word");
+  if (!els.length) return;
   wordIndex = (wordIndex + 1) % words.length;
-  el.textContent = words[wordIndex];
+  els.forEach((el) => {
+    el.textContent = words[wordIndex];
+  });
 }, 1500);
 
 function formatNumber(value) {

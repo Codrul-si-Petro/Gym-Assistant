@@ -72,10 +72,14 @@ class UpdatePreferencesSerializer(serializers.Serializer):
         required=False,
         max_length=20,
     )
+    # Explicit opt-out / confirm without changing the list — still marks configured.
+    workout_splits_configured = serializers.BooleanField(required=False)
 
     def validate(self, attrs):
-        if "preferred_unit" not in attrs and "workout_splits" not in attrs:
-            raise serializers.ValidationError("Provide preferred_unit and/or workout_splits.")
+        if "preferred_unit" not in attrs and "workout_splits" not in attrs and "workout_splits_configured" not in attrs:
+            raise serializers.ValidationError(
+                "Provide preferred_unit, workout_splits, and/or workout_splits_configured."
+            )
         return attrs
 
     def validate_workout_splits(self, value):

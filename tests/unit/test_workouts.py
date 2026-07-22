@@ -115,6 +115,20 @@ def test_workouts_patch_updates_row(authenticated_client, dims):
     assert response.data["comments"] == "fixed typo"
 
 
+def test_workouts_put_updates_row(authenticated_client, dims):
+    created = _create(authenticated_client, dims)
+    payload = _payload(dims, repetitions=15, load=55, comments="full replace")
+    response = authenticated_client.put(
+        f"{BASE_URL}{created['workout_id']}/",
+        payload,
+        format="json",
+    )
+    assert response.status_code == status.HTTP_200_OK, response.data
+    assert response.data["repetitions"] == 15
+    assert float(response.data["load"]) == 55
+    assert response.data["comments"] == "full replace"
+
+
 def test_workouts_patch_other_users_row_returns_404(authenticated_client, dims, db):
     created = _create(authenticated_client, dims)
 

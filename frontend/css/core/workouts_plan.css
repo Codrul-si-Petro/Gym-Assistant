@@ -94,13 +94,61 @@
 }
 
 .plan-weekdays,
-.plan-interval {
+.plan-interval,
+.plan-dates-picker {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem 0.75rem;
     margin: 0.35rem 0 0.75rem 1.25rem;
     color: var(--text-secondary);
     font-size: 0.88rem;
+}
+
+.plan-dates-picker {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.plan-dates-add {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.plan-specific-dates-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.plan-specific-date-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+}
+
+.plan-specific-date-remove {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.plan-specific-dates-empty {
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 .plan-interval label {

@@ -95,16 +95,18 @@ exercise_ids AS (
 SELECT
   e.exercise_id,
   COALESCE(c.total_volume, 0) AS total_volume,
-  COALESCE(p.plan_volume, 0) AS plan_volume,
+  -- plan_* stay NULL when there are no plan rows for this exercise/window
+  -- so the UI can show N/A instead of treating "no plan" as a 0 target.
+  p.plan_volume AS plan_volume,
   COALESCE(w.previous_week, 0) AS previous_week,
   COALESCE(wt.previous_week_to_date, 0) AS previous_week_to_date,
   COALESCE(m.previous_month, 0) AS previous_month,
   COALESCE(mt.previous_month_to_date, 0) AS previous_month_to_date,
   COALESCE(y.previous_year, 0) AS previous_year,
   COALESCE(yt.previous_year_to_date, 0) AS previous_year_to_date,
-  COALESCE(pwf.plan_week_full, 0) AS plan_week_full,
-  COALESCE(pmf.plan_month_full, 0) AS plan_month_full,
-  COALESCE(pyf.plan_year_full, 0) AS plan_year_full
+  pwf.plan_week_full AS plan_week_full,
+  pmf.plan_month_full AS plan_month_full,
+  pyf.plan_year_full AS plan_year_full
 FROM exercise_ids e
 LEFT JOIN current_volume c USING (exercise_id)
 LEFT JOIN current_plan p USING (exercise_id)

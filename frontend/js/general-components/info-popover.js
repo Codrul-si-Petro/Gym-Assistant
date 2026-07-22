@@ -1,5 +1,5 @@
 // ?v= is a manual cache-buster for this internal import — bump when info-content.js changes.
-import { PAGE_INFO } from "./info-content.js?v=7";
+import { PAGE_INFO } from "./info-content.js?v=9";
 
 const SEEN_PREFIX = "gym_assistant_info_seen_";
 
