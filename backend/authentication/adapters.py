@@ -39,6 +39,9 @@ class JWTRedirectAdapter(DefaultSocialAccountAdapter):
     """Social adapter: redirect with JWT when applicable."""
 
     def get_login_redirect_url(self, request):
+        next_url = request.session.pop("post_login_redirect", None)
+        if next_url and request.user.is_staff:
+            return next_url
         url = get_jwt_login_redirect_url(request)
         if url:
             return url

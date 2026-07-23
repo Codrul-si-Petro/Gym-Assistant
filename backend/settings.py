@@ -45,7 +45,7 @@ if _SENTRY_DSN:
         environment="dev" if DEBUG else "prod",
     )
 
-ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 
