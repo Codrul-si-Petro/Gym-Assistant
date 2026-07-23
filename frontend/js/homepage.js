@@ -1,4 +1,5 @@
 import { API_BASE, API_PREFIX, SUPPORT_EMAIL } from "./config.js";
+import { apiFetch } from "./utils.js";
 import { convertKgToPreferred, setPreferredUnit, unitSuffix } from "./user-preferences.js";
 
 const words = ["inspiration.", "passion.", "motivation."];
@@ -73,10 +74,10 @@ async function loadHomeSummary() {
 
   try {
     const [summaryRes, userRes] = await Promise.all([
-      fetch(`${API_BASE}${API_PREFIX}v1/home-summary`, {
+      apiFetch(`${API_BASE}${API_PREFIX}v1/home-summary`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       }),
-      fetch(`${API_BASE}${API_PREFIX}auth/current-user/`, {
+      apiFetch(`${API_BASE}${API_PREFIX}auth/current-user/`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       }),
     ]);

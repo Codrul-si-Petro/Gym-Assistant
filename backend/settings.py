@@ -36,10 +36,17 @@ if _SENTRY_DSN:
 
     # Performance = Tracing (transactions/spans). Profiling stays off cause Sentry's free tier.
     _traces_sample_rate = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "1.0"))
+
+    def _traces_sampler(sampling_context):
+        # Keep-alive / uptime pings should not burn free-tier trace quota.
+        if (sampling_context.get("wsgi_environ") or {}).get("PATH_INFO") == "/health/":
+            return 0.0
+        return _traces_sample_rate
+
     sentry_sdk.init(
         dsn=_SENTRY_DSN,
         integrations=[DjangoIntegration()],
-        traces_sample_rate=_traces_sample_rate,
+        traces_sampler=_traces_sampler,
         profiles_sample_rate=0.0,
         send_default_pii=False,
         environment="dev" if DEBUG else "prod",
@@ -81,6 +88,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.messages",
     "corsheaders",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 MIDDLEWARE = [
@@ -262,9 +270,9 @@ REST_FRAMEWORK = {
 
 # token lifetime config
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }

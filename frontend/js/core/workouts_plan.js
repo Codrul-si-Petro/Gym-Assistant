@@ -568,7 +568,7 @@ function loadUserSplitSuggestions() {
     if (!list) return Promise.resolve();
     var headers = getAuthHeaders();
     if (!headers) return Promise.resolve();
-    return fetch(API_BASE + "/api/auth/current-user/", { headers: headers })
+    return apiFetch(API_BASE + "/api/auth/current-user/", { headers: headers })
         .then(function (res) {
             return res.ok ? res.json() : null;
         })
@@ -770,7 +770,7 @@ function renderMyPlans(plans) {
 function loadMyPlans() {
     var headers = getAuthHeaders();
     if (!headers) return Promise.resolve();
-    return fetch(API_BASE + "/api/plan-series/", { headers: headers })
+    return apiFetch(API_BASE + "/api/plan-series/", { headers: headers })
         .then(function (res) {
             return res.ok ? res.json() : [];
         })
@@ -807,7 +807,7 @@ function onSubmit(e) {
         method = "PUT";
     }
 
-    fetch(url, { method: method, headers: headers, body: JSON.stringify(payload) })
+    apiFetch(url, { method: method, headers: headers, body: JSON.stringify(payload) })
         .then(function (res) {
             return res.json().then(function (data) {
                 return { status: res.status, data: data };
@@ -839,7 +839,7 @@ function deletePlan(seriesId, scope) {
             : "Delete all future occurrences of this plan?";
     if (!window.confirm(msg)) return;
 
-    fetch(API_BASE + "/api/plan-series/" + seriesId + "/?scope=" + scope, {
+    apiFetch(API_BASE + "/api/plan-series/" + seriesId + "/?scope=" + scope, {
         method: "DELETE",
         headers: headers,
     })
@@ -976,7 +976,7 @@ function wireMyPlansEvents() {
             var asCopy = e.target.classList.contains("copy-plan");
             var headers = getAuthHeaders();
             if (!headers) return;
-            fetch(API_BASE + "/api/plan-series/" + seriesId + "/", { headers: headers })
+            apiFetch(API_BASE + "/api/plan-series/" + seriesId + "/", { headers: headers })
                 .then(function (res) {
                     return res.ok ? res.json() : null;
                 })

@@ -58,13 +58,13 @@ function buildIdToNameMap(rows, idKey, nameKey) {
  */
 function fetchDimensionLists(headers) {
     return Promise.all([
-        fetch(API_BASE + "/api/exercises/", { headers: headers }).then(function (r) {
+        apiFetch(API_BASE + "/api/exercises/", { headers: headers }).then(function (r) {
             return r.ok ? r.json() : [];
         }),
-        fetch(API_BASE + "/api/attachments/", { headers: headers }).then(function (r) {
+        apiFetch(API_BASE + "/api/attachments/", { headers: headers }).then(function (r) {
             return r.ok ? r.json() : [];
         }),
-        fetch(API_BASE + "/api/equipment/", { headers: headers }).then(function (r) {
+        apiFetch(API_BASE + "/api/equipment/", { headers: headers }).then(function (r) {
             return r.ok ? r.json() : [];
         }),
     ]).then(function (results) {

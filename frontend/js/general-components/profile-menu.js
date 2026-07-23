@@ -1,5 +1,5 @@
 import { API_BASE, API_PREFIX, FRONTEND_URL, SUPPORT_EMAIL } from "../config.js";
-import { bindDismissOnOutsideOrEscape } from "../utils.js";
+import { apiFetch, bindDismissOnOutsideOrEscape } from "../utils.js";
 
 function getInitials(username) {
   if (!username) return "?";
@@ -79,7 +79,7 @@ async function fetchCurrentUser() {
   const token = localStorage.getItem("access_token");
   if (!token) return { unauthorized: true };
   try {
-    const res = await fetch(`${API_BASE}${API_PREFIX}auth/current-user/`, {
+    const res = await apiFetch(`${API_BASE}${API_PREFIX}auth/current-user/`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
     if (res.status === 401) return { unauthorized: true };

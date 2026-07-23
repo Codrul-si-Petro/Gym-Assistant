@@ -8,7 +8,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from backend.authentication.decorators import staff_sso_required
 from backend.authentication.views import redirect_to_frontend_login, redirect_to_frontend_signup
 
-from .views import homepageView, sentry_debug
+from .views import health, homepageView, sentry_debug
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -51,6 +51,8 @@ urlpatterns = [
     path("", include("backend.authentication.urls")),
     # Sentry smoke test (404 when DEBUG=False)
     path("sentry-debug/", sentry_debug),
+    # Cheap liveness for uptime monitors (Sentry, cron-job.org, etc.)
+    path("health/", health, name="health"),
     # Home page
     path("", homepageView, name="home"),
 ]
