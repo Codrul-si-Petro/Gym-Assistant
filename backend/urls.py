@@ -49,9 +49,8 @@ urlpatterns = [
     path("social/", include("allauth.socialaccount.providers.google.urls")),  # google login
     # include Authentication
     path("", include("backend.authentication.urls")),
-    # Sentry smoke test (404 when DEBUG=False)
+    # Sentry smoke test
     path("sentry-debug/", sentry_debug),
-    # Cheap liveness for uptime monitors (Sentry, cron-job.org, etc.)
     path("health/", health, name="health"),
     # Home page
     path("", homepageView, name="home"),
