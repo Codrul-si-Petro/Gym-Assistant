@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import date
 
 from drf_yasg.utils import swagger_auto_schema
@@ -35,10 +36,27 @@ class PlanSeriesViewSet(
         kwargs.setdefault("context", self.get_serializer_context())
         return PlanSeriesSerializer(*args, **kwargs)
 
+    def _prefetch_plan_workouts(self, instances):
+        """One query for all plan rows belonging to the listed series."""
+        series_ids = [instance.plan_series_id for instance in instances]
+        if not series_ids:
+            return {}
+        rows = (
+            Workouts.objects.filter(plan_group_id__in=series_ids, scenario=SCENARIO_PLAN)
+            .select_related("exercise", "equipment", "attachment")
+            .order_by("plan_group_id", "date_id", "exercise_id", "set_number")
+        )
+        by_series: dict = defaultdict(list)
+        for row in rows:
+            by_series[row.plan_group_id].append(row)
+        return by_series
+
     @swagger_auto_schema(tags=["workout-planning"])
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
+        instances = list(self.get_queryset())
+        context = self.get_serializer_context()
+        context["plan_workouts_by_series"] = self._prefetch_plan_workouts(instances)
+        serializer = self.get_serializer(instances, many=True, context=context)
         return Response(serializer.data)
 
     @swagger_auto_schema(tags=["workout-planning"])

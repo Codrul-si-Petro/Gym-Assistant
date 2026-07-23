@@ -1,3 +1,7 @@
+-- Distinct workout sessions for the authenticated user.
+-- Reads core.fact_workouts directly (not an analytics mart) so the list stays
+-- fresh after each logged set; other analytics endpoints use dbt marts that lag
+-- up to the 4-hour dbt build schedule.
 SELECT
   w.date_id AS date,
   w.workout_number,

@@ -28,7 +28,8 @@ locals {
     "DBT_USER",
     "DBT_DBNAME",
     "BACKEND_URL",
-    "DISCORD_WEBHOOK"
+    "DISCORD_WEBHOOK",
+    "SENTRY_DSN",
   ]
 }
 

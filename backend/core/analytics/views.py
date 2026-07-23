@@ -1,4 +1,3 @@
-from django.utils.dateparse import parse_date
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -7,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from backend.core.constants import TIME_FILTER_CURRENT
+from backend.core.helpers import parse_optional_date_range
 
 from .cache_utils import get_cached_analytics
 from .crud.crud import (
@@ -19,23 +19,7 @@ from .crud.crud import (
     get_workout_sessions,
     get_workout_splits,
 )
-
-
-def _parse_date_range(request):
-    start_date = request.query_params.get("start_date")
-    end_date = request.query_params.get("end_date")
-    start_date_parsed = parse_date(start_date) if start_date else None
-    end_date_parsed = parse_date(end_date) if end_date else None
-    if start_date_parsed is not None and end_date_parsed is not None and start_date_parsed > end_date_parsed:
-        return (
-            None,
-            None,
-            Response(
-                {"detail": "Make sure the start date is before the end date."},
-                status=status.HTTP_400_BAD_REQUEST,
-            ),
-        )
-    return start_date_parsed, end_date_parsed, None
+from .helpers import analytics_or_error
 
 
 class UserRestDaysView(APIView):
@@ -65,25 +49,24 @@ class FavouriteExercisesView(APIView):
     )
     def get(self, request):
         user_id = request.user.id
-        start_date_parsed, end_date_parsed, error = _parse_date_range(request)
-        if error:
-            return error
+        start_date_parsed, end_date_parsed = parse_optional_date_range(request.query_params)
 
         cache_params = {
             "start_date": start_date_parsed,
             "end_date": end_date_parsed,
         }
-        try:
-            results = get_cached_analytics(
+        results = analytics_or_error(
+            lambda: get_cached_analytics(
                 user_id,
                 "favourite-exercises",
                 cache_params,
                 lambda: get_favourite_exercises(user_id, start_date=start_date_parsed, end_date=end_date_parsed),
             )
-            for i, row in enumerate(results, 1):
-                row["rank"] = i
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        )
+        if isinstance(results, Response):
+            return results
+        for i, row in enumerate(results, 1):
+            row["rank"] = i
 
         return Response({"results": results})
 
@@ -114,9 +97,7 @@ class TotalVolumeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        start_date_parsed, end_date_parsed, error = _parse_date_range(request)
-        if error:
-            return error
+        start_date_parsed, end_date_parsed = parse_optional_date_range(request.query_params)
 
         parent_id_raw = request.query_params.get("parent_id")
         parent_id = None
@@ -132,8 +113,8 @@ class TotalVolumeView(APIView):
             "end_date": end_date_parsed if period == "all" else None,
             "parent_id": parent_id,
         }
-        try:
-            results = get_cached_analytics(
+        results = analytics_or_error(
+            lambda: get_cached_analytics(
                 user_id,
                 "total-volume",
                 cache_params,
@@ -145,10 +126,11 @@ class TotalVolumeView(APIView):
                     end_date=end_date_parsed if period == "all" else None,
                 ),
             )
-            for i, row in enumerate(results, 1):
-                row["rank"] = i
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        )
+        if isinstance(results, Response):
+            return results
+        for i, row in enumerate(results, 1):
+            row["rank"] = i
 
         return Response({"results": results, "period": period})
 
@@ -175,17 +157,15 @@ class TotalVolumePerDayView(APIView):
         except ValueError:
             return Response({"detail": "exercise_id must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
 
-        start_date_parsed, end_date_parsed, error = _parse_date_range(request)
-        if error:
-            return error
+        start_date_parsed, end_date_parsed = parse_optional_date_range(request.query_params)
 
         cache_params = {
             "exercise_id": exercise_id,
             "start_date": start_date_parsed,
             "end_date": end_date_parsed,
         }
-        try:
-            results = get_cached_analytics(
+        results = analytics_or_error(
+            lambda: get_cached_analytics(
                 user_id,
                 "total-volume-daily",
                 cache_params,
@@ -196,8 +176,9 @@ class TotalVolumePerDayView(APIView):
                     exercise_id=exercise_id,
                 ),
             )
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        )
+        if isinstance(results, Response):
+            return results
 
         return Response({"results": results})
 
@@ -214,23 +195,22 @@ class WorkoutSplitsView(APIView):
     )
     def get(self, request):
         user_id = request.user.id
-        start_date_parsed, end_date_parsed, error = _parse_date_range(request)
-        if error:
-            return error
+        start_date_parsed, end_date_parsed = parse_optional_date_range(request.query_params)
 
         cache_params = {
             "start_date": start_date_parsed,
             "end_date": end_date_parsed,
         }
-        try:
-            results = get_cached_analytics(
+        results = analytics_or_error(
+            lambda: get_cached_analytics(
                 user_id,
                 "workout-splits",
                 cache_params,
                 lambda: get_workout_splits(user_id, start_date=start_date_parsed, end_date=end_date_parsed),
             )
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        )
+        if isinstance(results, Response):
+            return results
 
         return Response({"results": results})
 
@@ -247,23 +227,22 @@ class GymWeekdaysView(APIView):
     )
     def get(self, request):
         user_id = request.user.id
-        start_date_parsed, end_date_parsed, error = _parse_date_range(request)
-        if error:
-            return error
+        start_date_parsed, end_date_parsed = parse_optional_date_range(request.query_params)
 
         cache_params = {
             "start_date": start_date_parsed,
             "end_date": end_date_parsed,
         }
-        try:
-            results = get_cached_analytics(
+        results = analytics_or_error(
+            lambda: get_cached_analytics(
                 user_id,
                 "gym-weekdays",
                 cache_params,
                 lambda: get_gym_weekdays(user_id, start_date=start_date_parsed, end_date=end_date_parsed),
             )
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        )
+        if isinstance(results, Response):
+            return results
 
         return Response({"results": results})
 
@@ -280,23 +259,22 @@ class WorkoutSessionsView(APIView):
     )
     def get(self, request):
         user_id = request.user.id
-        start_date_parsed, end_date_parsed, error = _parse_date_range(request)
-        if error:
-            return error
+        start_date_parsed, end_date_parsed = parse_optional_date_range(request.query_params)
 
         cache_params = {
             "start_date": start_date_parsed,
             "end_date": end_date_parsed,
         }
-        try:
-            payload = get_cached_analytics(
+        payload = analytics_or_error(
+            lambda: get_cached_analytics(
                 user_id,
                 "workout-sessions",
                 cache_params,
                 lambda: get_workout_sessions(user_id, start_date=start_date_parsed, end_date=end_date_parsed),
             )
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        )
+        if isinstance(payload, Response):
+            return payload
 
         # Backward-compatible: older cache entries may still be a bare list.
         if isinstance(payload, list):
@@ -316,14 +294,15 @@ class HomeSummaryView(APIView):
     @swagger_auto_schema(tags=["Analytics"])
     def get(self, request):
         user_id = request.user.id
-        try:
-            summary = get_cached_analytics(
+        summary = analytics_or_error(
+            lambda: get_cached_analytics(
                 user_id,
                 "home-summary",
                 {},
                 lambda: get_home_summary(user_id),
             )
-        except Exception as e:  # why do we throw a 500 error here directly and not let the server show any http code?
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        )
+        if isinstance(summary, Response):
+            return summary
 
         return Response(summary)

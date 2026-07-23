@@ -7,7 +7,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from backend.authentication.views import redirect_to_frontend_login, redirect_to_frontend_signup
 
-from .views import homepageView
+from .views import homepageView, sentry_debug
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -40,6 +40,8 @@ urlpatterns = [
     path("social/", include("allauth.socialaccount.providers.google.urls")),  # google login
     # include Authentication
     path("", include("backend.authentication.urls")),
+    # Sentry smoke test (404 when DEBUG=False)
+    path("sentry-debug/", sentry_debug),
     # Home page
     path("", homepageView, name="home"),
 ]

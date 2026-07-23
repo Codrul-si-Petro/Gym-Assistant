@@ -2,7 +2,7 @@
 #   name   = "Gym Assistant Backend"
 #   plan   = "free"
 #   region = "frankfurt"
-#   start_command = "gunicorn backend.wsgi:application"
+#   start_command = "gunicorn -c backend/gunicorn.conf.py backend.wsgi:application"
 #   root_directory = ""
 #
 #   runtime_source = {
