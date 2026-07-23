@@ -9,7 +9,7 @@ def homepageView(request):
 
 
 def health(request):
-    """Cheap liveness/readiness check for uptime monitors. No auth, no DRF."""
+    """Cheap liveness/readiness check for uptime monitors."""
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
