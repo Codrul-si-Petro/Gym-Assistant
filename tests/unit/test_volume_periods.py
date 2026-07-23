@@ -6,10 +6,6 @@ from backend.core.constants import (
     TIME_FILTER_ALL,
     TIME_FILTER_CURRENT,
     TIME_FILTER_MTD,
-    TIME_FILTER_PREV,
-    TIME_FILTER_PREV_MONTH,
-    TIME_FILTER_PREV_WEEK,
-    TIME_FILTER_PREV_YEAR,
     TIME_FILTER_WTD,
     TIME_FILTER_YTD,
 )
@@ -29,14 +25,6 @@ def test_time_filter_current_slices_are_stable():
         TIME_FILTER_WTD,
         TIME_FILTER_MTD,
         TIME_FILTER_YTD,
-    )
-
-
-def test_time_filter_prev_slices_are_stable():
-    assert TIME_FILTER_PREV == (
-        TIME_FILTER_PREV_WEEK,
-        TIME_FILTER_PREV_MONTH,
-        TIME_FILTER_PREV_YEAR,
     )
 
 

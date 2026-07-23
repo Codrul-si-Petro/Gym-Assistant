@@ -4,6 +4,7 @@ Need to fix the environment variable loading with the " " versus ' ' issue.
 """
 
 import argparse
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -48,7 +49,7 @@ except Exception as e:
 parser = argparse.ArgumentParser()
 parser.add_argument("--source", choices=["dev", "prod"], required=True, help="Source environment to copy tables from")
 
-parser.add_argument("--target", choices=["dev", "prod"], required=True, help="Source environment to copy tables from")
+parser.add_argument("--target", choices=["dev", "prod"], required=True, help="Target environment to copy tables to")
 
 parser.add_argument(
     "--tables",
@@ -57,10 +58,36 @@ parser.add_argument(
     help="List of table names to sync",
 )
 
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    help="Print what would be truncated/copied without writing anything",
+)
+
+parser.add_argument(
+    "--yes-i-am-sure",
+    action="store_true",
+    help="Skip the interactive confirmation prompt when targeting prod (required for non-interactive use)",
+)
+
 args = parser.parse_args()
 
 if args.source == args.target:
     raise ValueError("\033[91mSource and target environments must be different\033[0m")
+
+if args.target == "prod" and not args.dry_run:
+    print(
+        "\033[91mWARNING: This will TRUNCATE and overwrite production tables:\033[0m",
+        ", ".join(args.tables),
+    )
+    if args.yes_i_am_sure:
+        print("Proceeding because --yes-i-am-sure was passed.")
+    else:
+        confirmation = input('Type "PROD" to confirm (or re-run with --dry-run / --yes-i-am-sure): ').strip()
+        if confirmation != "PROD":
+            print("Aborted.")
+            sys.exit(1)
+
 # map engines
 engine_map = {"dev": dev_engine, "prod": prod_engine}
 
@@ -70,6 +97,10 @@ target_engine = engine_map[args.target]
 # copy
 for table_name in args.tables:
     print(f"Syncing table {table_name} from {args.source} to {args.target}...")
+
+    if args.dry_run:
+        print(f"  [dry-run] Would TRUNCATE core.{table_name} on {args.target} and copy rows from {args.source}")
+        continue
 
     df = pd.read_sql_table(table_name, source_engine, schema="core")
 

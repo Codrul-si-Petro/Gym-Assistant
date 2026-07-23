@@ -107,6 +107,10 @@ The app is hosted on [Render](https://render.com) for free (and most likely it w
 
 A cron job on [cron-job.org](https://cron-job.org) pings the server every 14 minutes to keep it alive. (because Render sleeps inactive services using its' free tier)
 
+**Gunicorn workers:** Run with a single worker (`gunicorn backend.wsgi:application --workers 1`). Analytics responses are cached in Django's in-process `LocMemCache`; bumping workers without switching to a shared cache backend would leave stale analytics after writes.
+
+**Error tracking:** Optional. Set `SENTRY_DSN` in Doppler (synced to GitHub/Render env) to enable [Sentry](https://sentry.io). When unset, the SDK is not initialized.
+
 
 # Links to service specific documentation:
 

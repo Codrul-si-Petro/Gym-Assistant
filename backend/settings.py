@@ -30,6 +30,23 @@ if not SECRET_KEY:
 DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
 print(f"Debugging set to: {DEBUG}")
 
+# Optional: set SENTRY_DSN in Doppler/env for production error visibility.
+# When unset (local/CI), Sentry is a no-op and the app starts normally.
+_SENTRY_DSN = os.getenv("SENTRY_DSN")
+if _SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    # Errors only — keep free-tier usage low (no tracing/profiling/metrics).
+    sentry_sdk.init(
+        dsn=_SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=0.0,
+        profiles_sample_rate=0.0,
+        send_default_pii=False,
+        environment="dev" if DEBUG else "prod",
+    )
+
 ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
@@ -192,7 +209,7 @@ SITE_ID = 1  # TODO: learn why this is needed for allauth
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Require email verification before login
-ACCOUNT_ADAPTER = "backend.authentication.adapters.JWTAccountAdapter"  # Use MailerSend for emails
+ACCOUNT_ADAPTER = "backend.authentication.adapters.JWTAccountAdapter"  # JWT redirect after login; password reset uses MailerSend via email_sender.py
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Confirm email on GET request (clicking the link)
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Email confirmation link expires in 3 days
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = f"{FRONTEND_URL}/pages/auth/login.html"
@@ -211,6 +228,10 @@ LOGOUT_REDIRECT_URL = "/"
 
 SOCIALACCOUNT_ADAPTER = "backend.authentication.adapters.JWTRedirectAdapter"
 
+# LocMemCache is process-local. Analytics invalidation (backend.core.analytics.cache_utils)
+# only works correctly with a single gunicorn worker. Keep the Render start command at
+# `gunicorn backend.wsgi:application --workers 1` (the free-tier default) unless you
+# switch CACHES to a shared backend (e.g. database cache) first.
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -218,6 +239,7 @@ CACHES = {
 }
 
 REST_FRAMEWORK = {
+    # JWT: SPA API calls. Session: allauth/admin. Basic: Swagger "Authorize" UI.
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
