@@ -1,14 +1,7 @@
-if (
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1" ||
-  window.location.hostname === "::1"
-) {
-  API_BASE = "http://127.0.0.1:8000";
-} else {
-  API_BASE = "https://api.gym-assistant.app";
-}
+// API_BASE / getAuthHeaders come from api-base.js (load that script first).
+// Dimension fetch/parse helpers come from dimension-picker.js (load that script first).
+// PLACEHOLDER_DIMENSION_ID is provided by dimension-picker.js.
 
-const PLACEHOLDER_DIMENSION_ID = -1;
 const PLACEHOLDER_DIMENSION_NAME = "None";
 
 function dimensionDisplayName(map, id) {
@@ -37,16 +30,6 @@ const seenSetTypes = new Set();
 let activeFilters = {};
 let editSheet = null;
 
-function getAuthHeaders() {
-  const token = localStorage.getItem("access_token");
-  if (!token) return null;
-  return {
-    Authorization: `Bearer ${token}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  };
-}
-
 function normalizeApiUrl(url) {
   if (!url) return null;
   try {
@@ -68,12 +51,6 @@ function parseListPayload(payload) {
   };
 }
 
-function parseDimensionList(payload) {
-  if (Array.isArray(payload)) return payload;
-  if (payload && Array.isArray(payload.results)) return payload.results;
-  return [];
-}
-
 function escapeHtml(s) {
   const div = document.createElement("div");
   div.textContent = s;
@@ -81,7 +58,15 @@ function escapeHtml(s) {
 }
 
 function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  // Local calendar date (not UTC) — matches plan/log/today helpers.
+  const d = new Date();
+  return (
+    d.getFullYear() +
+    "-" +
+    String(d.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(d.getDate()).padStart(2, "0")
+  );
 }
 
 function formatRowDate(row) {
@@ -220,38 +205,21 @@ function updateRowFromData(tr, row, maps) {
 
 async function loadDimensionMaps(headers) {
   if (cachedMaps) return cachedMaps;
-  const exerciseMap = {};
-  const attachmentMap = {};
-  const equipmentMap = {};
   try {
-    const [exRes, atRes, eqRes] = await Promise.all([
-      fetch(`${API_BASE}/api/exercises/`, { headers }),
-      fetch(`${API_BASE}/api/attachments/`, { headers }),
-      fetch(`${API_BASE}/api/equipment/`, { headers }),
-    ]);
-    const [exJson, atJson, eqJson] = await Promise.all([
-      exRes.ok ? exRes.json() : [],
-      atRes.ok ? atRes.json() : [],
-      eqRes.ok ? eqRes.json() : [],
-    ]);
-    dimensionLists.exercises = parseDimensionList(exJson);
-    dimensionLists.attachments = parseDimensionList(atJson);
-    dimensionLists.equipment = parseDimensionList(eqJson);
-
-    dimensionLists.exercises.forEach((e) => {
-      exerciseMap[e.exercise_id] = e.exercise_name;
-    });
-    dimensionLists.attachments.forEach((a) => {
-      attachmentMap[a.attachment_id] = a.attachment_name;
-    });
-    dimensionLists.equipment.forEach((e) => {
-      equipmentMap[e.equipment_id] = e.equipment_name;
-    });
+    const lists = await fetchDimensionLists(headers);
+    dimensionLists.exercises = lists.exercises;
+    dimensionLists.attachments = lists.attachments;
+    dimensionLists.equipment = lists.equipment;
+    cachedMaps = {
+      exerciseMap: buildIdToNameMap(lists.exercises, "exercise_id", "exercise_name"),
+      attachmentMap: buildIdToNameMap(lists.attachments, "attachment_id", "attachment_name"),
+      equipmentMap: buildIdToNameMap(lists.equipment, "equipment_id", "equipment_name"),
+    };
     populateExerciseFilter();
   } catch {
     /* use IDs if lookups fail */
+    cachedMaps = { exerciseMap: {}, attachmentMap: {}, equipmentMap: {} };
   }
-  cachedMaps = { exerciseMap, attachmentMap, equipmentMap };
   return cachedMaps;
 }
 
@@ -282,15 +250,7 @@ function updatePaginationControls() {
 }
 
 function formatApiErrors(data) {
-  if (!data || typeof data !== "object") return "Something went wrong.";
-  if (data.detail) return String(data.detail);
-  const parts = [];
-  Object.keys(data).forEach((key) => {
-    const val = data[key];
-    const messages = Array.isArray(val) ? val : [String(val)];
-    messages.forEach((msg) => parts.push(`${key}: ${msg}`));
-  });
-  return parts.length ? parts.join(" ") : "Something went wrong.";
+  return window.formatApiErrors(data);
 }
 
 function buildSelectOptions(items, idKey, nameKey, selectedId) {

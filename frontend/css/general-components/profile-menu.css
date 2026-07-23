@@ -19,7 +19,7 @@
   border-radius: 50%;
   border: 1px solid var(--border-subtle);
   background: var(--accent-gradient);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
@@ -128,7 +128,7 @@
   padding: 8px 14px;
   font-size: 0.85rem;
   background: var(--accent-gradient);
-  color: #fff;
+  color: var(--on-accent);
   box-shadow: 0 4px 20px var(--accent-glow);
 }
 

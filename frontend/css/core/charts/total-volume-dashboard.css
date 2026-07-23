@@ -203,8 +203,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
   padding: 0 10px;
   border: 1px dashed var(--border-strong);
   border-radius: 10px;

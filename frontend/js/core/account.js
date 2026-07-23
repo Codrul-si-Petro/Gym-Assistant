@@ -1,20 +1,12 @@
 import { API_BASE, API_PREFIX } from "../config.js";
-
-function getAuthHeaders() {
-  const token = localStorage.getItem("access_token");
-  if (!token) return null;
-  return {
-    Authorization: `Bearer ${token}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  };
-}
+import { getAuthHeaders, showMessage as showStatus, formatApiErrors } from "../utils.js";
 
 function showMessage(text, type = "") {
-  const el = document.getElementById("account-msg");
-  if (!el) return;
-  el.textContent = text;
-  el.className = `account-msg ${type}`.trim();
+  showStatus(text, type, {
+    elementId: "account-msg",
+    baseClass: "account-msg",
+    autoHideMs: null,
+  });
 }
 
 const ERROR_MESSAGES = {
@@ -39,14 +31,7 @@ function humanizeFieldError(key, message) {
 }
 
 function formatErrors(data) {
-  if (!data || typeof data !== "object") return "Something went wrong.";
-  const parts = [];
-  Object.keys(data).forEach((key) => {
-    const val = data[key];
-    const messages = Array.isArray(val) ? val : [String(val)];
-    messages.forEach((msg) => parts.push(humanizeFieldError(key, msg)));
-  });
-  return parts.length ? parts.join(" ") : "Something went wrong.";
+  return formatApiErrors(data, { humanize: humanizeFieldError });
 }
 
 async function submitUsername(event) {

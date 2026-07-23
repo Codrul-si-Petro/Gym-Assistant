@@ -1,4 +1,5 @@
 import { API_BASE, API_PREFIX, FRONTEND_URL, SUPPORT_EMAIL } from "../config.js";
+import { bindDismissOnOutsideOrEscape } from "../utils.js";
 
 function getInitials(username) {
   if (!username) return "?";
@@ -113,12 +114,11 @@ export async function initProfileMenu(containerId = "nav-actions") {
   buildProfileMenu(container, user);
 }
 
-document.addEventListener("click", (e) => {
-  if (!e.target.closest(".profile-menu")) closeAllMenus();
-});
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeAllMenus();
+bindDismissOnOutsideOrEscape({
+  isOpen: () => document.querySelector(".profile-dropdown.is-open") != null,
+  onClose: closeAllMenus,
+  isInside: (target) =>
+    target instanceof Element && target.closest(".profile-menu") != null,
 });
 
 function bootProfileMenu() {

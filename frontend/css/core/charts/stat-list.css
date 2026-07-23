@@ -71,7 +71,7 @@
 .stat-bar-track {
   grid-column: 1 / -1;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--bg-hover);
   overflow: hidden;
 }
@@ -79,7 +79,7 @@
 .stat-bar-fill {
   width: 0;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--accent-gradient);
   box-shadow: 0 0 10px var(--accent-glow);
   transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);

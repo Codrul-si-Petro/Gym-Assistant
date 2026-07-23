@@ -1,5 +1,5 @@
 import { API_BASE, API_PREFIX } from "../config.js";
-import { getAuthHeaders } from "../utils.js";
+import { getAuthHeaders, getTabFromLocation, syncTabToLocation } from "../utils.js";
 
 const SECTIONS = {
   exercises: { label: "Exercises", searchPlaceholder: "Search exercises..." },
@@ -7,23 +7,14 @@ const SECTIONS = {
   equipment: { label: "Equipment", searchPlaceholder: "Search equipment..." },
 };
 
+const DEFAULT_SECTION = "exercises";
+
 function getSectionFromLocation() {
-  const hash = location.hash.replace(/^#/, "");
-  if (SECTIONS[hash]) return hash;
-
-  const tabParam = new URLSearchParams(location.search).get("tab");
-  if (SECTIONS[tabParam]) return tabParam;
-
-  return "exercises";
+  return getTabFromLocation(SECTIONS, DEFAULT_SECTION);
 }
 
 function syncSectionToLocation(section) {
-  const nextHash = section === "exercises" ? "" : `#${section}`;
-  const nextUrl = `${location.pathname}${location.search}${nextHash}`;
-  const currentUrl = `${location.pathname}${location.search}${location.hash}`;
-  if (currentUrl !== nextUrl) {
-    history.replaceState(null, "", nextUrl);
-  }
+  syncTabToLocation(section, DEFAULT_SECTION);
 }
 
 let activeSection = getSectionFromLocation();

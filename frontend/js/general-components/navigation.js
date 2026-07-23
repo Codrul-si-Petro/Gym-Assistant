@@ -1,7 +1,10 @@
-document.addEventListener("DOMContentLoaded", () => {
+import { bindDismissOnOutsideOrEscape } from "../utils.js";
+
+function bootNavigation() {
   const navToggle = document.querySelector(".nav-toggle");
   const navLinks = document.querySelector(".nav-links");
   const siteTitle = document.querySelector(".site-title");
+  if (!navToggle || !navLinks) return;
 
   function isMobile() {
     return window.matchMedia("(max-width: 767px)").matches;
@@ -13,7 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     siteTitle?.classList.remove("hidden");
   }
 
-  navToggle?.addEventListener("click", (e) => {
+  navToggle.addEventListener("click", (e) => {
     const isActive = navLinks.classList.contains("active");
 
     if (isActive) {
@@ -28,23 +31,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Close menu when clicking a link
-  navLinks?.querySelectorAll("a").forEach(link => {
+  navLinks.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", closeMenu);
   });
 
-  // Close menu when clicking outside
-  document.addEventListener("click", (e) => {
-    if (navLinks.classList.contains("active") &&
-        !navLinks.contains(e.target) &&
-        !navToggle.contains(e.target)) {
-      closeMenu();
-    }
+  bindDismissOnOutsideOrEscape({
+    isOpen: () => navLinks.classList.contains("active"),
+    onClose: closeMenu,
+    isInside: (target) =>
+      target instanceof Element &&
+      (navLinks.contains(target) || navToggle.contains(target)),
   });
+}
 
-  // Close menu with ESC key
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && navLinks.classList.contains("active")) {
-      closeMenu();
-    }
-  });
-});
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootNavigation);
+} else {
+  bootNavigation();
+}

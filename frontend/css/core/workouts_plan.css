@@ -195,7 +195,7 @@
 }
 
 .plan-danger-btn:hover {
-    background: rgba(248, 113, 113, 0.12);
+    background: var(--danger-alpha-weak);
 }
 
 .plan-icon-btn {
@@ -360,7 +360,7 @@
 .plan-preview-dates li {
     background: var(--bg-hover);
     color: var(--text-primary);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     padding: 0.2rem 0.6rem;
     font-size: 0.82rem;
 }

@@ -27,6 +27,11 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
+  --radius-pill: 999px;
+  --on-accent: #fff;
+  --overlay-backdrop: rgba(0, 0, 0, 0.6);
+  --danger-alpha-weak: rgba(248, 113, 113, 0.15);
+  --danger-alpha-strong: rgba(248, 113, 113, 0.4);
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-serif: "Georgia", "Times New Roman", serif;
   --touch-target: 44px;
@@ -54,6 +59,10 @@
   --chart-plan: #0891b2;
   --shadow-lg: 0 8px 32px rgba(15, 23, 42, 0.12);
   --shadow-md: 0 4px 24px rgba(15, 23, 42, 0.08);
+  --on-accent: #fff;
+  --overlay-backdrop: rgba(15, 23, 42, 0.45);
+  --danger-alpha-weak: rgba(220, 38, 38, 0.12);
+  --danger-alpha-strong: rgba(220, 38, 38, 0.35);
 }
 
 *,
@@ -109,7 +118,7 @@ body {
   padding: 12px 20px;
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--on-accent);
   background: var(--accent-gradient);
   border-radius: var(--radius-md);
   text-decoration: none;

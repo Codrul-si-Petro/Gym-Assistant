@@ -102,8 +102,7 @@
   box-shadow: 0 0 12px var(--accent-glow);
 }
 
-.site-title,
-.nav-title {
+.site-title {
   font-size: 0.95rem;
   color: var(--text-primary);
   align-self: center;
@@ -118,8 +117,7 @@
 }
 
 /* Hide title on small screens to preserve tap targets */
-.site-title,
-.nav-title {
+.site-title {
   display: none;
 }
 
@@ -130,8 +128,7 @@
 }
 
 @media (min-width: 480px) {
-  .site-title,
-  .nav-title {
+  .site-title {
     display: block;
     font-size: 1rem;
   }

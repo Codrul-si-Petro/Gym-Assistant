@@ -1,3 +1,6 @@
+import { unitSuffix, convertKgToPreferred } from "../../user-preferences.js";
+import { computeDeltaPct as sharedComputeDeltaPct } from "../../utils.js";
+
 // Keep chart instances per canvas so tabs do not clobber each other.
 
 const chartInstances = new Map();
@@ -41,13 +44,8 @@ export function shortLabel(name, maxLen = 14) {
   return name.slice(0, maxLen) + "\u2026";
 }
 
-function unitSuffix(unit) {
-  return unit === "LBS" ? "lbs" : "kg";
-}
-
 function toDisplayUnit(kgValue, unit) {
-  const kg = Number(kgValue) || 0;
-  return unit === "LBS" ? kg * 2.2046226218 : kg;
+  return convertKgToPreferred(kgValue, unit);
 }
 
 // "To date" comparisons: apples-to-apples vs the prior period *as far as it has run*
@@ -197,11 +195,7 @@ function hasPlanBaseline(baseline) {
 function computeDeltaPct(current, baseline) {
   // null/undefined baseline = "no plan" → caller renders N/A (do not compute %).
   if (!hasPlanBaseline(baseline)) return null;
-  const cur = Number(current) || 0;
-  const base = Number(baseline) || 0;
-  if (base === 0 && cur === 0) return null;
-  if (base === 0) return 100;
-  return ((cur - base) / base) * 100;
+  return sharedComputeDeltaPct(current, baseline);
 }
 
 function formatDeltaPct(current, baseline) {
@@ -438,9 +432,6 @@ export function renderSessionsTable(results, period = "all", comparisons = {}, o
   updateSessionsDeltaHeader(period);
   tbody.replaceChildren();
 
-  const colCount =
-    4 + (deltaCfg ? 1 : 0) + (deltaFullCfg ? 1 : 0) + 1 + (planFullCfg ? 1 : 0);
-
   const appendEmptyDeltaCells = (tr) => {
     if (deltaCfg) {
       const td = document.createElement("td");
@@ -521,7 +512,6 @@ export function renderSessionsTable(results, period = "all", comparisons = {}, o
   }
 
   if (inner) inner.style.display = results.length ? "" : "none";
-  void colCount;
 }
 
 export function renderVolumeDailyTimeSeries(dailyRows, exerciseName, type, unit = "KG") {
