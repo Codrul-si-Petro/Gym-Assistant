@@ -3,7 +3,7 @@
  * Mounted on authenticated pages; no-ops when already configured or logged out.
  */
 import { API_BASE, API_PREFIX } from "../config.js";
-import { getAuthHeaders } from "../utils.js";
+import { getAuthHeaders, apiFetch } from "../utils.js";
 
 let splits = [];
 let dialogEl = null;
@@ -55,7 +55,7 @@ function addFromInput() {
 async function savePreferences(payload) {
   const headers = getAuthHeaders();
   if (!headers) throw new Error("Please log in first.");
-  const res = await fetch(`${API_BASE}${API_PREFIX}auth/preferences/`, {
+  const res = await apiFetch(`${API_BASE}${API_PREFIX}auth/preferences/`, {
     method: "PATCH",
     headers,
     body: JSON.stringify(payload),
@@ -153,7 +153,7 @@ async function maybeShowOnboarding() {
   if (!headers) return;
 
   try {
-    const res = await fetch(`${API_BASE}${API_PREFIX}auth/current-user/`, { headers });
+    const res = await apiFetch(`${API_BASE}${API_PREFIX}auth/current-user/`, { headers });
     if (!res.ok) return;
     const user = await res.json();
     if (!user) return;

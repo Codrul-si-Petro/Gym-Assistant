@@ -1,5 +1,5 @@
 import { API_BASE, API_PREFIX, SUPPORT_EMAIL } from "../config.js";
-import { getAuthHeaders, showMessage as showStatus } from "../utils.js";
+import { getAuthHeaders, apiFetch, showMessage as showStatus } from "../utils.js";
 import { getPreferredUnit, setPreferredUnit } from "../user-preferences.js";
 
 let workoutSplits = [];
@@ -57,7 +57,7 @@ async function loadProfile() {
   if (!headers) return;
 
   try {
-    const res = await fetch(`${API_BASE}${API_PREFIX}auth/current-user/`, { headers });
+    const res = await apiFetch(`${API_BASE}${API_PREFIX}auth/current-user/`, { headers });
     if (!res.ok) return;
     const user = await res.json();
     if (!user) return;
@@ -97,7 +97,7 @@ async function submitPreferences(event) {
     workout_splits: workoutSplits,
   };
 
-  const res = await fetch(`${API_BASE}${API_PREFIX}auth/preferences/`, {
+  const res = await apiFetch(`${API_BASE}${API_PREFIX}auth/preferences/`, {
     method: "PATCH",
     headers,
     body: JSON.stringify(payload),

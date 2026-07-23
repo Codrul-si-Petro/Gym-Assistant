@@ -145,7 +145,7 @@ function populateExerciseFilter() {
 
 async function loadSplitFilterOptions(headers) {
   try {
-    const res = await fetch(`${API_BASE}/api/v1/workout-splits`, { headers });
+    const res = await apiFetch(`${API_BASE}/api/v1/workout-splits`, { headers });
     if (!res.ok) return;
     const data = await res.json();
     (data.results || []).forEach((row) => {
@@ -367,7 +367,7 @@ function openEditSheet(workoutId) {
       if (!headers) throw new Error("Not logged in.");
 
       const payload = readEditPayload(formEl, row);
-      const res = await fetch(`${API_BASE}/api/workouts/${workoutId}/`, {
+      const res = await apiFetch(`${API_BASE}/api/workouts/${workoutId}/`, {
         method: "PATCH",
         headers,
         body: JSON.stringify(payload),
@@ -497,7 +497,7 @@ async function fetchWorkoutsPage(reset = false) {
   updatePaginationControls();
 
   try {
-    const res = await fetch(nextPageUrl, { headers });
+    const res = await apiFetch(nextPageUrl, { headers });
     if (res.status === 401) {
       setStatusMessage("Session expired. Please log in again.");
       if (tbody && reset) {

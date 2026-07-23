@@ -1,13 +1,13 @@
 // Self-contained component (own fetch + own mount), same pattern as
 // profile-menu.js, so it can be dropped onto any authenticated page.
 import { API_BASE, API_PREFIX } from "../config.js";
-import { computeDeltaPct, deltaTone } from "../utils.js";
+import { apiFetch, computeDeltaPct, deltaTone } from "../utils.js";
 
 async function fetchHomeSummary() {
   const token = localStorage.getItem("access_token");
   if (!token) return null;
   try {
-    const res = await fetch(`${API_BASE}${API_PREFIX}v1/home-summary`, {
+    const res = await apiFetch(`${API_BASE}${API_PREFIX}v1/home-summary`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
     if (!res.ok) return null;

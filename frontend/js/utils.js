@@ -1,5 +1,6 @@
 // useful variables and functions to be reused across the project
 // API_BASE / FRONTEND_URL come from config.js (single source of truth for modules).
+import { API_BASE, API_PREFIX } from "./config.js";
 export { API_BASE, FRONTEND_URL as BASE, API_PREFIX } from "./config.js";
 
 export const TODAY = (() => {
@@ -21,6 +22,43 @@ export function getAuthHeaders() {
     "Accept": "application/json",
     "Content-Type": "application/json",
   };
+}
+
+export async function refreshAccessToken() {
+  const refresh = localStorage.getItem("refresh_token");
+  if (!refresh) return false;
+  try {
+    const res = await fetch(`${API_BASE}${API_PREFIX}token/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (!data.access) return false;
+    localStorage.setItem("access_token", data.access);
+    if (data.refresh) localStorage.setItem("refresh_token", data.refresh);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function apiFetch(url, options = {}) {
+  let res = await fetch(url, options);
+  if (res.status === 401 && localStorage.getItem("refresh_token")) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      res = await fetch(url, {
+        ...options,
+        headers: { ...(options.headers || {}), ...getAuthHeaders() },
+      });
+    } else {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+    }
+  }
+  return res;
 }
 
 let _messageHideTimer = null;

@@ -1,5 +1,5 @@
 import { API_BASE, API_PREFIX } from "../config.js";
-import { getAuthHeaders, getTabFromLocation, syncTabToLocation } from "../utils.js";
+import { getAuthHeaders, apiFetch, getTabFromLocation, syncTabToLocation } from "../utils.js";
 
 const SECTIONS = {
   exercises: { label: "Exercises", searchPlaceholder: "Search exercises..." },
@@ -206,9 +206,9 @@ async function loadGlossary() {
 
   try {
     const [exercisesRes, attachmentsRes, equipmentRes] = await Promise.all([
-      fetch(`${API_BASE}${API_PREFIX}exercises/glossary/`, { headers, ...NO_STORE }),
-      fetch(`${API_BASE}${API_PREFIX}attachments/`, { headers, ...NO_STORE }),
-      fetch(`${API_BASE}${API_PREFIX}equipment/`, { headers, ...NO_STORE }),
+      apiFetch(`${API_BASE}${API_PREFIX}exercises/glossary/`, { headers, ...NO_STORE }),
+      apiFetch(`${API_BASE}${API_PREFIX}attachments/`, { headers, ...NO_STORE }),
+      apiFetch(`${API_BASE}${API_PREFIX}equipment/`, { headers, ...NO_STORE }),
     ]);
     if (!exercisesRes.ok || !attachmentsRes.ok || !equipmentRes.ok) throw new Error("Failed to load");
     [allExercises, allAttachments, allEquipment] = await Promise.all([
