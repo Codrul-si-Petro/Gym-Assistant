@@ -21,27 +21,25 @@ warnings.filterwarnings("ignore", message=".*app_settings.*is deprecated.*", cat
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("DJANGO_SECRET_KEY is not set!")
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
 print(f"Debugging set to: {DEBUG}")
 
-# Optional: set SENTRY_DSN in Doppler/env for production error visibility.
 # When unset (local/CI), Sentry is a no-op and the app starts normally.
 _SENTRY_DSN = os.getenv("SENTRY_DSN")
 if _SENTRY_DSN:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 
-    # Errors only — keep free-tier usage low (no tracing/profiling/metrics).
+    # Performance = Tracing (transactions/spans). Profiling stays off cause Sentry's free tier.
+    _traces_sample_rate = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "1.0"))
     sentry_sdk.init(
         dsn=_SENTRY_DSN,
         integrations=[DjangoIntegration()],
-        traces_sample_rate=0.0,
+        traces_sample_rate=_traces_sample_rate,
         profiles_sample_rate=0.0,
         send_default_pii=False,
         environment="dev" if DEBUG else "prod",
@@ -138,6 +136,9 @@ DATABASES = {
         "PASSWORD": tmpPostgres.password,
         "HOST": tmpPostgres.hostname,
         "PORT": 5432,
+        # Reuse connections across requests (gthread workers share one process).
+        # Neon pooler sits in front; 600s balances reconnect cost vs. idle drop.
+        "CONN_MAX_AGE": 600,
         "OPTIONS": dict(parse_qsl(tmpPostgres.query or "")),
         "TEST": {
             # Use the actual database instead of creating a test database
@@ -229,9 +230,9 @@ LOGOUT_REDIRECT_URL = "/"
 SOCIALACCOUNT_ADAPTER = "backend.authentication.adapters.JWTRedirectAdapter"
 
 # LocMemCache is process-local. Analytics invalidation (backend.core.analytics.cache_utils)
-# only works correctly with a single gunicorn worker. Keep the Render start command at
-# `gunicorn backend.wsgi:application --workers 1` (the free-tier default) unless you
-# switch CACHES to a shared backend (e.g. database cache) first.
+# only works correctly with a single gunicorn *process*. Threads within that process are
+# fine (see backend/gunicorn.conf.py: workers=1, threads=4, gthread). Do not raise
+# --workers without switching CACHES to a shared backend (e.g. database cache) first.
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
