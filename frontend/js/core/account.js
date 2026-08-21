@@ -1,5 +1,5 @@
 import { API_BASE, API_PREFIX } from "../config.js";
-import { getAuthHeaders, showMessage as showStatus, formatApiErrors } from "../utils.js";
+import { getAuthHeaders, apiFetch, showMessage as showStatus, formatApiErrors } from "../utils.js";
 
 function showMessage(text, type = "") {
   showStatus(text, type, {
@@ -47,7 +47,7 @@ async function submitUsername(event) {
     username: form.username.value.trim(),
   };
 
-  const res = await fetch(`${API_BASE}${API_PREFIX}auth/update-username/`, {
+  const res = await apiFetch(`${API_BASE}${API_PREFIX}auth/update-username/`, {
     method: "PATCH",
     headers,
     body: JSON.stringify(payload),
@@ -76,7 +76,7 @@ async function submitPassword(event) {
     new_password2: form.new_password2.value,
   };
 
-  const res = await fetch(`${API_BASE}${API_PREFIX}auth/change-password/`, {
+  const res = await apiFetch(`${API_BASE}${API_PREFIX}auth/change-password/`, {
     method: "POST",
     headers,
     body: JSON.stringify(payload),

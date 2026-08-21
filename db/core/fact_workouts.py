@@ -33,9 +33,8 @@ WORKOUT_SCENARIO = Enum("actuals", "plan", name="workout_scenario", schema="core
 
 class FactWorkouts(CoreTable, table=True):
     __tablename__: ClassVar[str] = "fact_workouts"
-    __table_args__: tuple[Index, Index, Index, dict[str, str]] = (
+    __table_args__: tuple[Index, Index, dict[str, str]] = (
         Index("ix_fact_workout_user_date", "user_id", "date_id"),
-        Index("ix_fact_workout_user_id", "user_id"),
         Index("ix_fact_workout_user_scenario_date", "user_id", "scenario", "date_id"),
         {"comment": "Fact table where users log their workouts."},
     )

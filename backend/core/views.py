@@ -1,5 +1,4 @@
 from django.db.models import OuterRef, Subquery
-from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from drf_yasg import openapi
@@ -17,6 +16,7 @@ from .api_throttle import EndpointThrottle
 from .constants import SCENARIO_ACTUALS, SCENARIO_PLAN
 from .dimension_utils import exclude_placeholder_dimensions
 from .glossary.crud.crud import get_exercise_glossary, get_exercise_glossary_list
+from .helpers import parse_optional_date_range
 from .models import AttachmentMedia, Attachments, Equipment, EquipmentMedia, Exercises, Muscles, Workouts
 from .pagination import WorkoutPagination
 from .serializers import (
@@ -90,16 +90,7 @@ class WorkoutsViewSet(
             if raw is not None and raw.strip() != "":
                 qs = qs.filter(**{field: raw.strip()})
 
-        start_raw = params.get("start_date")
-        end_raw = params.get("end_date")
-        start_date = parse_date(start_raw) if start_raw else None
-        end_date = parse_date(end_raw) if end_raw else None
-        if start_raw and start_date is None:
-            raise ValidationError({"start_date": "Must be an ISO date (YYYY-MM-DD)."})
-        if end_raw and end_date is None:
-            raise ValidationError({"end_date": "Must be an ISO date (YYYY-MM-DD)."})
-        if start_date and end_date and start_date > end_date:
-            raise ValidationError({"detail": "Make sure the start date is before the end date."})
+        start_date, end_date = parse_optional_date_range(params)
         if start_date:
             qs = qs.filter(date_id__gte=start_date)
         if end_date:

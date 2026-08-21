@@ -107,12 +107,17 @@ The app is hosted on [Render](https://render.com) for free (and most likely it w
 
 A cron job on [cron-job.org](https://cron-job.org) pings the server every 14 minutes to keep it alive. (because Render sleeps inactive services using its' free tier)
 
+**Gunicorn:** Use a single **process** with threads (`gunicorn -c backend/gunicorn.conf.py backend.wsgi:application` → `--workers 1 --threads 4 --worker-class gthread`). Analytics responses are cached in Django's in-process `LocMemCache`; bumping **workers** without switching to a shared cache backend would leave stale analytics after writes. Extra **threads** in that one process are fine — they share memory.
+
+**Error + performance tracking:** Optional. Set `SENTRY_DSN` in Doppler (synced to GitHub/Render env) to enable [Sentry](https://sentry.io). Errors are always captured; performance tracing uses `SENTRY_TRACES_SAMPLE_RATE` (default `1.0`). Profiling is off. When `SENTRY_DSN` is unset, the SDK is not initialized.
+
 
 # Links to service specific documentation:
 
 - [DRF API](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
 - [Alembic](db/README.md)
 - [dbt](db/transformation/README.md)
+- [Go migration plan (this will be fun)](docs/go-migration-plan.md)
 
 
 # This documentation is a work in progress. If you encounter any issues or there are things that would be nice to be added here, please let the repo owners know.

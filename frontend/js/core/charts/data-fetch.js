@@ -1,8 +1,8 @@
-import { API_BASE, getAuthHeaders } from "../../utils.js";
+import { API_BASE, getAuthHeaders, apiFetch } from "../../utils.js";
 
 async function fetchJson(url) {
   const headers = getAuthHeaders();
-  const res = await fetch(url.toString(), { headers });
+  const res = await apiFetch(url.toString(), { headers });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }

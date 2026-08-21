@@ -278,7 +278,7 @@ function loadNextSetNumber(exerciseId) {
     var setInput = document.getElementById("set_number");
     if (!headers || !exerciseId || !setInput) return;
 
-    fetch(API_BASE + "/api/workouts/next-set-info/?exercise_id=" + encodeURIComponent(exerciseId), {
+    apiFetch(API_BASE + "/api/workouts/next-set-info/?exercise_id=" + encodeURIComponent(exerciseId), {
         headers: headers,
     })
         .then(function (res) {
@@ -317,7 +317,7 @@ function loadWorkoutNumber(options) {
     var headers = getAuthHeaders();
     if (!headers) return;
 
-    fetch(API_BASE + "/api/workouts/next-workout-info/", { headers: headers })
+    apiFetch(API_BASE + "/api/workouts/next-workout-info/", { headers: headers })
         .then(function (res) {
             return res.ok ? res.json() : null;
         })
@@ -412,7 +412,7 @@ function onSubmit(e) {
 
     var btn = document.getElementById("submit-btn");
     btn.disabled = true;
-    fetch(API_BASE + "/api/workouts/", {
+    apiFetch(API_BASE + "/api/workouts/", {
         method: "POST",
         headers: headers,
         body: JSON.stringify(payload),
@@ -486,7 +486,7 @@ function onDeleteLast() {
     var btn = document.getElementById("delete-last-btn");
     if (btn) btn.disabled = true;
 
-    fetch(API_BASE + "/api/workouts/last/", {
+    apiFetch(API_BASE + "/api/workouts/last/", {
         method: "DELETE",
         headers: headers,
     })

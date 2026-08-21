@@ -6,11 +6,12 @@ from django.core.cache import cache
 ANALYTICS_CACHE_TTL = 60 * 10
 
 
+# actually since these change only upon dbt model update, maybe I clear the cache whenever dbt finishes running.
+# LocMemCache is process-local — requires a single gunicorn process (see settings.CACHES).
+# Extra threads in that process are fine; extra workers are not.
 def _analytics_version(
     user_id: int,
-) -> (
-    int
-):  # actually since these change only upon dbt model update, maybe I clear the cache whenever dbt finishes running
+) -> int:
     return cache.get(f"analytics:v:{user_id}", 0)
 
 

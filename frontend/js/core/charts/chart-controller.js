@@ -1,6 +1,6 @@
 // Controls which content loads per tab and wires shared date controls.
 
-import { BASE, TODAY, syncDateFilters, getTabFromLocation, syncTabToLocation } from "../../utils.js?v=3";
+import { BASE, TODAY, syncDateFilters, getTabFromLocation, syncTabToLocation } from "../../utils.js?v=4";
 import { getPreferredUnit, unitSuffix } from "../../user-preferences.js";
 // The ?v= on these two imports is a manual cache-buster — bump it whenever
 // chart-renderers.js/data-fetch.js change. They aren't covered by the ?v= on
@@ -19,7 +19,7 @@ import {
   resetVolumeDeltaDisplayMode,
   formatVolume,
 } from "./chart-renderers.js?v=13";
-import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSessions, fetchWorkoutSplits } from "./data-fetch.js?v=5";
+import { fetchFavExercises, fetchGymWeekdays, fetchTotalVolume, fetchTotalVolumeDaily, fetchWorkoutSessions, fetchWorkoutSplits } from "./data-fetch.js?v=6";
 
 let volumeParentId = null;
 /** Stack of { id, name, total_volume } for breadcrumb while drilling. */

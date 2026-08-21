@@ -109,7 +109,7 @@ function renderEmptyState(nextPlanHint) {
 function loadNextPlanHint(today) {
     var headers = getAuthHeaders();
     if (!headers) return Promise.resolve(null);
-    return fetch(API_BASE + "/api/plan-series/", { headers: headers })
+    return apiFetch(API_BASE + "/api/plan-series/", { headers: headers })
         .then(function (res) {
             return res.ok ? res.json() : [];
         })

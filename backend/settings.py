@@ -21,16 +21,38 @@ warnings.filterwarnings("ignore", message=".*app_settings.*is deprecated.*", cat
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("DJANGO_SECRET_KEY is not set!")
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
 print(f"Debugging set to: {DEBUG}")
 
-ALLOWED_HOSTS = [os.getenv("DJANGO_ALLOWED_HOSTS")]
+# When unset (local/CI), Sentry is a no-op and the app starts normally.
+_SENTRY_DSN = os.getenv("SENTRY_DSN")
+if _SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    # Performance = Tracing (transactions/spans). Profiling stays off cause Sentry's free tier.
+    _traces_sample_rate = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "1.0"))
+
+    def _traces_sampler(sampling_context):
+        # Keep-alive / uptime pings should not burn free-tier trace quota.
+        if (sampling_context.get("wsgi_environ") or {}).get("PATH_INFO") == "/health/":
+            return 0.0
+        return _traces_sample_rate
+
+    sentry_sdk.init(
+        dsn=_SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sampler=_traces_sampler,
+        profiles_sample_rate=0.0,
+        send_default_pii=False,
+        environment="dev" if DEBUG else "prod",
+    )
+
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 
@@ -66,6 +88,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.messages",
     "corsheaders",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 MIDDLEWARE = [
@@ -121,6 +144,9 @@ DATABASES = {
         "PASSWORD": tmpPostgres.password,
         "HOST": tmpPostgres.hostname,
         "PORT": 5432,
+        # Reuse connections across requests (gthread workers share one process).
+        # Neon pooler sits in front; 600s balances reconnect cost vs. idle drop.
+        "CONN_MAX_AGE": 600,
         "OPTIONS": dict(parse_qsl(tmpPostgres.query or "")),
         "TEST": {
             # Use the actual database instead of creating a test database
@@ -192,7 +218,7 @@ SITE_ID = 1  # TODO: learn why this is needed for allauth
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Require email verification before login
-ACCOUNT_ADAPTER = "backend.authentication.adapters.JWTAccountAdapter"  # Use MailerSend for emails
+ACCOUNT_ADAPTER = "backend.authentication.adapters.JWTAccountAdapter"  # JWT redirect after login; password reset uses MailerSend via email_sender.py
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Confirm email on GET request (clicking the link)
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Email confirmation link expires in 3 days
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = f"{FRONTEND_URL}/pages/auth/login.html"
@@ -211,6 +237,10 @@ LOGOUT_REDIRECT_URL = "/"
 
 SOCIALACCOUNT_ADAPTER = "backend.authentication.adapters.JWTRedirectAdapter"
 
+# LocMemCache is process-local. Analytics invalidation (backend.core.analytics.cache_utils)
+# only works correctly with a single gunicorn *process*. Threads within that process are
+# fine (see backend/gunicorn.conf.py: workers=1, threads=4, gthread). Do not raise
+# --workers without switching CACHES to a shared backend (e.g. database cache) first.
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -218,6 +248,7 @@ CACHES = {
 }
 
 REST_FRAMEWORK = {
+    # JWT: SPA API calls. Session: allauth/admin. Basic: Swagger "Authorize" UI.
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
@@ -239,9 +270,9 @@ REST_FRAMEWORK = {
 
 # token lifetime config
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }

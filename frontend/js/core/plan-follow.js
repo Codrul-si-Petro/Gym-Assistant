@@ -29,7 +29,7 @@ function fetchWorkoutsForDate(scenario, dateIso) {
         "&end_date=" +
         encodeURIComponent(dateIso) +
         "&page_size=200";
-    return fetch(url, { headers: headers })
+    return apiFetch(url, { headers: headers })
         .then(function (res) {
             return res.ok ? res.json() : null;
         })

@@ -268,16 +268,33 @@ class PlanSeriesSerializer(serializers.Serializer):
             )
         return list(by_exercise.values())
 
-    def _template_rows(self, series_id):
-        rows = (
+    def _plan_rows(self, series_id):
+        """All plan workout rows for a series, ordered by date/exercise/set.
+
+        When list() has prefetched rows into context['plan_workouts_by_series'],
+        reuse that map instead of querying per instance.
+        """
+        cached = self.context.get("plan_workouts_by_series")
+        if cached is not None:
+            return cached.get(series_id, [])
+        return list(
             Workouts.objects.filter(plan_group_id=series_id, scenario=SCENARIO_PLAN)
             .select_related("exercise", "equipment", "attachment")
             .order_by("date_id", "exercise_id", "set_number")
         )
+
+    def _template_from_rows(self, rows):
         if not rows:
             return []
-        earliest = rows.first().date_id
+        earliest = rows[0].date_id
         return [r for r in rows if r.date_id == earliest]
+
+    def _next_date_from_rows(self, rows):
+        today = date.today()
+        for row in rows:
+            if row.date_id >= today:
+                return row.date_id
+        return None
 
     def create(self, validated_data):
         user = self.context["request"].user
@@ -323,7 +340,7 @@ class PlanSeriesSerializer(serializers.Serializer):
             "occurrence_count": occurrence_count,
             "exercise_count": len(exercises_data),
             "set_count": set_count,
-            "next_date": self._next_date(series_id),
+            "next_date": min((d for d in dates if d >= date.today()), default=None),
             "ta_created_at": series.ta_created_at,
             "ta_updated_at": series.ta_updated_at,
         }
@@ -392,24 +409,10 @@ class PlanSeriesSerializer(serializers.Serializer):
             result.append({"exercise": block["exercise"].pk, "sets": sets})
         return result
 
-    def _next_date(self, series_id):
-        row = (
-            Workouts.objects.filter(plan_group_id=series_id, scenario=SCENARIO_PLAN, date_id__gte=date.today())
-            .order_by("date_id")
-            .values_list("date_id", flat=True)
-            .first()
-        )
-        return row
-
     def to_representation(self, instance):
-        template = self._template_rows(instance.plan_series_id)
+        rows = self._plan_rows(instance.plan_series_id)
+        template = self._template_from_rows(rows)
         exercises = self._build_exercises_from_rows(template)
-        occurrence_count = (
-            Workouts.objects.filter(plan_group_id=instance.plan_series_id, scenario=SCENARIO_PLAN)
-            .values("date_id")
-            .distinct()
-            .count()
-        )
         set_count = self._total_sets_from_template(exercises)
         return {
             "plan_series_id": instance.plan_series_id,
@@ -425,10 +428,10 @@ class PlanSeriesSerializer(serializers.Serializer):
                 "dates": self._dates_from_str(getattr(instance, "specific_dates", None)),
             },
             "exercises": exercises,
-            "occurrence_count": occurrence_count,
+            "occurrence_count": len({r.date_id for r in rows}),
             "exercise_count": len(exercises),
             "set_count": set_count,
-            "next_date": self._next_date(instance.plan_series_id),
+            "next_date": self._next_date_from_rows(rows),
             "ta_created_at": instance.ta_created_at,
             "ta_updated_at": instance.ta_updated_at,
         }

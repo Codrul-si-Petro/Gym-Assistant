@@ -26,6 +26,44 @@
     };
   };
 
+  global.refreshAccessToken = async function refreshAccessToken() {
+    var refresh = localStorage.getItem("refresh_token");
+    if (!refresh) return false;
+    try {
+      var res = await fetch(global.API_BASE + global.API_PREFIX + "token/refresh/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh: refresh }),
+      });
+      if (!res.ok) return false;
+      var data = await res.json();
+      if (!data.access) return false;
+      localStorage.setItem("access_token", data.access);
+      if (data.refresh) localStorage.setItem("refresh_token", data.refresh);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  global.apiFetch = async function apiFetch(url, options) {
+    options = options || {};
+    var res = await fetch(url, options);
+    if (res.status === 401 && localStorage.getItem("refresh_token")) {
+      var refreshed = await global.refreshAccessToken();
+      if (refreshed) {
+        var retryOptions = Object.assign({}, options, {
+          headers: Object.assign({}, options.headers, global.getAuthHeaders()),
+        });
+        res = await fetch(url, retryOptions);
+      } else {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+      }
+    }
+    return res;
+  };
+
   function flattenErrorLeaves(data) {
     if (data == null) return [];
     if (typeof data === "string") return [data];
