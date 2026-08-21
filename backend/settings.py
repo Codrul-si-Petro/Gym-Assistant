@@ -34,11 +34,9 @@ if _SENTRY_DSN:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 
-    # Performance = Tracing (transactions/spans). Profiling stays off cause Sentry's free tier.
     _traces_sample_rate = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "1.0"))
 
     def _traces_sampler(sampling_context):
-        # Keep-alive / uptime pings should not burn free-tier trace quota.
         if (sampling_context.get("wsgi_environ") or {}).get("PATH_INFO") == "/health/":
             return 0.0
         return _traces_sample_rate
@@ -144,8 +142,6 @@ DATABASES = {
         "PASSWORD": tmpPostgres.password,
         "HOST": tmpPostgres.hostname,
         "PORT": 5432,
-        # Reuse connections across requests (gthread workers share one process).
-        # Neon pooler sits in front; 600s balances reconnect cost vs. idle drop.
         "CONN_MAX_AGE": 600,
         "OPTIONS": dict(parse_qsl(tmpPostgres.query or "")),
         "TEST": {
@@ -195,6 +191,7 @@ AUTH_USER_MODEL = "authentication.User"
 STATIC_URL = "/static/"
 
 # tell django where to find static files. will be needed later once i have static files
+# need to look into whether to deprecate this soon
 STATICFILES_DIRS = [
     BASE_DIR / "django_frontend" / "static",
 ]
@@ -213,16 +210,16 @@ AUTHENTICATION_BACKENDS = (
     "allauth.account.auth_backends.AuthenticationBackend",
 )
 
-SITE_ID = 1  # TODO: learn why this is needed for allauth
+SITE_ID = 1  # this is just some convention for allauth
 
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Require email verification before login
-ACCOUNT_ADAPTER = "backend.authentication.adapters.JWTAccountAdapter"  # JWT redirect after login; password reset uses MailerSend via email_sender.py
+ACCOUNT_ADAPTER = "backend.authentication.adapters.JWTAccountAdapter"  # JWT redirect after login
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # Confirm email on GET request (clicking the link)
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Email confirmation link expires in 3 days
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = f"{FRONTEND_URL}/pages/auth/login.html"
-ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True  # Auto-login after email confirmation
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True  # auto-login after email confirmation
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Skip signup form for social login
@@ -237,10 +234,9 @@ LOGOUT_REDIRECT_URL = "/"
 
 SOCIALACCOUNT_ADAPTER = "backend.authentication.adapters.JWTRedirectAdapter"
 
-# LocMemCache is process-local. Analytics invalidation (backend.core.analytics.cache_utils)
+# LocMemCache is process-local. Analytics invalidation
 # only works correctly with a single gunicorn *process*. Threads within that process are
-# fine (see backend/gunicorn.conf.py: workers=1, threads=4, gthread). Do not raise
-# --workers without switching CACHES to a shared backend (e.g. database cache) first.
+# fine. Do not increase workers without switching CACHES to a shared backend first.
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -248,7 +244,6 @@ CACHES = {
 }
 
 REST_FRAMEWORK = {
-    # JWT: SPA API calls. Session: allauth/admin. Basic: Swagger "Authorize" UI.
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",

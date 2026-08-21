@@ -9,9 +9,6 @@ from mailersend.models.email import EmailContact, EmailRequest
 
 logger = logging.getLogger(__name__)
 
-# Bounded pool so password-reset (and any other) sends do not block a gunicorn
-# request thread on the MailerSend HTTP round trip. Failures are logged / sent
-# to Sentry; callers already return a generic success body.
 _email_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="mailersend")
 
 
@@ -74,12 +71,10 @@ class MailerSendEmailClient:
             text=text,
         )
 
-        # Send the email
         response = self.client.emails.send(email_request)
         return {"status": "sent", "response": str(response)}
 
 
-# Module-level convenience function using default client
 _default_client: MailerSendEmailClient | None = None
 
 
@@ -117,11 +112,7 @@ def send_email(
     text: str,
 ) -> None:
     """
-    Queue an email send on a background thread (does not wait for MailerSend).
-
-    Password-reset responses are intentionally generic whether or not the send
-    succeeds, so blocking the request thread on the HTTP round trip is wasteful.
-    Errors are logged and reported to Sentry when configured.
+    Queue an email send on a background thread.
     """
 
     def _run() -> None:
