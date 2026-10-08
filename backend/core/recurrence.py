@@ -58,7 +58,7 @@ def expand_recurrence(
             dates = [
                 start_date + timedelta(days=offset)
                 for offset in range((end_date - start_date).days + 1)
-                if (start_date + timedelta(days=offset)).isoweekday() in target_weekdays
+                if (start_date + timedelta(days=offset)).weekday() in target_weekdays
             ]
 
             if not dates:
