@@ -155,7 +155,6 @@ jobs:
             exit 0
           fi
 
-          # pull_request synchronize (Update branch)
           echo "Backmerge PR #$PR was updated."
           review="$(gh pr view "$PR" --json reviewDecision --jq '.reviewDecision')"
           if [ "$review" = "APPROVED" ]; then
