@@ -61,6 +61,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          set -x
 
           is_backmerge_pr() {
             local pr="$1"
