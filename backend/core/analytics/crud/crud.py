@@ -1,5 +1,6 @@
 """
 Some stuff I will need to update at some point
+8th of October 2026: I still haven't updated it
 """
 
 from collections import defaultdict
@@ -8,6 +9,7 @@ from pathlib import Path
 
 from django.utils import timezone
 
+from backend.core.analytics.helpers import get_period_bounds
 from backend.core.constants import TIME_FILTER_ALL, TIME_FILTER_CURRENT
 
 from .common import (
@@ -313,9 +315,9 @@ def get_session_period_comparisons(user_id: int) -> dict[str, int | None]:
     need "no plan at all" can check home-level flags later.
     """
     today = timezone.localdate()
-    week = period_bounds(today, "week")
-    month = period_bounds(today, "month")
-    year = period_bounds(today, "year")
+    week = get_period_bounds(today, "week")
+    month = get_period_bounds(today, "month")
+    year = get_period_bounds(today, "year")
 
     def to_date_end(cur_start: date, cur_end: date, prev_start: date) -> date:
         return prev_start + timedelta(days=(cur_end - cur_start).days)
@@ -361,46 +363,6 @@ def get_session_period_comparisons(user_id: int) -> dict[str, int | None]:
     return out
 
 
-def period_bounds(today: date, unit: str) -> dict[str, date]:
-    """Start/end for home-summary workout counts (this/last week, month, year).
-
-    Returns to-date bounds (cur_end = today) plus full-period ends for plan targets
-    (week_full_end / month_full_end / year_full_end = last day of the enclosing period).
-    """
-    if unit == "week":
-        cur_start = today - timedelta(days=today.isoweekday() - 1)
-        cur_end = today
-        full_end = cur_start + timedelta(days=6)
-    elif unit == "year":
-        cur_start = today.replace(month=1, day=1)
-        cur_end = today
-        full_end = today.replace(month=12, day=31)
-    else:
-        cur_start = today.replace(day=1)
-        cur_end = today
-        if today.month == 12:
-            full_end = today.replace(day=31)
-        else:
-            full_end = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
-
-    prev_end = cur_start - timedelta(days=1)
-    if unit == "week":
-        prev_start = prev_end - timedelta(days=6)
-    elif unit == "year":
-        prev_start = cur_start.replace(year=cur_start.year - 1)
-        prev_end = prev_start.replace(month=12, day=31)
-    else:
-        prev_start = prev_end.replace(day=1)
-
-    return {
-        "cur_start": cur_start,
-        "cur_end": cur_end,
-        "prev_start": prev_start,
-        "prev_end": prev_end,
-        "full_end": full_end,
-    }
-
-
 WORKOUT_COUNT_KEYS = (
     "workouts_this_week",
     "workouts_last_week",
@@ -424,9 +386,9 @@ def get_workout_counts(user_id: int) -> dict[str, int]:
     enclosing week/month/year (mirroring volume's plan-to-date vs plan-full).
     """
     today = timezone.localdate()
-    week = period_bounds(today, "week")
-    month = period_bounds(today, "month")
-    year = period_bounds(today, "year")
+    week = get_period_bounds(today, "week")
+    month = get_period_bounds(today, "month")
+    year = get_period_bounds(today, "year")
 
     query = (SQL_DIR / "get_workout_counts.sql").read_text()
     rows = execute_sql(
@@ -459,8 +421,6 @@ def get_home_summary(user_id: int):
     query_file = SQL_DIR / "get_home_summary.sql"
     query = query_file.read_text()
     rows = execute_sql(query, {"user_id": user_id})
-    # Merged in regardless of whether `rows` is empty — a brand-new user with no
-    # lifetime volume can still have workout counts once seeded/backfilled data lands.
     workout_counts = get_workout_counts(user_id)
 
     if not rows:
