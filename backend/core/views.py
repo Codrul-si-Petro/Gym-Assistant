@@ -63,10 +63,10 @@ class WorkoutsViewSet(
         user = self.request.user
         qs = Workouts.objects.filter(user=user)
         if self.action == "list":
-            qs = self._apply_list_filters(qs)
+            qs = self.apply_list_filters(qs)
         return qs.order_by("-workout_number").order_by("-ta_created_at")
 
-    def _apply_list_filters(self, qs):
+    def apply_list_filters(self, qs):
         """Server-side column filters for the Workout History table."""
         params = self.request.query_params
 

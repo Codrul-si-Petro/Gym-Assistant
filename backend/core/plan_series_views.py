@@ -29,14 +29,14 @@ class PlanSeriesViewSet(
 
     def get_queryset(self):
         user = self.request.user
-        qs = PlanSeries.objects.all() if user.is_staff else PlanSeries.objects.filter(user=user)
-        return qs.order_by("-ta_created_at")
+        qs = PlanSeries.objects.filter(user=user)
+        return qs.order_by("-workout_number").order_by("-ta_created_at")
 
     def get_serializer(self, *args, **kwargs):
         kwargs.setdefault("context", self.get_serializer_context())
         return PlanSeriesSerializer(*args, **kwargs)
 
-    def _prefetch_plan_workouts(self, instances):
+    def prefetch_plan_workouts(self, instances):
         """One query for all plan rows belonging to the listed series."""
         series_ids = [instance.plan_series_id for instance in instances]
         if not series_ids:
@@ -55,7 +55,7 @@ class PlanSeriesViewSet(
     def list(self, request, *args, **kwargs):
         instances = list(self.get_queryset())
         context = self.get_serializer_context()
-        context["plan_workouts_by_series"] = self._prefetch_plan_workouts(instances)
+        context["plan_workouts_by_series"] = self.prefetch_plan_workouts(instances)
         serializer = self.get_serializer(instances, many=True, context=context)
         return Response(serializer.data)
 
