@@ -95,10 +95,8 @@ jobs:
             fi
 
             echo "Waiting for required checks on PR #$pr..."
-            if ! gh pr checks "$pr" --watch --interval 30; then
-              echo "Required checks failed or were cancelled."
-              return 0
-            fi
+            gh --version
+            gh pr checks "$pr" --watch --interval 30
 
             merge_state="$(gh pr view "$pr" --json mergeStateStatus --jq -r '.mergeStateStatus')"
             echo "Merge state: $merge_state"
