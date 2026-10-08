@@ -61,10 +61,10 @@ class WorkoutsViewSet(
 
     def get_queryset(self):
         user = self.request.user
-        qs = Workouts.objects.all() if user.is_staff else Workouts.objects.filter(user=user)
+        qs = Workouts.objects.filter(user=user)
         if self.action == "list":
             qs = self._apply_list_filters(qs)
-        return qs.order_by("-date_id")
+        return qs.order_by("-workout_number").order_by("-ta_created_at")
 
     def _apply_list_filters(self, qs):
         """Server-side column filters for the Workout History table."""
@@ -116,9 +116,9 @@ class WorkoutsViewSet(
         invalidate_user_analytics(self.request.user.id)
 
     @swagger_auto_schema(
-        request_body=WorkoutSerializer,  # <-- use serializer to avoid writing schema each time
+        request_body=WorkoutSerializer,  # use serializer to avoid writing schema each time
         tags=["workout-logging"],
-        consumes=["application/x-www-form-urlencoded"],  # <-- force Swagger form
+        consumes=["application/x-www-form-urlencoded"],  # force Swagger form
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
@@ -134,7 +134,7 @@ class WorkoutsViewSet(
     @swagger_auto_schema(
         tags=["workout-logging"],
         request_body=WorkoutSerializer,
-        consumes=["application/x-www-form-urlencoded"],  # <-- force Swagger form
+        consumes=["application/x-www-form-urlencoded"],
         operation_description="Partially update one workout set row owned by the current user.",
     )
     def partial_update(self, request, *args, **kwargs):
@@ -143,14 +143,14 @@ class WorkoutsViewSet(
     @swagger_auto_schema(
         tags=["Core"],
         request_body=WorkoutSerializer,
-        consumes=["application/x-www-form-urlencoded"],  # <-- force Swagger form
+        consumes=["application/x-www-form-urlencoded"],
     )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 
     @swagger_auto_schema(
         tags=["workout-logging"],
-        consumes=["application/x-www-form-urlencoded"],  # <-- force Swagger form
+        consumes=["application/x-www-form-urlencoded"],
     )
     @action(detail=False, methods=["get"], url_path="next-workout-info")
     def next_workout_info(self, request):

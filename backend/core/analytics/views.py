@@ -19,7 +19,7 @@ from .crud.crud import (
     get_workout_sessions,
     get_workout_splits,
 )
-from .helpers import analytics_or_error
+from .helpers import query_analytics
 
 
 class UserRestDaysView(APIView):
@@ -55,7 +55,7 @@ class FavouriteExercisesView(APIView):
             "start_date": start_date_parsed,
             "end_date": end_date_parsed,
         }
-        results = analytics_or_error(
+        results = query_analytics(
             lambda: get_cached_analytics(
                 user_id,
                 "favourite-exercises",
@@ -113,7 +113,7 @@ class TotalVolumeView(APIView):
             "end_date": end_date_parsed if period == "all" else None,
             "parent_id": parent_id,
         }
-        results = analytics_or_error(
+        results = query_analytics(
             lambda: get_cached_analytics(
                 user_id,
                 "total-volume",
@@ -164,7 +164,7 @@ class TotalVolumePerDayView(APIView):
             "start_date": start_date_parsed,
             "end_date": end_date_parsed,
         }
-        results = analytics_or_error(
+        results = query_analytics(
             lambda: get_cached_analytics(
                 user_id,
                 "total-volume-daily",
@@ -201,7 +201,7 @@ class WorkoutSplitsView(APIView):
             "start_date": start_date_parsed,
             "end_date": end_date_parsed,
         }
-        results = analytics_or_error(
+        results = query_analytics(
             lambda: get_cached_analytics(
                 user_id,
                 "workout-splits",
@@ -233,7 +233,7 @@ class GymWeekdaysView(APIView):
             "start_date": start_date_parsed,
             "end_date": end_date_parsed,
         }
-        results = analytics_or_error(
+        results = query_analytics(
             lambda: get_cached_analytics(
                 user_id,
                 "gym-weekdays",
@@ -265,7 +265,7 @@ class WorkoutSessionsView(APIView):
             "start_date": start_date_parsed,
             "end_date": end_date_parsed,
         }
-        payload = analytics_or_error(
+        payload = query_analytics(
             lambda: get_cached_analytics(
                 user_id,
                 "workout-sessions",
@@ -294,7 +294,7 @@ class HomeSummaryView(APIView):
     @swagger_auto_schema(tags=["Analytics"])
     def get(self, request):
         user_id = request.user.id
-        summary = analytics_or_error(
+        summary = query_analytics(
             lambda: get_cached_analytics(
                 user_id,
                 "home-summary",

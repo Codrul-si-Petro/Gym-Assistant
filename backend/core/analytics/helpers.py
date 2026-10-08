@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-def analytics_or_error(fetch_fn: Callable[[], T]) -> T | Response:
+def query_analytics(fetch_fn: Callable[[], T]) -> T | Response:
     """Run an analytics fetch; return a generic 500 Response on unexpected errors.
 
     Does not leak exception text to clients — the traceback stays in server logs
