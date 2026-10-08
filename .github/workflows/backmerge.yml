@@ -61,7 +61,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          set -x
 
           is_backmerge_pr() {
             local pr="$1"
@@ -89,7 +88,7 @@ jobs:
             local pr="$1"
             local review merge_state
 
-            review="$(gh pr view "$pr" --json reviewDecision --jq -r '.reviewDecision')"
+            review="$(gh pr view "$pr" --json reviewDecision --jq '.reviewDecision')"
             if [ "$review" != "APPROVED" ]; then
               echo "PR #$pr is not approved yet (reviewDecision=$review)."
               return 0
@@ -99,7 +98,7 @@ jobs:
             gh --version
             gh pr checks "$pr" --watch --interval 30
 
-            merge_state="$(gh pr view "$pr" --json mergeStateStatus --jq -r '.mergeStateStatus')"
+            merge_state="$(gh pr view "$pr" --json mergeStateStatus --jq '.mergeStateStatus')"
             echo "Merge state: $merge_state"
 
             if [ "$merge_state" = "MERGEABLE" ] || [ "$merge_state" = "CLEAN" ]; then
