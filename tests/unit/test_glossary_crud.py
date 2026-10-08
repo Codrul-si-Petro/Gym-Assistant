@@ -1,32 +1,31 @@
 """Unit tests for glossary grouping and YouTube embed URL helpers (no DB)."""
 
-from backend.core.glossary.crud.crud import _group_glossary_rows, _youtube_embed_url
+from backend.core.glossary.crud.crud import group_glossary_rows, youtube_embed_url
 
 
 def test_youtube_embed_url_youtu_be():
-    assert _youtube_embed_url("https://youtu.be/abc123XYZ") == "https://www.youtube.com/embed/abc123XYZ"
+    assert youtube_embed_url("https://youtu.be/abc123XYZ") == "https://www.youtube.com/embed/abc123XYZ"
 
 
 def test_youtube_embed_url_youtu_be_strips_query():
-    assert _youtube_embed_url("https://youtu.be/abc123XYZ?si=token") == "https://www.youtube.com/embed/abc123XYZ"
+    assert youtube_embed_url("https://youtu.be/abc123XYZ?si=token") == "https://www.youtube.com/embed/abc123XYZ"
 
 
 def test_youtube_embed_url_watch_v_param():
     assert (
-        _youtube_embed_url("https://www.youtube.com/watch?v=abc123XYZ&t=30")
-        == "https://www.youtube.com/embed/abc123XYZ"
+        youtube_embed_url("https://www.youtube.com/watch?v=abc123XYZ&t=30") == "https://www.youtube.com/embed/abc123XYZ"
     )
 
 
 def test_youtube_embed_url_already_embed():
     url = "https://www.youtube.com/embed/abc123XYZ"
-    assert _youtube_embed_url(url) == url
+    assert youtube_embed_url(url) == url
 
 
 def test_youtube_embed_url_none_and_unknown():
-    assert _youtube_embed_url(None) is None
-    assert _youtube_embed_url("") is None
-    assert _youtube_embed_url("https://example.com/video") is None
+    assert youtube_embed_url(None) is None
+    assert youtube_embed_url("") is None
+    assert youtube_embed_url("https://example.com/video") is None
 
 
 def test_group_glossary_rows_skips_placeholder_and_sorts_primary_first():
@@ -77,7 +76,7 @@ def test_group_glossary_rows_skips_placeholder_and_sorts_primary_first():
         },
     ]
 
-    grouped = _group_glossary_rows(rows)
+    grouped = group_glossary_rows(rows)
     assert len(grouped) == 1
     entry = grouped[0]
     assert entry["exercise_id"] == 10

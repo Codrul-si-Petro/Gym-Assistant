@@ -15,7 +15,7 @@ def execute_sql(sql: str, params: dict) -> list[dict]:
     return [dict(zip(columns, row)) for row in rows]
 
 
-def _build_children(rows):
+def build_children(rows):
     children = defaultdict(list)
     by_id = {}
     for r in rows:
@@ -25,7 +25,7 @@ def _build_children(rows):
     return children, by_id
 
 
-def _subtree_terminal_exercise_ids(node_id, children, cache):
+def subtree_terminal_exercise_ids(node_id, children, cache):
     if node_id in cache:
         return cache[node_id]
     direct = children.get(node_id, [])
@@ -34,21 +34,21 @@ def _subtree_terminal_exercise_ids(node_id, children, cache):
     else:
         s = set()
         for c in direct:
-            s |= _subtree_terminal_exercise_ids(c, children, cache)
+            s |= subtree_terminal_exercise_ids(c, children, cache)
         out = frozenset(s)
     cache[node_id] = out
     return out
 
 
 def rollup_exercise_total_volume(hierarchy_rows, volume_by_exercise_id, parent_id):
-    children, _by_id = _build_children(hierarchy_rows)
+    children, _by_id = build_children(hierarchy_rows)
     cache = {}
     results = []
     for r in hierarchy_rows:
         if r["parent_id"] != parent_id:
             continue
         cid = r["current_id"]
-        terminals = _subtree_terminal_exercise_ids(cid, children, cache)
+        terminals = subtree_terminal_exercise_ids(cid, children, cache)
         total = sum(volume_by_exercise_id.get(eid, 0) for eid in terminals)
         if total == 0:
             continue

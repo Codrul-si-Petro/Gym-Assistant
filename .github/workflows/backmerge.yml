@@ -88,19 +88,17 @@ jobs:
             local pr="$1"
             local review merge_state
 
-            review="$(gh pr view "$pr" --json reviewDecision --jq -r '.reviewDecision')"
+            review="$(gh pr view "$pr" --json reviewDecision --jq '.reviewDecision')"
             if [ "$review" != "APPROVED" ]; then
               echo "PR #$pr is not approved yet (reviewDecision=$review)."
               return 0
             fi
 
             echo "Waiting for required checks on PR #$pr..."
-            if ! gh pr checks "$pr" --required --watch --interval 30; then
-              echo "Required checks failed or were cancelled."
-              return 0
-            fi
+            gh --version
+            gh pr checks "$pr" --watch --interval 30
 
-            merge_state="$(gh pr view "$pr" --json mergeStateStatus --jq -r '.mergeStateStatus')"
+            merge_state="$(gh pr view "$pr" --json mergeStateStatus --jq '.mergeStateStatus')"
             echo "Merge state: $merge_state"
 
             if [ "$merge_state" = "MERGEABLE" ] || [ "$merge_state" = "CLEAN" ]; then
@@ -159,7 +157,7 @@ jobs:
 
           # pull_request synchronize (Update branch)
           echo "Backmerge PR #$PR was updated."
-          review="$(gh pr view "$PR" --json reviewDecision --jq -r '.reviewDecision')"
+          review="$(gh pr view "$PR" --json reviewDecision --jq '.reviewDecision')"
           if [ "$review" = "APPROVED" ]; then
             enable_auto_merge "$PR"
             try_merge "$PR"
