@@ -19,3 +19,4 @@ equipment_id,equipment_name,equipment_description,equipment_parent_id,equipment_
 19,Box,Plyometric or step box for step-ups and jumps,17,Free weight,2026-07-20 01:01:00.000 +0200
 20,Sled,Weighted sled for pushes and drags,17,Free weight,2026-07-20 01:01:00.000 +0200
 21,TRX,Suspension trainer straps for bodyweight exercises,,Variable resistance,2026-07-20 01:01:00.000 +0200
+22,Plate,Simple plate used on barbells,,Variable resistance,2026-10-08 01:01:00.000 +0200
