@@ -95,7 +95,7 @@ jobs:
             fi
 
             echo "Waiting for required checks on PR #$pr..."
-            if ! gh pr checks "$pr" --required --watch --interval 30; then
+            if ! gh pr checks "$pr" --watch --interval 30; then
               echo "Required checks failed or were cancelled."
               return 0
             fi

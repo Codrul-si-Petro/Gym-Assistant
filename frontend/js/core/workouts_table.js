@@ -1,7 +1,3 @@
-// API_BASE / getAuthHeaders come from api-base.js (load that script first).
-// Dimension fetch/parse helpers come from dimension-picker.js (load that script first).
-// PLACEHOLDER_DIMENSION_ID is provided by dimension-picker.js.
-
 const PLACEHOLDER_DIMENSION_NAME = "None";
 
 function dimensionDisplayName(map, id) {

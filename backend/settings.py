@@ -234,9 +234,6 @@ LOGOUT_REDIRECT_URL = "/"
 
 SOCIALACCOUNT_ADAPTER = "backend.authentication.adapters.JWTRedirectAdapter"
 
-# LocMemCache is process-local. Analytics invalidation
-# only works correctly with a single gunicorn *process*. Threads within that process are
-# fine. Do not increase workers without switching CACHES to a shared backend first.
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

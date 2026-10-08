@@ -1,5 +1,6 @@
 """
 Some stuff I will need to update at some point
+8th of October 2026: I still haven't updated it
 """
 
 from collections import defaultdict
@@ -8,19 +9,20 @@ from pathlib import Path
 
 from django.utils import timezone
 
+from backend.core.analytics.helpers import get_period_bounds
 from backend.core.constants import TIME_FILTER_ALL, TIME_FILTER_CURRENT
 
 from .common import (
-    _build_children,
-    _subtree_terminal_exercise_ids,
+    build_children,
     execute_sql,
     get_dimension_hierarchies,
     rollup_exercise_total_volume,
+    subtree_terminal_exercise_ids,
 )
 
 SQL_DIR = Path(__file__).resolve().parent.parent / "sql"
 
-_VOLUME_METRIC_KEYS = (
+VOLUME_METRIC_KEYS = (
     "total_volume",
     "previous_week",
     "previous_week_to_date",
@@ -29,15 +31,13 @@ _VOLUME_METRIC_KEYS = (
     "previous_year",
     "previous_year_to_date",
     "plan_volume",
-    # Full-period (not just to-date) plan targets — only meaningful for period=wtd/mtd/ytd;
-    # the "all"/custom-range path has no enclosing week/month/year, so these stay None there.
     "plan_week_full",
     "plan_month_full",
     "plan_year_full",
 )
 
 # Plan metrics use NULL = "no plan for this grain" (distinct from a real 0 target).
-_PLAN_METRIC_KEYS = frozenset(
+PLAN_METRIC_KEYS = frozenset(
     {
         "plan_volume",
         "plan_week_full",
@@ -47,15 +47,16 @@ _PLAN_METRIC_KEYS = frozenset(
 )
 
 
-def _metric_value(row: dict, key: str):
+# TODO: get rid of these horrible helpers wtf why did I let Cursor touch the backend
+def metric_value(row: dict, key: str):
     """Coerce missing actuals to 0; preserve None for plan metrics (no plan)."""
     val = row.get(key)
-    if key in _PLAN_METRIC_KEYS:
+    if key in PLAN_METRIC_KEYS:
         return None if val is None else float(val)
     return float(val or 0)
 
 
-def _sum_nullable(values) -> float | None:
+def sum_nullable(values) -> float | None:
     """Sum non-None values; return None when every input is None (no plan anywhere)."""
     present = [v for v in values if v is not None]
     if not present:
@@ -89,32 +90,30 @@ def get_favourite_exercises(user_id, start_date, end_date):
     )
 
 
-def _rollup_nullable_by_parent(hierarchy_rows, by_exercise_id: dict, parent_id) -> dict:
+def rollup_nullable_by_parent(hierarchy_rows, by_exercise_id: dict, parent_id) -> dict:
     """Roll up a nullable metric (plan_*) to each direct child of parent_id."""
-    children, _ = _build_children(hierarchy_rows)
+    children, _ = build_children(hierarchy_rows)
     cache: dict = {}
     out: dict = {}
     for r in hierarchy_rows:
         if r["parent_id"] != parent_id:
             continue
         cid = r["current_id"]
-        terminals = _subtree_terminal_exercise_ids(cid, children, cache)
-        out[cid] = _sum_nullable(by_exercise_id.get(eid) for eid in terminals)
+        terminals = subtree_terminal_exercise_ids(cid, children, cache)
+        out[cid] = sum_nullable(by_exercise_id.get(eid) for eid in terminals)
     return out
 
 
-def _rollup_volume_rows(volume_rows, parent_id):
+def rollup_volume_rows(volume_rows, parent_id):
     hierarchy_rows = get_dimension_hierarchies("exercise")
-    by_metric = {
-        key: {row["exercise_id"]: _metric_value(row, key) for row in volume_rows} for key in _VOLUME_METRIC_KEYS
-    }
+    by_metric = {key: {row["exercise_id"]: metric_value(row, key) for row in volume_rows} for key in VOLUME_METRIC_KEYS}
 
-    # total_volume / prior-period metrics: missing → 0 (existing rollup).
+    # total_volume
     current = rollup_exercise_total_volume(hierarchy_rows, by_metric["total_volume"], parent_id)
     rolled = {}
-    for key in _VOLUME_METRIC_KEYS[1:]:
-        if key in _PLAN_METRIC_KEYS:
-            rolled[key] = _rollup_nullable_by_parent(hierarchy_rows, by_metric[key], parent_id)
+    for key in VOLUME_METRIC_KEYS[1:]:
+        if key in PLAN_METRIC_KEYS:
+            rolled[key] = rollup_nullable_by_parent(hierarchy_rows, by_metric[key], parent_id)
         else:
             rolled[key] = {
                 row["exercise_id"]: row["total_volume"]
@@ -123,8 +122,8 @@ def _rollup_volume_rows(volume_rows, parent_id):
 
     for row in current:
         eid = row["exercise_id"]
-        for key in _VOLUME_METRIC_KEYS[1:]:
-            if key in _PLAN_METRIC_KEYS:
+        for key in VOLUME_METRIC_KEYS[1:]:
+            if key in PLAN_METRIC_KEYS:
                 row[key] = rolled[key].get(eid)  # may be None
             else:
                 row[key] = rolled[key].get(eid, 0)
@@ -139,15 +138,7 @@ def get_total_volume(
     start_date: date | None = None,
     end_date: date | None = None,
 ):
-    """Read precomputed volume facts; hierarchy rollup is the only app-side work.
-
-    - period=all           → dated daily fact (analytics.total_daily_volume), any/no range
-    - period=wtd|mtd|ytd    → analytics.volume_to_date, filtered by the matching flag
-    - prev week/month/year  → always their own dbt models (ref() chained from
-      total_daily_volume), regardless of which current period was requested. Each has
-      a "full" (complete prior period) and a "to date" (capped at today's relative day)
-      variant, e.g. previous_month vs previous_month_to_date.
-    """
+    # TODO: simplify this horrible shit with time filters and put better constraints
     time_filter = (period or TIME_FILTER_ALL).lower()
     if time_filter not in TIME_FILTER_CURRENT:
         time_filter = TIME_FILTER_ALL
@@ -179,21 +170,19 @@ def get_total_volume(
                     "previous_month_to_date": prev.get("previous_month_to_date") or 0,
                     "previous_year": prev.get("previous_year") or 0,
                     "previous_year_to_date": prev.get("previous_year_to_date") or 0,
-                    # NULL when no plan rows in range (SQL FILTER returns NULL).
                     "plan_volume": None if plan_vol is None else float(plan_vol),
-                    # No enclosing week/month/year for a custom range.
                     "plan_week_full": None,
                     "plan_month_full": None,
                     "plan_year_full": None,
                 }
             )
-        return _rollup_volume_rows(volume_rows, parent_id)
+        return rollup_volume_rows(volume_rows, parent_id)
 
     volume_rows = execute_sql(
         (SQL_DIR / "get_total_volume_periods.sql").read_text(),
         {"user_id": user_id, "time_filter": time_filter},
     )
-    return _rollup_volume_rows(volume_rows, parent_id)
+    return rollup_volume_rows(volume_rows, parent_id)
 
 
 def get_total_volume_per_day(
@@ -216,10 +205,10 @@ def get_total_volume_per_day(
 
     hierarchy_rows = get_dimension_hierarchies("exercise")
 
-    children, _ = _build_children(hierarchy_rows)
+    children, _ = build_children(hierarchy_rows)
     cache: dict[int, frozenset[int]] = {}
 
-    terminals = _subtree_terminal_exercise_ids(
+    terminals = subtree_terminal_exercise_ids(
         exercise_id,
         children,
         cache,
@@ -326,9 +315,9 @@ def get_session_period_comparisons(user_id: int) -> dict[str, int | None]:
     need "no plan at all" can check home-level flags later.
     """
     today = timezone.localdate()
-    week = _period_bounds(today, "week")
-    month = _period_bounds(today, "month")
-    year = _period_bounds(today, "year")
+    week = get_period_bounds(today, "week")
+    month = get_period_bounds(today, "month")
+    year = get_period_bounds(today, "year")
 
     def to_date_end(cur_start: date, cur_end: date, prev_start: date) -> date:
         return prev_start + timedelta(days=(cur_end - cur_start).days)
@@ -374,47 +363,7 @@ def get_session_period_comparisons(user_id: int) -> dict[str, int | None]:
     return out
 
 
-def _period_bounds(today: date, unit: str) -> dict[str, date]:
-    """Start/end for home-summary workout counts (this/last week, month, year).
-
-    Returns to-date bounds (cur_end = today) plus full-period ends for plan targets
-    (week_full_end / month_full_end / year_full_end = last day of the enclosing period).
-    """
-    if unit == "week":
-        cur_start = today - timedelta(days=today.isoweekday() - 1)
-        cur_end = today
-        full_end = cur_start + timedelta(days=6)
-    elif unit == "year":
-        cur_start = today.replace(month=1, day=1)
-        cur_end = today
-        full_end = today.replace(month=12, day=31)
-    else:
-        cur_start = today.replace(day=1)
-        cur_end = today
-        if today.month == 12:
-            full_end = today.replace(day=31)
-        else:
-            full_end = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
-
-    prev_end = cur_start - timedelta(days=1)
-    if unit == "week":
-        prev_start = prev_end - timedelta(days=6)
-    elif unit == "year":
-        prev_start = cur_start.replace(year=cur_start.year - 1)
-        prev_end = prev_start.replace(month=12, day=31)
-    else:
-        prev_start = prev_end.replace(day=1)
-
-    return {
-        "cur_start": cur_start,
-        "cur_end": cur_end,
-        "prev_start": prev_start,
-        "prev_end": prev_end,
-        "full_end": full_end,
-    }
-
-
-_WORKOUT_COUNT_KEYS = (
+WORKOUT_COUNT_KEYS = (
     "workouts_this_week",
     "workouts_last_week",
     "workouts_this_month",
@@ -437,9 +386,9 @@ def get_workout_counts(user_id: int) -> dict[str, int]:
     enclosing week/month/year (mirroring volume's plan-to-date vs plan-full).
     """
     today = timezone.localdate()
-    week = _period_bounds(today, "week")
-    month = _period_bounds(today, "month")
-    year = _period_bounds(today, "year")
+    week = get_period_bounds(today, "week")
+    month = get_period_bounds(today, "month")
+    year = get_period_bounds(today, "year")
 
     query = (SQL_DIR / "get_workout_counts.sql").read_text()
     rows = execute_sql(
@@ -465,15 +414,13 @@ def get_workout_counts(user_id: int) -> dict[str, int]:
     )
 
     row = rows[0] if rows else {}
-    return {key: int(row.get(key) or 0) for key in _WORKOUT_COUNT_KEYS}
+    return {key: int(row.get(key) or 0) for key in WORKOUT_COUNT_KEYS}
 
 
 def get_home_summary(user_id: int):
     query_file = SQL_DIR / "get_home_summary.sql"
     query = query_file.read_text()
     rows = execute_sql(query, {"user_id": user_id})
-    # Merged in regardless of whether `rows` is empty — a brand-new user with no
-    # lifetime volume can still have workout counts once seeded/backfilled data lands.
     workout_counts = get_workout_counts(user_id)
 
     if not rows:

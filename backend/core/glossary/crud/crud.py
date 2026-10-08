@@ -5,7 +5,7 @@ from backend.core.analytics.crud.common import execute_sql
 SQL_DIR = Path(__file__).resolve().parent.parent / "sql"
 
 
-def _youtube_embed_url(url: str | None) -> str | None:
+def youtube_embed_url(url: str | None) -> str | None:
     if not url:
         return None
     if "youtu.be/" in url:
@@ -19,7 +19,7 @@ def _youtube_embed_url(url: str | None) -> str | None:
     return None
 
 
-def _group_glossary_rows(rows: list[dict]) -> list[dict]:
+def group_glossary_rows(rows: list[dict]) -> list[dict]:
     grouped: dict[int, dict] = {}
     order: list[int] = []
 
@@ -37,7 +37,7 @@ def _group_glossary_rows(rows: list[dict]) -> list[dict]:
                 "youtube_url": youtube_url,
                 "display_title": row.get("display_title"),
                 "notes": row.get("notes"),
-                "youtube_embed_url": _youtube_embed_url(youtube_url),
+                "youtube_embed_url": youtube_embed_url(youtube_url),
             }
             order.append(exercise_id)
 
@@ -61,16 +61,16 @@ def _group_glossary_rows(rows: list[dict]) -> list[dict]:
     return [grouped[exercise_id] for exercise_id in order]
 
 
-def _fetch_glossary(exercise_id: int | None) -> list[dict]:
+def fetch_glossary(exercise_id: int | None) -> list[dict]:
     query = (SQL_DIR / "get_exercise_glossary.sql").read_text()
     rows = execute_sql(query, {"exercise_id": exercise_id})
-    return _group_glossary_rows(rows)
+    return group_glossary_rows(rows)
 
 
 def get_exercise_glossary_list() -> list[dict]:
-    return _fetch_glossary(None)
+    return fetch_glossary(None)
 
 
 def get_exercise_glossary(exercise_id: int) -> dict | None:
-    rows = _fetch_glossary(exercise_id)
+    rows = fetch_glossary(exercise_id)
     return rows[0] if rows else None
