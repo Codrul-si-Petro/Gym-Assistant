@@ -30,7 +30,7 @@ class PlanSeriesViewSet(
     def get_queryset(self):
         user = self.request.user
         qs = PlanSeries.objects.filter(user=user)
-        return qs.order_by("-workout_number").order_by("-ta_created_at")
+        return qs.order_by("-ta_created_at")
 
     def get_serializer(self, *args, **kwargs):
         kwargs.setdefault("context", self.get_serializer_context())
